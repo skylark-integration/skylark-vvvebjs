@@ -3,7 +3,7 @@ define([
 	"skylark-utils-dom/query",
 	"./Vvveb",
 	"./tmpl",
-	"skylark-bootstrap3/button",
+	"skylark-bootstrap4/button",
 ],function(langx, $,Vvveb,tmpl) {
 	var Input = {
 		

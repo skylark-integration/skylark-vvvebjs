@@ -1,8 +1,10 @@
 define([
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
 
     bgcolorClasses = ["bg-primary", "bg-secondary", "bg-success", "bg-danger", "bg-warning", "bg-info", "bg-light", "bg-dark", "bg-white"]
 
@@ -60,32 +62,31 @@ define([
     ["html/container", "html/gridrow", "html/button", "html/buttongroup", "html/buttontoolbar", "html/heading", "html/image", "html/jumbotron", "html/alert", "html/card", "html/listgroup", "html/hr", "html/taglabel", "html/badge", "html/progress", "html/navbar", "html/breadcrumbs", "html/pagination", "html/form", "html/textinput", "html/textareainput", "html/selectinput", "html/fileinput", "html/checkbox", "html/radiobutton", "html/table", "html/paragraph"];
 
 
-    var base_sort = 100;//start sorting for base component from 100 to allow extended properties to be first
 
     Components.add("_base", {
         name: "Element",
     	properties: [{
             key: "element_header",
-            inputtype: SectionInput,
+            inputtype: inputs.SectionInput,
             name:false,
-            sort:base_sort++,
+            sort:Components.base_sort++,
             data: {header:"General"},
         }, {
             name: "Id",
             key: "id",
             htmlAttr: "id",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             inline:true,
             col:6,
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Class",
             key: "class",
             htmlAttr: "class",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             inline:true,
             col:6,
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }
        ]
     });    
@@ -95,18 +96,18 @@ define([
     	 properties: [
          {
             key: "display_header",
-            inputtype: SectionInput,
+            inputtype: inputs.SectionInput,
             name:false,
-            sort: base_sort++,
+            sort: Components.base_sort++,
             data: {header:"Display"},
         }, {
             name: "Display",
             key: "display",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["block", "inline", "inline-block", "none"],
             data: {
                 options: [{
@@ -127,10 +128,10 @@ define([
             name: "Position",
             key: "position",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["static", "fixed", "relative", "absolute"],
             data: {
                 options: [{
@@ -151,46 +152,46 @@ define([
             name: "Top",
             key: "top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Left",
             key: "left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         },{
             name: "Float",
             key: "float",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -217,11 +218,11 @@ define([
             name: "Opacity",
             key: "opacity",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
     		inline:true,
             parent:"",
-            inputtype: RangeInput,
+            inputtype: inputs.RangeInput,
             data:{
     			max: 1, //max zoom level
     			min:0,
@@ -230,19 +231,19 @@ define([
     	}, {
             name: "Background Color",
             key: "background-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
     	}, {
             name: "Text Color",
             key: "color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
       	}]
     });    
 
@@ -251,18 +252,18 @@ define([
     	 properties: [
          {
     		key: "typography_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Typography"},
         }, {
             name: "Font family",
             key: "font-family",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -312,10 +313,10 @@ define([
             name: "Font weight",
             key: "font-weight",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -353,10 +354,10 @@ define([
             name: "Text align",
             key: "text-align",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -395,26 +396,26 @@ define([
             name: "Line height",
             key: "line-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Letter spacing",
             key: "letter-spacing",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Text decoration",
             key: "text-decoration-line",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -452,19 +453,19 @@ define([
     	}, {
             name: "Decoration Color",
             key: "text-decoration-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
     	}, {
             name: "Decoration style",
             key: "text-decoration-style",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -493,58 +494,58 @@ define([
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "size_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Size", expanded:false},
     	}, {
             name: "Width",
             key: "width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Height",
             key: "height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Min Width",
             key: "min-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Min Height",
             key: "min-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Max Width",
             key: "max-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Max Height",
             key: "max-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -552,42 +553,42 @@ define([
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "margins_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Margin", expanded:false},
     	}, {
             name: "Top",
             key: "margin-top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "margin-right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "margin-bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Left",
             key: "margin-left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -595,42 +596,42 @@ define([
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "paddings_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Padding", expanded:false},
     	}, {
             name: "Top",
             key: "padding-top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "padding-right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "padding-bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Left",
             key: "padding-left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -639,18 +640,18 @@ define([
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "border_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Border", expanded:false},
     	 }, {        
             name: "Style",
             key: "border-style",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -670,18 +671,18 @@ define([
             name: "Width",
             key: "border-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
        	}, {
             name: "Color",
             key: "border-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         }]
     });    
 
@@ -689,16 +690,16 @@ define([
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "background_image_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Background Image", expanded:false},
     	 },{
             name: "Image",
             key: "Image",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		//htmlAttr: "style",
-            inputtype: ImageInput,
+            inputtype: inputs.ImageInput,
             
             init: function(node) {
     			var image = $(node).css("background-image").replace(/^url\(['"]?(.+)['"]?\)/, '$1');
@@ -715,9 +716,9 @@ define([
        	}, {
             name: "Repeat",
             key: "background-repeat",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -736,9 +737,9 @@ define([
        	}, {
             name: "Size",
             key: "background-size",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -754,11 +755,11 @@ define([
        	}, {
             name: "Position x",
             key: "background-position-x",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
             col:6,
     		inline:true,
-    		inputtype: SelectInput,
+    		inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -777,11 +778,11 @@ define([
        	}, {
             name: "Position y",
             key: "background-position-y",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
             col:6,
     		inline:true,
-    		inputtype: SelectInput,
+    		inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -810,7 +811,7 @@ define([
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["container", "container-fluid"],
             data: {
                 options: [{
@@ -827,7 +828,7 @@ define([
             key: "background",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -836,13 +837,13 @@ define([
             name: "Background Color",
             key: "background-color",
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         },
     	{
             name: "Text Color",
             key: "color",
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         }],
     });
 
@@ -856,7 +857,7 @@ define([
     	{
             name: "Size",
             key: "size",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             
             onChange: function(node, value) {
     			
@@ -903,12 +904,12 @@ define([
             name: "Url",
             key: "href",
             htmlAttr: "href",
-            inputtype: LinkInput
+            inputtype: inputs.LinkInput
         }, {
             name: "Target",
             key: "target",
             htmlAttr: "target",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/image", {
@@ -926,22 +927,22 @@ define([
             name: "Image",
             key: "src",
             htmlAttr: "src",
-            inputtype: ImageInput
+            inputtype: inputs.ImageInput
         }, {
             name: "Width",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Height",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Alt",
             key: "alt",
             htmlAttr: "alt",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("html/hr", {
@@ -958,7 +959,7 @@ define([
             name: "For id",
             htmlAttr: "for",
             key: "for",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/button", {
@@ -970,12 +971,12 @@ define([
             name: "Link To",
             key: "href",
             htmlAttr: "href",
-            inputtype: LinkInput
+            inputtype: inputs.LinkInput
         }, {
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-default", "btn-primary", "btn-info", "btn-success", "btn-warning", "btn-info", "btn-light", "btn-dark", "btn-outline-primary", "btn-outline-info", "btn-outline-success", "btn-outline-warning", "btn-outline-info", "btn-outline-light", "btn-outline-dark", "btn-link"],
             data: {
                 options: [{
@@ -1032,7 +1033,7 @@ define([
             name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-lg", "btn-sm"],
             data: {
                 options: [{
@@ -1050,12 +1051,12 @@ define([
             name: "Target",
             key: "target",
             htmlAttr: "target",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Disabled",
             key: "disabled",
             htmlAttr: "class",
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             validValues: ["disabled"],
             data: {
                 on: "disabled",
@@ -1072,7 +1073,7 @@ define([
     	    name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-group-lg", "btn-group-sm"],
             data: {
                 options: [{
@@ -1090,7 +1091,7 @@ define([
     	    name: "Alignment",
             key: "alignment",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-group", "btn-group-vertical"],
             data: {
                 options: [{
@@ -1142,7 +1143,7 @@ define([
             key: "type",
             htmlAttr: "class",
             validValues: ["alert-primary", "alert-secondary", "alert-success", "alert-danger", "alert-warning", "alert-info", "alert-light", "alert-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "alert-primary",
@@ -1182,7 +1183,7 @@ define([
             key: "color",
             htmlAttr: "class",
             validValues:["badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -1258,7 +1259,7 @@ define([
             key: "active",
             htmlAttr: "class",
             validValues: ["", "active"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "active",
                 off: ""
@@ -1283,7 +1284,7 @@ define([
             name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-lg", "btn-sm"],
             data: {
                 options: [{
@@ -1301,7 +1302,7 @@ define([
             name: "Alignment",
             key: "alignment",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["justify-content-center", "justify-content-end"],
             data: {
                 options: [{
@@ -1326,13 +1327,13 @@ define([
             key: "href",
             htmlAttr: "href",
             child:".page-link",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Disabled",
             key: "disabled",
             htmlAttr: "class",
             validValues: ["disabled"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "disabled",
                 off: ""
@@ -1349,7 +1350,7 @@ define([
             key: "background",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -1360,7 +1361,7 @@ define([
             child:".progress-bar",
     		htmlAttr: "class",
             validValues: ["", "w-25", "w-50", "w-75", "w-100"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -1386,7 +1387,7 @@ define([
             child:".progress-bar",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -1396,7 +1397,7 @@ define([
             child:".progress-bar",
             htmlAttr: "class",
             validValues: ["", "progress-bar-striped"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "progress-bar-striped",
                 off: "",
@@ -1407,7 +1408,7 @@ define([
             child:".progress-bar",
             htmlAttr: "class",
             validValues: ["", "progress-bar-animated"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "progress-bar-animated",
                 off: "",
@@ -1462,7 +1463,7 @@ define([
             key: "color",
             htmlAttr: "class",
             validValues: ["navbar-light", "navbar-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -1480,7 +1481,7 @@ define([
             key: "background",
             htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -1489,7 +1490,7 @@ define([
             key: "placement",
             htmlAttr: "class",
             validValues: ["fixed-top", "fixed-bottom", "sticky-top"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -1518,7 +1519,7 @@ define([
             key: "style",
             htmlAttr: "class",
             validValues: ["", "form-search", "form-inline", "form-horizontal"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -1538,12 +1539,12 @@ define([
             name: "Action",
             key: "action",
             htmlAttr: "action",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Method",
             key: "method",
             htmlAttr: "method",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 
@@ -1556,12 +1557,12 @@ define([
             name: "Value",
             key: "value",
             htmlAttr: "value",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Placeholder",
             key: "placeholder",
             htmlAttr: "placeholder",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 
@@ -1586,7 +1587,7 @@ define([
     				key: "option" + i,
     				//index: i - 1,
     				optionNode: this,
-    				inputtype: TextValueInput,
+    				inputtype: inputs.TextValueInput,
     				data: data,
     				onChange: function(node, value, input) {
     					
@@ -1623,15 +1624,15 @@ define([
         properties: [{
             name: "Option",
             key: "option1",
-            inputtype: TextValueInput
+            inputtype: inputs.TextValueInput
     	}, {
             name: "Option",
             key: "option2",
-            inputtype: TextValueInput
+            inputtype: inputs.TextValueInput
     	}, {
             name: "",
             key: "addChild",
-            inputtype: ButtonInput,
+            inputtype: inputs.ButtonInput,
             data: {text:"Add option", icon:"la-plus"},
             onChange: function(node)
             {
@@ -1658,7 +1659,7 @@ define([
             name: "Name",
             key: "name",
             htmlAttr: "name",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/checkbox", {
@@ -1670,7 +1671,7 @@ define([
             name: "Name",
             key: "name",
             htmlAttr: "name",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/fileinput", {
@@ -1722,7 +1723,7 @@ define([
             key: "type",
     		htmlAttr: "class",
             validValues: ["table-primary", "table-secondary", "table-success", "table-danger", "table-warning", "table-info", "table-light", "table-dark", "table-white"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
     				value: "Default",
@@ -1762,7 +1763,7 @@ define([
             key: "responsive",
             htmlAttr: "class",
             validValues: ["table-responsive"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-responsive",
                 off: ""
@@ -1773,7 +1774,7 @@ define([
             key: "small",
             htmlAttr: "class",
             validValues: ["table-sm"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-sm",
                 off: ""
@@ -1784,7 +1785,7 @@ define([
             key: "hover",
             htmlAttr: "class",
             validValues: ["table-hover"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-hover",
                 off: ""
@@ -1795,7 +1796,7 @@ define([
             key: "bordered",
             htmlAttr: "class",
             validValues: ["table-bordered"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-bordered",
                 off: ""
@@ -1806,7 +1807,7 @@ define([
             key: "striped",
             htmlAttr: "class",
             validValues: ["table-striped"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-striped",
                 off: ""
@@ -1817,7 +1818,7 @@ define([
             key: "inverse",
             htmlAttr: "class",
             validValues: ["table-inverse"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-inverse",
                 off: ""
@@ -1828,7 +1829,7 @@ define([
             key: "head",
             htmlAttr: "class",
             child:"thead",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "thead-inverse", "thead-default"],
             data: {
                 options: [{
@@ -1852,7 +1853,7 @@ define([
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "success", "danger", "warning", "active"],
             data: {
                 options: [{
@@ -1892,7 +1893,7 @@ define([
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "success", "danger", "warning", "info"],
             data: {
                 options: [{
@@ -1928,7 +1929,7 @@ define([
         properties: [{
             name: "Column",
             key: "column",
-            inputtype: GridInput,
+            inputtype: inputs.GridInput,
             data: {hide_remove:true},
     		
     		beforeInit: function(node) {
@@ -1986,7 +1987,7 @@ define([
     				columnNode: this,
     				col:12,
     				inline:true,
-    				inputtype: GridInput,
+    				inputtype: inputs.GridInput,
     				data: data,
     				onChange: function(node, value, input) {
 
@@ -2032,17 +2033,17 @@ define([
         properties: [{
             name: "Column",
             key: "column1",
-            inputtype: GridInput
+            inputtype: inputs.GridInput
     	}, {
             name: "Column",
             key: "column1",
             inline:true,
             col:12,
-            inputtype: GridInput
+            inputtype: inputs.GridInput
     	}, {
             name: "",
             key: "addChild",
-            inputtype: ButtonInput,
+            inputtype: inputs.ButtonInput,
             data: {text:"Add column", icon:"la la-plus"},
             onChange: function(node)
             {
@@ -2066,9 +2067,9 @@ define([
             name: "Text align",
             key: "text-align",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "text-left", "text-center", "text-right"],
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{

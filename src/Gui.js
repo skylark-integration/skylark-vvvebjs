@@ -2,7 +2,8 @@ define([
 	"skylark-utils-dom/query",
 	"./Vvveb",
 	"./Builder",
-	"./WysiwygEditor"
+	"./WysiwygEditor",
+	"skylark-bootstrap4/modal"
 ],function($,Vvveb){
 	var Gui = {
 		
@@ -101,7 +102,7 @@ define([
 		},
 		
 		fullscreen : function () {
-			launchFullScreen(document); // the whole page
+			Vvveb.launchFullScreen(document); // the whole page
 		},
 		
 		componentSearch : function () {

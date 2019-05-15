@@ -1,5 +1,7 @@
 define([
-	"skylark-langx/skylark"
+	"skylark-langx/skylark",
+	"skylark-bootstrap4"
+
 ],function(skylark){
 
  var Vvveb = {};
@@ -37,7 +39,7 @@ var isElement = Vvveb.isElement	=  function (obj){
 };
 
 
-var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
+var isIE11 = Vvveb.isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
 
 
 Vvveb.defaultComponent = "_base";
@@ -49,7 +51,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 
 
 	// Toggle fullscreen
-	function launchFullScreen(document) {
+    Vvveb.launchFullScreen	=	function launchFullScreen(document) {
 	  if(document.documentElement.requestFullScreen) {
 	    
 			if (document.FullScreenElement)
@@ -78,7 +80,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 			else
 				document.documentElement.msRequestFullscreen();
 	  }
-	}
+	};
 
 	return skylark.attach("itg.Vvveb",Vvveb);
 });

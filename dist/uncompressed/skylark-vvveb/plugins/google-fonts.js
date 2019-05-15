@@ -1,16 +1,17 @@
 define([
-	"../Components"
-],function(Components){
+	"../Components",
+	"../inputs"
+],function(Components,inputs){
 	Components.extend("_base", "_base", {
 		 properties: [
 		 {
 	        name: "Font family",
 	        key: "font-family",
 			htmlAttr: "style",
-	        sort: base_sort++,
+	        sort: Components.base_sort++,
 	        col:6,
 			inline:true,
-	        inputtype: SelectInput,
+	        inputtype: inputs.SelectInput,
 	        data: {
 				options: [{
 					value: "",

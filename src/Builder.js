@@ -304,13 +304,13 @@ define([
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (isIE11) 
+									 if (Vvveb.isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (isIE11) 
+									if (Vvveb.isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);

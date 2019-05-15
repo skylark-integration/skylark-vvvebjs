@@ -87,10 +87,14 @@
 })(function(define,require) {
 
 define('skylark-vvveb/Vvveb',[
-	"skylark-langx/skylark"
+	"skylark-langx/skylark",
+	"skylark-bootstrap4"
+
 ],function(skylark){
 
-var delay = (function(){
+ var Vvveb = {};
+
+var delay = Vvveb.delay = (function(){
   var timer = 0;
   return function(callback, ms){
     clearTimeout (timer);
@@ -98,8 +102,7 @@ var delay = (function(){
   };
 })();
 
-function getStyle(el,styleProp)
-{
+var getStyle = Vvveb.getStyle = function (el,styleProp) {
 	value = "";
 	//var el = document.getElementById(el);
 	if (el.style && el.style.length > 0 && el.style[styleProp])//check inline
@@ -115,18 +118,17 @@ function getStyle(el,styleProp)
 	}
 	
 	return value;
-}
+} ;
 
-function isElement(obj){
+var isElement = Vvveb.isElement	=  function (obj){
    return (typeof obj==="object") &&
       (obj.nodeType===1) && (typeof obj.style === "object") &&
       (typeof obj.ownerDocument ==="object")/* && obj.tagName != "BODY"*/;
-}
+};
 
 
-var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
+var isIE11 = Vvveb.isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
 
-if (Vvveb === undefined) var Vvveb = {};
 
 Vvveb.defaultComponent = "_base";
 Vvveb.preservePropertySections = true;
@@ -137,7 +139,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 
 
 	// Toggle fullscreen
-	function launchFullScreen(document) {
+    Vvveb.launchFullScreen	=	function launchFullScreen(document) {
 	  if(document.documentElement.requestFullScreen) {
 	    
 			if (document.FullScreenElement)
@@ -166,9 +168,9 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 			else
 				document.documentElement.msRequestFullscreen();
 	  }
-	}
+	};
 
-	return skylark.attach("itg.vvveb",{});
+	return skylark.attach("itg.Vvveb",Vvveb);
 });
 define('skylark-vvveb/BlocksGroup',[
 	"./Vvveb"
@@ -198,6 +200,8 @@ define('skylark-vvveb/Builder',[
 	"skylark-utils-dom/query",
 	"./Vvveb"
 ],function($,Vvveb){
+	var jQuery = $;
+	
 	return Vvveb.Builder = {
 
 		component : {},
@@ -261,7 +265,7 @@ define('skylark-vvveb/Builder',[
 							if (component.image) {
 
 								item.css({
-									backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
+									backgroundImage: "url(" + component.image + ")", //backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
 									backgroundRepeat: "no-repeat"
 								})
 							}
@@ -477,7 +481,7 @@ define('skylark-vvveb/Builder',[
 			
 			self.frameHtml.on("mousemove touchmove", function(event) {
 				
-				if (event.target && isElement(event.target) && event.originalEvent)
+				if (event.target && Vvveb.isElement(event.target) && event.originalEvent)
 				{
 					self.highlightEl = target = jQuery(event.target);
 					var offset = target.offset();
@@ -498,13 +502,13 @@ define('skylark-vvveb/Builder',[
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (isIE11) 
+									 if (Vvveb.isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (isIE11) 
+									if (Vvveb.isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);
@@ -1013,7 +1017,7 @@ define('skylark-vvveb/CodeEditor',[
 
 			$("#vvveb-code-editor textarea").keyup(function () 
 			{
-				delay(Vvveb.Builder.setHtml(this.value), 1000);
+				Vvveb.delay(Vvveb.Builder.setHtml(this.value), 1000);
 			});
 
 			//load code on document changes
@@ -1097,928 +1101,13 @@ define('skylark-vvveb/tmpl',[
   return Vvveb.tmpl = tmpl;
 
 });
-define('skylark-vvveb/Components',[
-	"skylark-langx/langx",
-	"skylark-utils-dom/query",
-	"./Vvveb",
-	"./tmpl"
-],function($,Vvveb,tmpl){
-	return Vvveb.Components = {
-		
-		_components: {},
-		
-		_nodesLookup: {},
-		
-		_attributesLookup: {},
-
-		_classesLookup: {},
-		
-		_classesRegexLookup: {},
-		
-		componentPropertiesElement: "#right-panel .component-properties",
-
-		get: function(type) {
-			return this._components[type];
-		},
-
-		add: function(type, data) {
-			data.type = type;
-			
-			this._components[type] = data;
-			
-			if (data.nodes) 
-			{
-				for (var i in data.nodes)
-				{	
-					this._nodesLookup[ data.nodes[i] ] = data;
-				}
-			}
-			
-			if (data.attributes) 
-			{
-				if (data.attributes.constructor === Array)
-				{
-					for (var i in data.attributes)
-					{	
-						this._attributesLookup[ data.attributes[i] ] = data;
-					}
-				} else
-				{
-					for (var i in data.attributes)
-					{	
-						if (typeof this._attributesLookup[i] === 'undefined')
-						{
-							this._attributesLookup[i] = {};
-						}
-
-						if (typeof this._attributesLookup[i][ data.attributes[i] ] === 'undefined')
-						{
-							this._attributesLookup[i][ data.attributes[i] ] = {};
-						}
-
-						this._attributesLookup[i][ data.attributes[i] ] = data;
-					}
-				}
-			}
-			
-			if (data.classes) 
-			{
-				for (var i in data.classes)
-				{	
-					this._classesLookup[ data.classes[i] ] = data;
-				}
-			}
-			
-			if (data.classesRegex) 
-			{
-				for (var i in data.classesRegex)
-				{	
-					this._classesRegexLookup[ data.classesRegex[i] ] = data;
-				}
-			}
-		},
-		
-		extend: function(inheritType, type, data) {
-			 
-			 var newData = data;
-			 
-			 if (inheritData = this._components[inheritType])
-			 {
-				newData = langx.extend(true,{}, inheritData, data);
-				newData.properties = langx.merge( langx.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
-			 }
-			 
-			 //sort by order
-			 newData.properties.sort(function (a,b) 
-				{
-					if (typeof a.sort  === "undefined") a.sort = 0;
-					if (typeof b.sort  === "undefined") b.sort = 0;
-
-					if (a.sort < b.sort)
-						return -1;
-					if (a.sort > b.sort)
-						return 1;
-					return 0;
-				});
-	/*		 
-			var output = array.reduce(function(o, cur) {
-
-			  // Get the index of the key-value pair.
-			  var occurs = o.reduce(function(n, item, i) {
-				return (item.key === cur.key) ? i : n;
-			  }, -1);
-
-			  // If the name is found,
-			  if (occurs >= 0) {
-
-				// append the current value to its list of values.
-				o[occurs].value = o[occurs].value.concat(cur.value);
-
-			  // Otherwise,
-			  } else {
-
-				// add the current item to o (but make sure the value is an array).
-				var obj = {name: cur.key, value: [cur.value]};
-				o = o.concat([obj]);
-			  }
-
-			  return o;
-			}, newData.properties);		 
-	*/
-			
-			this.add(type, newData);
-		},
-		
-		
-		matchNode: function(node) {
-			var component = {};
-			
-			if (!node || !node.tagName) return false;
-			
-			if (node.attributes && node.attributes.length)
-			{
-				//search for attributes
-				for (var i in node.attributes)
-				{
-					if (node.attributes[i])
-					{
-					attr = node.attributes[i].name;
-					value = node.attributes[i].value;
-
-					if (attr in this._attributesLookup) 
-					{
-						component = this._attributesLookup[ attr ];
-						
-						//currently we check that is not a component by looking at name attribute
-						//if we have a collection of objects it means that attribute value must be checked
-						if (typeof component["name"] === "undefined")
-						{
-							if (value in component)
-							{
-								return component[value];
-							}
-						} else 
-						return component;
-					}
-				}
-				}
-					
-				for (var i in node.attributes)
-				{
-					attr = node.attributes[i].name;
-					value = node.attributes[i].value;
-					
-					//check for node classes
-					if (attr == "class")
-					{
-						classes = value.split(" ");
-						
-						for (j in classes) 
-						{
-							if (classes[j] in this._classesLookup)
-							return this._classesLookup[ classes[j] ];	
-						}
-						
-						for (regex in this._classesRegexLookup) 
-						{
-							regexObj = new RegExp(regex);
-							if (regexObj.exec(value)) 
-							{
-								return this._classesRegexLookup[ regex ];	
-							}
-						}
-					}
-				}
-			}
-
-			tagName = node.tagName.toLowerCase();
-			if (tagName in this._nodesLookup) return this._nodesLookup[ tagName ];
-		
-			return false;
-			//return false;
-		},
-		
-		render: function(type) {
-
-			var component = this._components[type];
-			
-			var rightPanel = jQuery(this.componentPropertiesElement);
-			var section = rightPanel.find('.section[data-section="default"]');
-			
-			if (!(Vvveb.preservePropertySections && section.length))
-			{
-				rightPanel.html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
-				section = rightPanel.find(".section");
-			}
-
-			rightPanel.find('[data-header="default"] span').html(component.name);
-			section.html("")	
-		
-			if (component.beforeInit) component.beforeInit(Vvveb.Builder.selectedEl.get(0));
-			
-			var element;
-			
-			var fn = function(component, property) {
-				return property.input.on('propertyChange', function (event, value, input) {
-						
-						var element = Vvveb.Builder.selectedEl;
-						
-						if (property.child) element = element.find(property.child);
-						if (property.parent) element = element.parent(property.parent);
-						
-						if (property.onChange)
-						{
-							element = property.onChange(element, value, input, component);
-						}/* else */
-						if (property.htmlAttr)
-						{
-							oldValue = element.attr(property.htmlAttr);
-							
-							if (property.htmlAttr == "class" && property.validValues) 
-							{
-								element.removeClass(property.validValues.join(" "));
-								element = element.addClass(value);
-							}
-							else if (property.htmlAttr == "style") 
-							{
-								element = element.css(property.key, value);
-							}
-							else
-							{
-								element = element.attr(property.htmlAttr, value);
-							}
-							
-							Vvveb.Undo.addMutation({type: 'attributes', 
-													target: element.get(0), 
-													attributeName: property.htmlAttr, 
-													oldValue: oldValue, 
-													newValue: element.attr(property.htmlAttr)});
-						}
-
-						if (component.onChange) 
-						{
-							element = component.onChange(element, property, value, input);
-						}
-						
-						if (!property.child && !property.parent) Vvveb.Builder.selectNode(element);
-						
-						return element;
-				});				
-			};			
-		
-			var nodeElement = Vvveb.Builder.selectedEl;
-
-			for (var i in component.properties)
-			{
-				var property = component.properties[i];
-				var element = nodeElement;
-				
-				if (property.beforeInit) property.beforeInit(element.get(0)) 
-				
-				if (property.child) element = element.find(property.child);
-				
-				if (property.data) {
-					property.data["key"] = property.key;
-				} else
-				{
-					property.data = {"key" : property.key};
-				}
-
-				if (typeof property.group  === 'undefined') property.group = null;
-
-				property.input = property.inputtype.init(property.data);
-				
-				if (property.init)
-				{
-					property.inputtype.setValue(property.init(element.get(0)));
-				} else if (property.htmlAttr)
-				{
-					if (property.htmlAttr == "style")
-					{
-						//value = element.css(property.key);//jquery css returns computed style
-						var value = getStyle(element.get(0), property.key);//getStyle returns declared style
-					} else
-					{
-						var value = element.attr(property.htmlAttr);
-					}
-
-					//if attribute is class check if one of valid values is included as class to set the select
-					if (value && property.htmlAttr == "class" && property.validValues)
-					{
-						value = value.split(" ").filter(function(el) {
-							return property.validValues.indexOf(el) != -1
-						});
-					} 
-
-					property.inputtype.setValue(value);
-				}
-				
-				fn(component, property);
-
-				if (property.inputtype == SectionInput)
-				{
-					section = rightPanel.find('.section[data-section="' + property.key + '"]');
-					
-					if (Vvveb.preservePropertySections && section.length)
-					{
-						section.html("");
-					} else 
-					{
-						rightPanel.append(property.input);
-						section = rightPanel.find('.section[data-section="' + property.key + '"]');
-					}
-				}
-				else
-				{
-					var row = $(tmpl('vvveb-property', property)); 
-					row.find('.input').append(property.input);
-					section.append(row);
-				}
-				
-				if (property.inputtype.afterInit)
-				{
-					property.inputtype.afterInit(property.input);
-				}
-
-			}
-			
-			if (component.init) component.init(Vvveb.Builder.selectedEl.get(0));
-		}
-	};	
-});
-define('skylark-vvveb/FileManager',[
-	"skylark-utils-dom/query",
-	"./Vvveb",
-	"./tmpl"
-],function($,Vvveb,tmpl){
-	return Vvveb.FileManager = {
-		tree:false,
-		pages:{},
-		currentPage: false,
-		
-		init: function() {
-			this.tree = $("#filemanager .tree > ol").html("");
-			
-			$(this.tree).on("click", "a", function (e) {
-				e.preventDefault();
-				return false;
-			});
-			
-			$(this.tree).on("click", "li[data-page] label", function (e) {
-				var page = $(this.parentNode).data("page");
-				
-				if (page) Vvveb.FileManager.loadPage(page);
-				return false;			
-			})
-			
-			$(this.tree).on("click", "li[data-component] label ", function (e) {
-				node = $(e.currentTarget.parentNode).data("node");
-				
-				Vvveb.Builder.frameHtml.animate({
-					scrollTop: $(node).offset().top
-				}, 1000);
-
-				Vvveb.Builder.selectNode(node);
-				Vvveb.Builder.loadNodeComponent(node);
-				
-				//e.preventDefault();
-				//return false;
-			}).on("mouseenter", "li[data-component] label", function (e) {
-
-				node = $(e.currentTarget).data("node");
-				$(node).trigger("mousemove");
-				
-			});
-		},
-		
-		addPage: function(name, title, url) {
-			
-			this.pages[name] = {title:title, url:url};
-			
-			this.tree.append(
-				tmpl("vvveb-filemanager-page", {name:name, title:title, url:url}));
-		},
-		
-		addPages: function(pages) {
-			for (page in pages)
-			{
-				this.addPage(pages[page]['name'], pages[page]['title'], pages[page]['url']);
-			}
-		},
-		
-		addComponent: function(name, url, title, page) {
-			$("[data-page='" + page + "'] > ol", this.tree).append(
-				tmpl("vvveb-filemanager-component", {name:name, url:url, title:title}));
-		},
-		
-		getComponents: function() {
-
-				var tree = [];
-				function getNodeTree (node, parent) {
-					if (node.hasChildNodes()) {
-						for (var j = 0; j < node.childNodes.length; j++) {
-							child = node.childNodes[j];
-							
-							if (child && child["attributes"] != undefined && 
-								(matchChild = Vvveb.Components.matchNode(child))) 
-							{
-								element = {
-									name: matchChild.name,
-									image: matchChild.image,
-									type: matchChild.type,
-									node: child,
-									children: []
-								};
-								element.children = [];
-								parent.push(element);
-								element = getNodeTree(child, element.children);
-							} else
-							{
-								element = getNodeTree(child, parent);	
-							}
-						}
-					}
-
-					return false;
-				}
-			
-			getNodeTree(window.FrameDocument.body, tree);
-			
-			return tree;
-		},
-		
-		loadComponents: function() {
-
-			tree = this.getComponents();
-			html = drawComponentsTree(tree);
-
-			function drawComponentsTree(tree)
-			{
-				var html = $("<ol></ol>");
-				j++;
-				for (i in tree)
-				{
-					var node = tree[i];
-					
-					if (tree[i].children.length > 0) 
-					{
-						var li = $('<li data-component="' + node.name + '">\
-						<label for="id' + j + '" style="background-image:url(libs/builder/' + node.image + ')"><span>' + node.name + '</span></label>\
-						<input type="checkbox" id="id' + j + '">\
-						</li>');		
-						li.data("node", node.node);
-						li.append(drawComponentsTree(node.children));
-						html.append(li);
-					}
-					else 
-					{
-						var li =$('<li data-component="' + node.name + '" class="file">\
-								<label for="id' + j + '" style="background-image:url(libs/builder/' + node.image + ')"><span>' + node.name + '</span></label>\
-								<input type="checkbox" id="id' + j + '"></li>');
-						li.data("node", node.node);							
-						html.append(li);
-					}
-				}
-				
-				return html;
-			}
-			
-			$("[data-page='" + this.currentPage + "'] > ol", this.tree).replaceWith(html);
-		},
-		
-		getCurrentUrl: function() {
-			if (this.currentPage)
-			return this.pages[this.currentPage]['url'];
-		},
-		
-		reloadCurrentPage: function() {
-			if (this.currentPage)
-			return this.loadPage(this.currentPage);
-		},
-		
-		loadPage: function(name, disableCache = true) {
-			$("[data-page]", this.tree).removeClass("active");
-			$("[data-page='" + name + "']", this.tree).addClass("active");
-			
-			this.currentPage = name;
-			var url = this.pages[name]['url'];
-			
-			Vvveb.Builder.loadUrl(url + (disableCache ? (url.indexOf('?') > -1?'&':'?') + Math.random():''), 
-				function () { 
-					Vvveb.FileManager.loadComponents(); 
-				});
-		},
-
-		scrollBottom: function() {
-			var scroll = this.tree.parent();	
-			scroll.scrollTop(scroll.prop("scrollHeight"));	
-		},
-	}
-});
-
-define('skylark-vvveb/Undo',[
-	"./Vvveb"
-],function(Vvveb){
-
-	return Vvveb.Undo = {
-		
-		undos: [],
-		mutations: [],
-		undoIndex: -1,
-		enabled:true,
-		/*		
-		init: function() {
-		},
-		*/	
-		addMutation : function(mutation) {	
-			/*
-				this.mutations.push(mutation);
-				this.undoIndex++;
-			*/
-			Vvveb.Builder.frameBody.trigger("vvveb.undo.add");
-			this.mutations.splice(++this.undoIndex, 0, mutation);
-		 },
-
-		restore : function(mutation, undo) {	
-			
-			switch (mutation.type) {
-				case 'childList':
-				
-					if (undo == true)
-					{
-						addedNodes = mutation.removedNodes;
-						removedNodes = mutation.addedNodes;
-					} else //redo
-					{
-						addedNodes = mutation.addedNodes;
-						removedNodes = mutation.removedNodes;
-					}
-					
-					if (addedNodes) for(i in addedNodes)
-					{
-						node = addedNodes[i];
-						if (mutation.nextSibling)
-						{ 
-							mutation.nextSibling.parentNode.insertBefore(node, mutation.nextSibling);
-						} else
-						{
-							mutation.target.append(node);
-						}
-					}
-
-					if (removedNodes) for(i in removedNodes)
-					{
-						node = removedNodes[i];
-						node.parentNode.removeChild(node);
-					}
-				break;					
-				case 'move':
-					if (undo == true)
-					{
-						parent = mutation.oldParent;
-						sibling = mutation.oldNextSibling;
-					} else //redo
-					{
-						parent = mutation.newParent;
-						sibling = mutation.newNextSibling;
-					}
-				  
-					if (sibling)
-					{
-						sibling.parentNode.insertBefore(mutation.target, sibling);
-					} else
-					{
-						parent.append(node);
-					}
-				break;
-				case 'characterData':
-				  mutation.target.innerHTML = undo ? mutation.oldValue : mutation.newValue;
-				  break;
-				case 'attributes':
-				  value = undo ? mutation.oldValue : mutation.newValue;
-
-				  if (value || value === false || value === 0)
-					mutation.target.setAttribute(mutation.attributeName, value);
-				  else
-					mutation.target.removeAttribute(mutation.attributeName);
-
-				break;
-			}
-			
-			Vvveb.Builder.frameBody.trigger("vvveb.undo.restore");
-		 },
-		 
-		undo : function() {	
-			if (this.undoIndex >= 0) {
-			  this.restore(this.mutations[this.undoIndex--], true);
-			}
-		 },
-
-		redo : function() {	
-			if (this.undoIndex < this.mutations.length - 1) {
-			  this.restore(this.mutations[++this.undoIndex], false);
-			}
-		},
-
-		hasChanges : function() {	
-			return this.mutations.length;
-		},
-	};
-
-});
-
-define('skylark-vvveb/WysiwygEditor',[
-	"skylark-utils-dom/query",
-	"./Vvveb",
-	"./Undo"
-],function($,Vvveb){
-	return Vvveb.WysiwygEditor = {
-	
-		isActive: false,
-		oldValue: '',
-		doc:false,
-		
-		init: function(doc) {
-			this.doc = doc;
-			
-			$("#bold-btn").on("click", function (e) {
-					doc.execCommand('bold',false,null);
-					e.preventDefault();
-					return false;
-			});
-
-			$("#italic-btn").on("click", function (e) {
-					doc.execCommand('italic',false,null);
-					e.preventDefault();
-					return false;
-			});
-
-			$("#underline-btn").on("click", function (e) {
-					doc.execCommand('underline',false,null);
-					e.preventDefault();
-					return false;
-			});
-			
-			$("#strike-btn").on("click", function (e) {
-					doc.execCommand('strikeThrough',false,null);
-					e.preventDefault();
-					return false;
-			});
-
-			$("#link-btn").on("click", function (e) {
-					doc.execCommand('createLink',false,"#");
-					e.preventDefault();
-					return false;
-			});
-		},
-		
-		undo: function(element) {
-			this.doc.execCommand('undo',false,null);
-		},
-
-		redo: function(element) {
-			this.doc.execCommand('redo',false,null);
-		},
-		
-		edit: function(element) {
-			element.attr({'contenteditable':true, 'spellcheckker':false});
-			$("#wysiwyg-editor").show();
-
-			this.element = element;
-			this.isActive = true;
-			this.oldValue = element.html();
-		},
-
-		destroy: function(element) {
-			element.removeAttr('contenteditable spellcheckker');
-			$("#wysiwyg-editor").hide();
-			this.isActive = false;
-
-		
-			node = this.element.get(0);
-			Vvveb.Undo.addMutation({type:'characterData', 
-									target: node, 
-									oldValue: this.oldValue, 
-									newValue: node.innerHTML});
-		}
-	};
-
-});
-	
-define('skylark-vvveb/Gui',[
-	"skylark-utils-dom/query",
-	"./Vvveb",
-	"./Builder",
-	"./WysiwygEditor"
-],function($,Vvveb){
-	var Gui = {
-		
-		init: function() {
-			$("[data-vvveb-action]").each(function () {
-				on = "click";
-				if (this.dataset.vvvebOn) on = this.dataset.vvvebOn;
-				
-				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
-				if (this.dataset.vvvebShortcut)
-				{
-					$(document).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-					$(window.FrameDocument, window.FrameWindow).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-				}
-			});
-		},
-		
-		undo : function () {
-			if (Vvveb.WysiwygEditor.isActive) 
-			{
-				Vvveb.WysiwygEditor.undo();
-			} else
-			{
-				Vvveb.Undo.undo();
-			}
-			Vvveb.Builder.selectNode();
-		},
-		
-		redo : function () {
-			if (Vvveb.WysiwygEditor.isActive) 
-			{
-				Vvveb.WysiwygEditor.redo();
-			} else
-			{
-				Vvveb.Undo.redo();
-			}
-			Vvveb.Builder.selectNode();
-		},
-		
-		//show modal with html content
-		save : function () {
-			$('#textarea-modal textarea').val(Vvveb.Builder.getHtml());
-			$('#textarea-modal').modal();
-		},
-		
-		//post html content through ajax to save to filesystem/db
-		saveAjax : function () {
-			
-			var url = Vvveb.FileManager.getCurrentUrl();
-			
-			return Vvveb.Builder.saveAjax(url, null, function (data) {
-				$('#message-modal').modal().find(".modal-body").html("File saved at: " + data);
-			});		
-		},
-		
-		download : function () {
-			filename = /[^\/]+$/.exec(Vvveb.Builder.iframe.src)[0];
-			uriContent = "data:application/octet-stream,"  + encodeURIComponent(Vvveb.Builder.getHtml());
-
-			var link = document.createElement('a');
-			if ('download' in link)
-			{
-				link.download = filename;
-				link.href = uriContent;
-				link.target = "_blank";
-				
-				document.body.appendChild(link);
-				result = link.click();
-				document.body.removeChild(link);
-				link.remove();
-				
-			} else
-			{
-				location.href = uriContent;
-			}
-		},
-		
-		viewport : function () {
-			$("#canvas").attr("class", this.dataset.view);
-		},
-		
-		toggleEditor : function () {
-			$("#vvveb-builder").toggleClass("bottom-panel-expand");
-			$("#toggleEditorJsExecute").toggle();
-			Vvveb.CodeEditor.toggle();
-		},
-		
-		toggleEditorJsExecute : function () {
-			Vvveb.Builder.runJsOnSetHtml = this.checked;
-		},
-		
-		preview : function () {
-			(Vvveb.Builder.isPreview == true)?Vvveb.Builder.isPreview = false:Vvveb.Builder.isPreview = true;
-			$("#iframe-layer").toggle();
-			$("#vvveb-builder").toggleClass("preview");
-		},
-		
-		fullscreen : function () {
-			launchFullScreen(document); // the whole page
-		},
-		
-		componentSearch : function () {
-			searchText = this.value;
-			
-			$("#left-panel .components-list li ol li").each(function () {
-				$this = $(this);
-				
-				$this.hide();
-				if ($this.data("search").indexOf(searchText) > -1) $this.show();
-			});
-		},
-		
-		clearComponentSearch : function () {
-			$(".component-search").val("").keyup();
-		},
-		
-		blockSearch : function () {
-			searchText = this.value;
-			
-			$("#left-panel .blocks-list li ol li").each(function () {
-				$this = $(this);
-				
-				$this.hide();
-				if ($this.data("search").indexOf(searchText) > -1) $this.show();
-			});
-		},
-		
-		clearBlockSearch : function () {
-			$(".block-search").val("").keyup();
-		},
-		
-		addBoxComponentSearch : function () {
-			searchText = this.value;
-			
-			$("#add-section-box .components-list li ol li").each(function () {
-				$this = $(this);
-				
-				$this.hide();
-				if ($this.data("search").indexOf(searchText) > -1) $this.show();
-			});
-		},
-		
-		
-		addBoxBlockSearch : function () {
-			searchText = this.value;
-			
-			$("#add-section-box .blocks-list li ol li").each(function () {
-				$this = $(this);
-				
-				$this.hide();
-				if ($this.data("search").indexOf(searchText) > -1) $this.show();
-			});
-		},
-
-	
-		newPage : function () { //Pages, file/components tree 
-			
-			var newPageModal = $('#new-page-modal');
-			
-			newPageModal.modal("show").find("form").off("submit").submit(function( event ) {
-
-				var title = $("input[name=title]", newPageModal).val();
-				var startTemplateUrl = $("select[name=startTemplateUrl]", newPageModal).val();
-				var fileName = $("input[name=fileName]", newPageModal).val();
-				
-				//replace nonalphanumeric with dashes and lowercase for name
-				var name = title.replace(/\W+/g, '-').toLowerCase();
-					//allow only alphanumeric, dot char for extension (eg .html) and / to allow typing full path including folders
-					fileName = fileName.replace(/[^A-Za-z0-9\.\/]+/g, '-').toLowerCase();
-				
-				//add your server url/prefix/path if needed
-				var url = "" + fileName;
-				
-
-				Vvveb.FileManager.addPage(name, title, url);
-				event.preventDefault();
-
-				return Vvveb.Builder.saveAjax(url, startTemplateUrl, function (data) {
-						Vvveb.FileManager.loadPage(name);
-						Vvveb.FileManager.scrollBottom();
-						newPageModal.modal("hide");
-				});
-			});
-			
-		},
-		
-		deletePage : function () {
-			
-		},
-
-		setDesignerMode : function () {
-			//aria-pressed attribute is updated after action is called and we check for false instead of true
-			var designerMode = this.attributes["aria-pressed"].value != "true";
-			Vvveb.Builder.setDesignerMode(designerMode);
-		}
-		
-	}
-
-	return Vvveb.Gui = Gui;
-});
-
-
-
 define('skylark-vvveb/inputs',[
 	"skylark-utils-dom/langx",
 	"skylark-utils-dom/query",
 	"./Vvveb",
-	"skylark-bootstrap3/button",
-],function(langx, $,Vvveb) {
+	"./tmpl",
+	"skylark-bootstrap4/button",
+],function(langx, $,Vvveb,tmpl) {
 	var Input = {
 		
 		init: function(name) {
@@ -2576,6 +1665,928 @@ define('skylark-vvveb/inputs',[
 	};
 
 });
+
+
+define('skylark-vvveb/Components',[
+	"skylark-langx/langx",
+	"skylark-utils-dom/query",
+	"./Vvveb",
+	"./tmpl",
+	"./inputs"
+],function(langx,$,Vvveb,tmpl,inputs){
+	var jQuery = $;
+
+	
+	return Vvveb.Components = {
+    	base_sort : 100,//start sorting for base component from 100 to allow extended properties to be first
+		
+		_components: {},
+		
+		_nodesLookup: {},
+		
+		_attributesLookup: {},
+
+		_classesLookup: {},
+		
+		_classesRegexLookup: {},
+		
+		componentPropertiesElement: "#right-panel .component-properties",
+
+		get: function(type) {
+			return this._components[type];
+		},
+
+		add: function(type, data) {
+			data.type = type;
+			
+			this._components[type] = data;
+			
+			if (data.nodes) 
+			{
+				for (var i in data.nodes)
+				{	
+					this._nodesLookup[ data.nodes[i] ] = data;
+				}
+			}
+			
+			if (data.attributes) 
+			{
+				if (data.attributes.constructor === Array)
+				{
+					for (var i in data.attributes)
+					{	
+						this._attributesLookup[ data.attributes[i] ] = data;
+					}
+				} else
+				{
+					for (var i in data.attributes)
+					{	
+						if (typeof this._attributesLookup[i] === 'undefined')
+						{
+							this._attributesLookup[i] = {};
+						}
+
+						if (typeof this._attributesLookup[i][ data.attributes[i] ] === 'undefined')
+						{
+							this._attributesLookup[i][ data.attributes[i] ] = {};
+						}
+
+						this._attributesLookup[i][ data.attributes[i] ] = data;
+					}
+				}
+			}
+			
+			if (data.classes) 
+			{
+				for (var i in data.classes)
+				{	
+					this._classesLookup[ data.classes[i] ] = data;
+				}
+			}
+			
+			if (data.classesRegex) 
+			{
+				for (var i in data.classesRegex)
+				{	
+					this._classesRegexLookup[ data.classesRegex[i] ] = data;
+				}
+			}
+		},
+		
+		extend: function(inheritType, type, data) {
+			 
+			 var newData = data;
+			 
+			 if (inheritData = this._components[inheritType])
+			 {
+				newData = langx.extend(true,{}, inheritData, data);
+				newData.properties = langx.merge( langx.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
+			 }
+			 
+			 //sort by order
+			 newData.properties.sort(function (a,b) 
+				{
+					if (typeof a.sort  === "undefined") a.sort = 0;
+					if (typeof b.sort  === "undefined") b.sort = 0;
+
+					if (a.sort < b.sort)
+						return -1;
+					if (a.sort > b.sort)
+						return 1;
+					return 0;
+				});
+	/*		 
+			var output = array.reduce(function(o, cur) {
+
+			  // Get the index of the key-value pair.
+			  var occurs = o.reduce(function(n, item, i) {
+				return (item.key === cur.key) ? i : n;
+			  }, -1);
+
+			  // If the name is found,
+			  if (occurs >= 0) {
+
+				// append the current value to its list of values.
+				o[occurs].value = o[occurs].value.concat(cur.value);
+
+			  // Otherwise,
+			  } else {
+
+				// add the current item to o (but make sure the value is an array).
+				var obj = {name: cur.key, value: [cur.value]};
+				o = o.concat([obj]);
+			  }
+
+			  return o;
+			}, newData.properties);		 
+	*/
+			
+			this.add(type, newData);
+		},
+		
+		
+		matchNode: function(node) {
+			var component = {};
+			
+			if (!node || !node.tagName) return false;
+			
+			if (node.attributes && node.attributes.length)
+			{
+				//search for attributes
+				for (var i in node.attributes)
+				{
+					if (node.attributes[i])
+					{
+					attr = node.attributes[i].name;
+					value = node.attributes[i].value;
+
+					if (attr in this._attributesLookup) 
+					{
+						component = this._attributesLookup[ attr ];
+						
+						//currently we check that is not a component by looking at name attribute
+						//if we have a collection of objects it means that attribute value must be checked
+						if (typeof component["name"] === "undefined")
+						{
+							if (value in component)
+							{
+								return component[value];
+							}
+						} else 
+						return component;
+					}
+				}
+				}
+					
+				for (var i in node.attributes)
+				{
+					attr = node.attributes[i].name;
+					value = node.attributes[i].value;
+					
+					//check for node classes
+					if (attr == "class")
+					{
+						classes = value.split(" ");
+						
+						for (j in classes) 
+						{
+							if (classes[j] in this._classesLookup)
+							return this._classesLookup[ classes[j] ];	
+						}
+						
+						for (regex in this._classesRegexLookup) 
+						{
+							regexObj = new RegExp(regex);
+							if (regexObj.exec(value)) 
+							{
+								return this._classesRegexLookup[ regex ];	
+							}
+						}
+					}
+				}
+			}
+
+			tagName = node.tagName.toLowerCase();
+			if (tagName in this._nodesLookup) return this._nodesLookup[ tagName ];
+		
+			return false;
+			//return false;
+		},
+		
+		render: function(type) {
+
+			var component = this._components[type];
+			
+			var rightPanel = jQuery(this.componentPropertiesElement);
+			var section = rightPanel.find('.section[data-section="default"]');
+			
+			if (!(Vvveb.preservePropertySections && section.length))
+			{
+				rightPanel.html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
+				section = rightPanel.find(".section");
+			}
+
+			rightPanel.find('[data-header="default"] span').html(component.name);
+			section.html("")	
+		
+			if (component.beforeInit) component.beforeInit(Vvveb.Builder.selectedEl.get(0));
+			
+			var element;
+			
+			var fn = function(component, property) {
+				return property.input.on('propertyChange', function (event, value, input) {
+						
+						var element = Vvveb.Builder.selectedEl;
+						
+						if (property.child) element = element.find(property.child);
+						if (property.parent) element = element.parent(property.parent);
+						
+						if (property.onChange)
+						{
+							element = property.onChange(element, value, input, component);
+						}/* else */
+						if (property.htmlAttr)
+						{
+							oldValue = element.attr(property.htmlAttr);
+							
+							if (property.htmlAttr == "class" && property.validValues) 
+							{
+								element.removeClass(property.validValues.join(" "));
+								element = element.addClass(value);
+							}
+							else if (property.htmlAttr == "style") 
+							{
+								element = element.css(property.key, value);
+							}
+							else
+							{
+								element = element.attr(property.htmlAttr, value);
+							}
+							
+							Vvveb.Undo.addMutation({type: 'attributes', 
+													target: element.get(0), 
+													attributeName: property.htmlAttr, 
+													oldValue: oldValue, 
+													newValue: element.attr(property.htmlAttr)});
+						}
+
+						if (component.onChange) 
+						{
+							element = component.onChange(element, property, value, input);
+						}
+						
+						if (!property.child && !property.parent) Vvveb.Builder.selectNode(element);
+						
+						return element;
+				});				
+			};			
+		
+			var nodeElement = Vvveb.Builder.selectedEl;
+
+			for (var i in component.properties)
+			{
+				var property = component.properties[i];
+				var element = nodeElement;
+				
+				if (property.beforeInit) property.beforeInit(element.get(0)) 
+				
+				if (property.child) element = element.find(property.child);
+				
+				if (property.data) {
+					property.data["key"] = property.key;
+				} else
+				{
+					property.data = {"key" : property.key};
+				}
+
+				if (typeof property.group  === 'undefined') property.group = null;
+
+				property.input = property.inputtype.init(property.data);
+				
+				if (property.init)
+				{
+					property.inputtype.setValue(property.init(element.get(0)));
+				} else if (property.htmlAttr)
+				{
+					if (property.htmlAttr == "style")
+					{
+						//value = element.css(property.key);//jquery css returns computed style
+						var value =  Vvveb.getStyle(element.get(0), property.key);//getStyle returns declared style
+					} else
+					{
+						var value = element.attr(property.htmlAttr);
+					}
+
+					//if attribute is class check if one of valid values is included as class to set the select
+					if (value && property.htmlAttr == "class" && property.validValues)
+					{
+						value = value.split(" ").filter(function(el) {
+							return property.validValues.indexOf(el) != -1
+						});
+					} 
+
+					property.inputtype.setValue(value);
+				}
+				
+				fn(component, property);
+
+				if (property.inputtype == inputs.SectionInput)
+				{
+					section = rightPanel.find('.section[data-section="' + property.key + '"]');
+					
+					if (Vvveb.preservePropertySections && section.length)
+					{
+						section.html("");
+					} else 
+					{
+						rightPanel.append(property.input);
+						section = rightPanel.find('.section[data-section="' + property.key + '"]');
+					}
+				}
+				else
+				{
+					var row = $(tmpl('vvveb-property', property)); 
+					row.find('.input').append(property.input);
+					section.append(row);
+				}
+				
+				if (property.inputtype.afterInit)
+				{
+					property.inputtype.afterInit(property.input);
+				}
+
+			}
+			
+			if (component.init) component.init(Vvveb.Builder.selectedEl.get(0));
+		}
+	};	
+});
+define('skylark-vvveb/FileManager',[
+	"skylark-utils-dom/query",
+	"./Vvveb",
+	"./tmpl"
+],function($,Vvveb,tmpl){
+	return Vvveb.FileManager = {
+		tree:false,
+		pages:{},
+		currentPage: false,
+		
+		init: function() {
+			this.tree = $("#filemanager .tree > ol").html("");
+			
+			$(this.tree).on("click", "a", function (e) {
+				e.preventDefault();
+				return false;
+			});
+			
+			$(this.tree).on("click", "li[data-page] label", function (e) {
+				var page = $(this.parentNode).data("page");
+				
+				if (page) Vvveb.FileManager.loadPage(page);
+				return false;			
+			})
+			
+			$(this.tree).on("click", "li[data-component] label ", function (e) {
+				node = $(e.currentTarget.parentNode).data("node");
+				
+				Vvveb.Builder.frameHtml.animate({
+					scrollTop: $(node).offset().top
+				}, 1000);
+
+				Vvveb.Builder.selectNode(node);
+				Vvveb.Builder.loadNodeComponent(node);
+				
+				//e.preventDefault();
+				//return false;
+			}).on("mouseenter", "li[data-component] label", function (e) {
+
+				node = $(e.currentTarget).data("node");
+				$(node).trigger("mousemove");
+				
+			});
+		},
+		
+		addPage: function(name, title, url) {
+			
+			this.pages[name] = {title:title, url:url};
+			
+			this.tree.append(
+				tmpl("vvveb-filemanager-page", {name:name, title:title, url:url}));
+		},
+		
+		addPages: function(pages) {
+			for (page in pages)
+			{
+				this.addPage(pages[page]['name'], pages[page]['title'], pages[page]['url']);
+			}
+		},
+		
+		addComponent: function(name, url, title, page) {
+			$("[data-page='" + page + "'] > ol", this.tree).append(
+				tmpl("vvveb-filemanager-component", {name:name, url:url, title:title}));
+		},
+		
+		getComponents: function() {
+
+				var tree = [];
+				function getNodeTree (node, parent) {
+					if (node.hasChildNodes()) {
+						for (var j = 0; j < node.childNodes.length; j++) {
+							child = node.childNodes[j];
+							
+							if (child && child["attributes"] != undefined && 
+								(matchChild = Vvveb.Components.matchNode(child))) 
+							{
+								element = {
+									name: matchChild.name,
+									image: matchChild.image,
+									type: matchChild.type,
+									node: child,
+									children: []
+								};
+								element.children = [];
+								parent.push(element);
+								element = getNodeTree(child, element.children);
+							} else
+							{
+								element = getNodeTree(child, parent);	
+							}
+						}
+					}
+
+					return false;
+				}
+			
+			getNodeTree(window.FrameDocument.body, tree);
+			
+			return tree;
+		},
+		
+		loadComponents: function() {
+
+			tree = this.getComponents();
+			html = drawComponentsTree(tree);
+
+			function drawComponentsTree(tree)
+			{
+				var html = $("<ol></ol>");
+				j++;
+				for (i in tree)
+				{
+					var node = tree[i];
+					
+					if (tree[i].children.length > 0) 
+					{
+						var li = $('<li data-component="' + node.name + '">\
+						<label for="id' + j + '" style="background-image:url(libs/builder/' + node.image + ')"><span>' + node.name + '</span></label>\
+						<input type="checkbox" id="id' + j + '">\
+						</li>');		
+						li.data("node", node.node);
+						li.append(drawComponentsTree(node.children));
+						html.append(li);
+					}
+					else 
+					{
+						var li =$('<li data-component="' + node.name + '" class="file">\
+								<label for="id' + j + '" style="background-image:url(libs/builder/' + node.image + ')"><span>' + node.name + '</span></label>\
+								<input type="checkbox" id="id' + j + '"></li>');
+						li.data("node", node.node);							
+						html.append(li);
+					}
+				}
+				
+				return html;
+			}
+			
+			$("[data-page='" + this.currentPage + "'] > ol", this.tree).replaceWith(html);
+		},
+		
+		getCurrentUrl: function() {
+			if (this.currentPage)
+			return this.pages[this.currentPage]['url'];
+		},
+		
+		reloadCurrentPage: function() {
+			if (this.currentPage)
+			return this.loadPage(this.currentPage);
+		},
+		
+		loadPage: function(name, disableCache = true) {
+			$("[data-page]", this.tree).removeClass("active");
+			$("[data-page='" + name + "']", this.tree).addClass("active");
+			
+			this.currentPage = name;
+			var url = this.pages[name]['url'];
+			
+			Vvveb.Builder.loadUrl(url + (disableCache ? (url.indexOf('?') > -1?'&':'?') + Math.random():''), 
+				function () { 
+					Vvveb.FileManager.loadComponents(); 
+				});
+		},
+
+		scrollBottom: function() {
+			var scroll = this.tree.parent();	
+			scroll.scrollTop(scroll.prop("scrollHeight"));	
+		},
+	}
+});
+
+define('skylark-vvveb/Undo',[
+	"./Vvveb"
+],function(Vvveb){
+
+	return Vvveb.Undo = {
+		
+		undos: [],
+		mutations: [],
+		undoIndex: -1,
+		enabled:true,
+		/*		
+		init: function() {
+		},
+		*/	
+		addMutation : function(mutation) {	
+			/*
+				this.mutations.push(mutation);
+				this.undoIndex++;
+			*/
+			Vvveb.Builder.frameBody.trigger("vvveb.undo.add");
+			this.mutations.splice(++this.undoIndex, 0, mutation);
+		 },
+
+		restore : function(mutation, undo) {	
+			
+			switch (mutation.type) {
+				case 'childList':
+				
+					if (undo == true)
+					{
+						addedNodes = mutation.removedNodes;
+						removedNodes = mutation.addedNodes;
+					} else //redo
+					{
+						addedNodes = mutation.addedNodes;
+						removedNodes = mutation.removedNodes;
+					}
+					
+					if (addedNodes) for(i in addedNodes)
+					{
+						node = addedNodes[i];
+						if (mutation.nextSibling)
+						{ 
+							mutation.nextSibling.parentNode.insertBefore(node, mutation.nextSibling);
+						} else
+						{
+							mutation.target.append(node);
+						}
+					}
+
+					if (removedNodes) for(i in removedNodes)
+					{
+						node = removedNodes[i];
+						node.parentNode.removeChild(node);
+					}
+				break;					
+				case 'move':
+					if (undo == true)
+					{
+						parent = mutation.oldParent;
+						sibling = mutation.oldNextSibling;
+					} else //redo
+					{
+						parent = mutation.newParent;
+						sibling = mutation.newNextSibling;
+					}
+				  
+					if (sibling)
+					{
+						sibling.parentNode.insertBefore(mutation.target, sibling);
+					} else
+					{
+						parent.append(node);
+					}
+				break;
+				case 'characterData':
+				  mutation.target.innerHTML = undo ? mutation.oldValue : mutation.newValue;
+				  break;
+				case 'attributes':
+				  value = undo ? mutation.oldValue : mutation.newValue;
+
+				  if (value || value === false || value === 0)
+					mutation.target.setAttribute(mutation.attributeName, value);
+				  else
+					mutation.target.removeAttribute(mutation.attributeName);
+
+				break;
+			}
+			
+			Vvveb.Builder.frameBody.trigger("vvveb.undo.restore");
+		 },
+		 
+		undo : function() {	
+			if (this.undoIndex >= 0) {
+			  this.restore(this.mutations[this.undoIndex--], true);
+			}
+		 },
+
+		redo : function() {	
+			if (this.undoIndex < this.mutations.length - 1) {
+			  this.restore(this.mutations[++this.undoIndex], false);
+			}
+		},
+
+		hasChanges : function() {	
+			return this.mutations.length;
+		},
+	};
+
+});
+
+define('skylark-vvveb/WysiwygEditor',[
+	"skylark-utils-dom/query",
+	"./Vvveb",
+	"./Undo"
+],function($,Vvveb){
+	return Vvveb.WysiwygEditor = {
+	
+		isActive: false,
+		oldValue: '',
+		doc:false,
+		
+		init: function(doc) {
+			this.doc = doc;
+			
+			$("#bold-btn").on("click", function (e) {
+					doc.execCommand('bold',false,null);
+					e.preventDefault();
+					return false;
+			});
+
+			$("#italic-btn").on("click", function (e) {
+					doc.execCommand('italic',false,null);
+					e.preventDefault();
+					return false;
+			});
+
+			$("#underline-btn").on("click", function (e) {
+					doc.execCommand('underline',false,null);
+					e.preventDefault();
+					return false;
+			});
+			
+			$("#strike-btn").on("click", function (e) {
+					doc.execCommand('strikeThrough',false,null);
+					e.preventDefault();
+					return false;
+			});
+
+			$("#link-btn").on("click", function (e) {
+					doc.execCommand('createLink',false,"#");
+					e.preventDefault();
+					return false;
+			});
+		},
+		
+		undo: function(element) {
+			this.doc.execCommand('undo',false,null);
+		},
+
+		redo: function(element) {
+			this.doc.execCommand('redo',false,null);
+		},
+		
+		edit: function(element) {
+			element.attr({'contenteditable':true, 'spellcheckker':false});
+			$("#wysiwyg-editor").show();
+
+			this.element = element;
+			this.isActive = true;
+			this.oldValue = element.html();
+		},
+
+		destroy: function(element) {
+			element.removeAttr('contenteditable spellcheckker');
+			$("#wysiwyg-editor").hide();
+			this.isActive = false;
+
+		
+			node = this.element.get(0);
+			Vvveb.Undo.addMutation({type:'characterData', 
+									target: node, 
+									oldValue: this.oldValue, 
+									newValue: node.innerHTML});
+		}
+	};
+
+});
+	
+define('skylark-vvveb/Gui',[
+	"skylark-utils-dom/query",
+	"./Vvveb",
+	"./Builder",
+	"./WysiwygEditor",
+	"skylark-bootstrap4/modal"
+],function($,Vvveb){
+	var Gui = {
+		
+		init: function() {
+			$("[data-vvveb-action]").each(function () {
+				on = "click";
+				if (this.dataset.vvvebOn) on = this.dataset.vvvebOn;
+				
+				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
+				if (this.dataset.vvvebShortcut)
+				{
+					$(document).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(window.FrameDocument, window.FrameWindow).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+				}
+			});
+		},
+		
+		undo : function () {
+			if (Vvveb.WysiwygEditor.isActive) 
+			{
+				Vvveb.WysiwygEditor.undo();
+			} else
+			{
+				Vvveb.Undo.undo();
+			}
+			Vvveb.Builder.selectNode();
+		},
+		
+		redo : function () {
+			if (Vvveb.WysiwygEditor.isActive) 
+			{
+				Vvveb.WysiwygEditor.redo();
+			} else
+			{
+				Vvveb.Undo.redo();
+			}
+			Vvveb.Builder.selectNode();
+		},
+		
+		//show modal with html content
+		save : function () {
+			$('#textarea-modal textarea').val(Vvveb.Builder.getHtml());
+			$('#textarea-modal').modal();
+		},
+		
+		//post html content through ajax to save to filesystem/db
+		saveAjax : function () {
+			
+			var url = Vvveb.FileManager.getCurrentUrl();
+			
+			return Vvveb.Builder.saveAjax(url, null, function (data) {
+				$('#message-modal').modal().find(".modal-body").html("File saved at: " + data);
+			});		
+		},
+		
+		download : function () {
+			filename = /[^\/]+$/.exec(Vvveb.Builder.iframe.src)[0];
+			uriContent = "data:application/octet-stream,"  + encodeURIComponent(Vvveb.Builder.getHtml());
+
+			var link = document.createElement('a');
+			if ('download' in link)
+			{
+				link.download = filename;
+				link.href = uriContent;
+				link.target = "_blank";
+				
+				document.body.appendChild(link);
+				result = link.click();
+				document.body.removeChild(link);
+				link.remove();
+				
+			} else
+			{
+				location.href = uriContent;
+			}
+		},
+		
+		viewport : function () {
+			$("#canvas").attr("class", this.dataset.view);
+		},
+		
+		toggleEditor : function () {
+			$("#vvveb-builder").toggleClass("bottom-panel-expand");
+			$("#toggleEditorJsExecute").toggle();
+			Vvveb.CodeEditor.toggle();
+		},
+		
+		toggleEditorJsExecute : function () {
+			Vvveb.Builder.runJsOnSetHtml = this.checked;
+		},
+		
+		preview : function () {
+			(Vvveb.Builder.isPreview == true)?Vvveb.Builder.isPreview = false:Vvveb.Builder.isPreview = true;
+			$("#iframe-layer").toggle();
+			$("#vvveb-builder").toggleClass("preview");
+		},
+		
+		fullscreen : function () {
+			Vvveb.launchFullScreen(document); // the whole page
+		},
+		
+		componentSearch : function () {
+			searchText = this.value;
+			
+			$("#left-panel .components-list li ol li").each(function () {
+				$this = $(this);
+				
+				$this.hide();
+				if ($this.data("search").indexOf(searchText) > -1) $this.show();
+			});
+		},
+		
+		clearComponentSearch : function () {
+			$(".component-search").val("").keyup();
+		},
+		
+		blockSearch : function () {
+			searchText = this.value;
+			
+			$("#left-panel .blocks-list li ol li").each(function () {
+				$this = $(this);
+				
+				$this.hide();
+				if ($this.data("search").indexOf(searchText) > -1) $this.show();
+			});
+		},
+		
+		clearBlockSearch : function () {
+			$(".block-search").val("").keyup();
+		},
+		
+		addBoxComponentSearch : function () {
+			searchText = this.value;
+			
+			$("#add-section-box .components-list li ol li").each(function () {
+				$this = $(this);
+				
+				$this.hide();
+				if ($this.data("search").indexOf(searchText) > -1) $this.show();
+			});
+		},
+		
+		
+		addBoxBlockSearch : function () {
+			searchText = this.value;
+			
+			$("#add-section-box .blocks-list li ol li").each(function () {
+				$this = $(this);
+				
+				$this.hide();
+				if ($this.data("search").indexOf(searchText) > -1) $this.show();
+			});
+		},
+
+	
+		newPage : function () { //Pages, file/components tree 
+			
+			var newPageModal = $('#new-page-modal');
+			
+			newPageModal.modal("show").find("form").off("submit").submit(function( event ) {
+
+				var title = $("input[name=title]", newPageModal).val();
+				var startTemplateUrl = $("select[name=startTemplateUrl]", newPageModal).val();
+				var fileName = $("input[name=fileName]", newPageModal).val();
+				
+				//replace nonalphanumeric with dashes and lowercase for name
+				var name = title.replace(/\W+/g, '-').toLowerCase();
+					//allow only alphanumeric, dot char for extension (eg .html) and / to allow typing full path including folders
+					fileName = fileName.replace(/[^A-Za-z0-9\.\/]+/g, '-').toLowerCase();
+				
+				//add your server url/prefix/path if needed
+				var url = "" + fileName;
+				
+
+				Vvveb.FileManager.addPage(name, title, url);
+				event.preventDefault();
+
+				return Vvveb.Builder.saveAjax(url, startTemplateUrl, function (data) {
+						Vvveb.FileManager.loadPage(name);
+						Vvveb.FileManager.scrollBottom();
+						newPageModal.modal("hide");
+				});
+			});
+			
+		},
+		
+		deletePage : function () {
+			
+		},
+
+		setDesignerMode : function () {
+			//aria-pressed attribute is updated after action is called and we check for false instead of true
+			var designerMode = this.attributes["aria-pressed"].value != "true";
+			Vvveb.Builder.setDesignerMode(designerMode);
+		}
+		
+	}
+
+	return Vvveb.Gui = Gui;
+});
+
 
 
 define('skylark-vvveb/blocks/bootstrap4',[
@@ -3473,9 +3484,11 @@ define('skylark-vvveb/blocks/bootstrap4',[
 });
 define('skylark-vvveb/components/bootstrap4',[
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
 
     bgcolorClasses = ["bg-primary", "bg-secondary", "bg-success", "bg-danger", "bg-warning", "bg-info", "bg-light", "bg-dark", "bg-white"]
 
@@ -3533,32 +3546,31 @@ define('skylark-vvveb/components/bootstrap4',[
     ["html/container", "html/gridrow", "html/button", "html/buttongroup", "html/buttontoolbar", "html/heading", "html/image", "html/jumbotron", "html/alert", "html/card", "html/listgroup", "html/hr", "html/taglabel", "html/badge", "html/progress", "html/navbar", "html/breadcrumbs", "html/pagination", "html/form", "html/textinput", "html/textareainput", "html/selectinput", "html/fileinput", "html/checkbox", "html/radiobutton", "html/table", "html/paragraph"];
 
 
-    var base_sort = 100;//start sorting for base component from 100 to allow extended properties to be first
 
     Components.add("_base", {
         name: "Element",
     	properties: [{
             key: "element_header",
-            inputtype: SectionInput,
+            inputtype: inputs.SectionInput,
             name:false,
-            sort:base_sort++,
+            sort:Components.base_sort++,
             data: {header:"General"},
         }, {
             name: "Id",
             key: "id",
             htmlAttr: "id",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             inline:true,
             col:6,
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Class",
             key: "class",
             htmlAttr: "class",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             inline:true,
             col:6,
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }
        ]
     });    
@@ -3568,18 +3580,18 @@ define('skylark-vvveb/components/bootstrap4',[
     	 properties: [
          {
             key: "display_header",
-            inputtype: SectionInput,
+            inputtype: inputs.SectionInput,
             name:false,
-            sort: base_sort++,
+            sort: Components.base_sort++,
             data: {header:"Display"},
         }, {
             name: "Display",
             key: "display",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["block", "inline", "inline-block", "none"],
             data: {
                 options: [{
@@ -3600,10 +3612,10 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Position",
             key: "position",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["static", "fixed", "relative", "absolute"],
             data: {
                 options: [{
@@ -3624,46 +3636,46 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Top",
             key: "top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Left",
             key: "left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
             parent:"",
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         },{
             name: "Float",
             key: "float",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -3690,11 +3702,11 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Opacity",
             key: "opacity",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
     		inline:true,
             parent:"",
-            inputtype: RangeInput,
+            inputtype: inputs.RangeInput,
             data:{
     			max: 1, //max zoom level
     			min:0,
@@ -3703,19 +3715,19 @@ define('skylark-vvveb/components/bootstrap4',[
     	}, {
             name: "Background Color",
             key: "background-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
     	}, {
             name: "Text Color",
             key: "color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
       	}]
     });    
 
@@ -3724,18 +3736,18 @@ define('skylark-vvveb/components/bootstrap4',[
     	 properties: [
          {
     		key: "typography_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Typography"},
         }, {
             name: "Font family",
             key: "font-family",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -3785,10 +3797,10 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Font weight",
             key: "font-weight",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -3826,10 +3838,10 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Text align",
             key: "text-align",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -3868,26 +3880,26 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Line height",
             key: "line-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Letter spacing",
             key: "letter-spacing",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Text decoration",
             key: "text-decoration-line",
             htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
             inline:true,
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -3925,19 +3937,19 @@ define('skylark-vvveb/components/bootstrap4',[
     	}, {
             name: "Decoration Color",
             key: "text-decoration-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
     	}, {
             name: "Decoration style",
             key: "text-decoration-style",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -3966,58 +3978,58 @@ define('skylark-vvveb/components/bootstrap4',[
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "size_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Size", expanded:false},
     	}, {
             name: "Width",
             key: "width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Height",
             key: "height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Min Width",
             key: "min-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Min Height",
             key: "min-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Max Width",
             key: "max-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Max Height",
             key: "max-height",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -4025,42 +4037,42 @@ define('skylark-vvveb/components/bootstrap4',[
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "margins_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Margin", expanded:false},
     	}, {
             name: "Top",
             key: "margin-top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "margin-right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "margin-bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Left",
             key: "margin-left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -4068,42 +4080,42 @@ define('skylark-vvveb/components/bootstrap4',[
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "paddings_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Padding", expanded:false},
     	}, {
             name: "Top",
             key: "padding-top",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
     	}, {
             name: "Right",
             key: "padding-right",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Bottom",
             key: "padding-bottom",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }, {
             name: "Left",
             key: "padding-left",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
         }]
     });
 
@@ -4112,18 +4124,18 @@ define('skylark-vvveb/components/bootstrap4',[
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "border_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Border", expanded:false},
     	 }, {        
             name: "Style",
             key: "border-style",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:12,
     		inline:true,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -4143,18 +4155,18 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Width",
             key: "border-width",
     		htmlAttr: "style",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
-            inputtype: CssUnitInput
+            inputtype: inputs.CssUnitInput
        	}, {
             name: "Color",
             key: "border-color",
-            sort: base_sort++,
+            sort: Components.base_sort++,
             col:6,
     		inline:true,
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         }]
     });    
 
@@ -4162,16 +4174,16 @@ define('skylark-vvveb/components/bootstrap4',[
     Components.extend("_base", "_base", {
     	 properties: [{
     		key: "background_image_header",
-    		inputtype: SectionInput,
+    		inputtype: inputs.SectionInput,
     		name:false,
-    		sort: base_sort++,
+    		sort: Components.base_sort++,
     		data: {header:"Background Image", expanded:false},
     	 },{
             name: "Image",
             key: "Image",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		//htmlAttr: "style",
-            inputtype: ImageInput,
+            inputtype: inputs.ImageInput,
             
             init: function(node) {
     			var image = $(node).css("background-image").replace(/^url\(['"]?(.+)['"]?\)/, '$1');
@@ -4188,9 +4200,9 @@ define('skylark-vvveb/components/bootstrap4',[
        	}, {
             name: "Repeat",
             key: "background-repeat",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -4209,9 +4221,9 @@ define('skylark-vvveb/components/bootstrap4',[
        	}, {
             name: "Size",
             key: "background-size",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -4227,11 +4239,11 @@ define('skylark-vvveb/components/bootstrap4',[
        	}, {
             name: "Position x",
             key: "background-position-x",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
             col:6,
     		inline:true,
-    		inputtype: SelectInput,
+    		inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -4250,11 +4262,11 @@ define('skylark-vvveb/components/bootstrap4',[
        	}, {
             name: "Position y",
             key: "background-position-y",
-            sort: base_sort++,
+            sort: Components.base_sort++,
     		htmlAttr: "style",
             col:6,
     		inline:true,
-    		inputtype: SelectInput,
+    		inputtype: inputs.SelectInput,
             data: {
     			options: [{
     				value: "",
@@ -4283,7 +4295,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["container", "container-fluid"],
             data: {
                 options: [{
@@ -4300,7 +4312,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "background",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -4309,13 +4321,13 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Background Color",
             key: "background-color",
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         },
     	{
             name: "Text Color",
             key: "color",
     		htmlAttr: "style",
-            inputtype: ColorInput,
+            inputtype: inputs.ColorInput,
         }],
     });
 
@@ -4329,7 +4341,7 @@ define('skylark-vvveb/components/bootstrap4',[
     	{
             name: "Size",
             key: "size",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             
             onChange: function(node, value) {
     			
@@ -4376,12 +4388,12 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Url",
             key: "href",
             htmlAttr: "href",
-            inputtype: LinkInput
+            inputtype: inputs.LinkInput
         }, {
             name: "Target",
             key: "target",
             htmlAttr: "target",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/image", {
@@ -4399,22 +4411,22 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Image",
             key: "src",
             htmlAttr: "src",
-            inputtype: ImageInput
+            inputtype: inputs.ImageInput
         }, {
             name: "Width",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Height",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Alt",
             key: "alt",
             htmlAttr: "alt",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("html/hr", {
@@ -4431,7 +4443,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "For id",
             htmlAttr: "for",
             key: "for",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/button", {
@@ -4443,12 +4455,12 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Link To",
             key: "href",
             htmlAttr: "href",
-            inputtype: LinkInput
+            inputtype: inputs.LinkInput
         }, {
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-default", "btn-primary", "btn-info", "btn-success", "btn-warning", "btn-info", "btn-light", "btn-dark", "btn-outline-primary", "btn-outline-info", "btn-outline-success", "btn-outline-warning", "btn-outline-info", "btn-outline-light", "btn-outline-dark", "btn-link"],
             data: {
                 options: [{
@@ -4505,7 +4517,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-lg", "btn-sm"],
             data: {
                 options: [{
@@ -4523,12 +4535,12 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Target",
             key: "target",
             htmlAttr: "target",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Disabled",
             key: "disabled",
             htmlAttr: "class",
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             validValues: ["disabled"],
             data: {
                 on: "disabled",
@@ -4545,7 +4557,7 @@ define('skylark-vvveb/components/bootstrap4',[
     	    name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-group-lg", "btn-group-sm"],
             data: {
                 options: [{
@@ -4563,7 +4575,7 @@ define('skylark-vvveb/components/bootstrap4',[
     	    name: "Alignment",
             key: "alignment",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-group", "btn-group-vertical"],
             data: {
                 options: [{
@@ -4615,7 +4627,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "type",
             htmlAttr: "class",
             validValues: ["alert-primary", "alert-secondary", "alert-success", "alert-danger", "alert-warning", "alert-info", "alert-light", "alert-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "alert-primary",
@@ -4655,7 +4667,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "color",
             htmlAttr: "class",
             validValues:["badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -4731,7 +4743,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "active",
             htmlAttr: "class",
             validValues: ["", "active"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "active",
                 off: ""
@@ -4756,7 +4768,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Size",
             key: "size",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["btn-lg", "btn-sm"],
             data: {
                 options: [{
@@ -4774,7 +4786,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Alignment",
             key: "alignment",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["justify-content-center", "justify-content-end"],
             data: {
                 options: [{
@@ -4799,13 +4811,13 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "href",
             htmlAttr: "href",
             child:".page-link",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Disabled",
             key: "disabled",
             htmlAttr: "class",
             validValues: ["disabled"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "disabled",
                 off: ""
@@ -4822,7 +4834,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "background",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -4833,7 +4845,7 @@ define('skylark-vvveb/components/bootstrap4',[
             child:".progress-bar",
     		htmlAttr: "class",
             validValues: ["", "w-25", "w-50", "w-75", "w-100"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -4859,7 +4871,7 @@ define('skylark-vvveb/components/bootstrap4',[
             child:".progress-bar",
     		htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -4869,7 +4881,7 @@ define('skylark-vvveb/components/bootstrap4',[
             child:".progress-bar",
             htmlAttr: "class",
             validValues: ["", "progress-bar-striped"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "progress-bar-striped",
                 off: "",
@@ -4880,7 +4892,7 @@ define('skylark-vvveb/components/bootstrap4',[
             child:".progress-bar",
             htmlAttr: "class",
             validValues: ["", "progress-bar-animated"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "progress-bar-animated",
                 off: "",
@@ -4935,7 +4947,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "color",
             htmlAttr: "class",
             validValues: ["navbar-light", "navbar-dark"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -4953,7 +4965,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "background",
             htmlAttr: "class",
             validValues: bgcolorClasses,
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: bgcolorSelectOptions
             }
@@ -4962,7 +4974,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "placement",
             htmlAttr: "class",
             validValues: ["fixed-top", "fixed-bottom", "sticky-top"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -4991,7 +5003,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "style",
             htmlAttr: "class",
             validValues: ["", "form-search", "form-inline", "form-horizontal"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
                     value: "",
@@ -5011,12 +5023,12 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Action",
             key: "action",
             htmlAttr: "action",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Method",
             key: "method",
             htmlAttr: "method",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 
@@ -5029,12 +5041,12 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Value",
             key: "value",
             htmlAttr: "value",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "Placeholder",
             key: "placeholder",
             htmlAttr: "placeholder",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 
@@ -5059,7 +5071,7 @@ define('skylark-vvveb/components/bootstrap4',[
     				key: "option" + i,
     				//index: i - 1,
     				optionNode: this,
-    				inputtype: TextValueInput,
+    				inputtype: inputs.TextValueInput,
     				data: data,
     				onChange: function(node, value, input) {
     					
@@ -5096,15 +5108,15 @@ define('skylark-vvveb/components/bootstrap4',[
         properties: [{
             name: "Option",
             key: "option1",
-            inputtype: TextValueInput
+            inputtype: inputs.TextValueInput
     	}, {
             name: "Option",
             key: "option2",
-            inputtype: TextValueInput
+            inputtype: inputs.TextValueInput
     	}, {
             name: "",
             key: "addChild",
-            inputtype: ButtonInput,
+            inputtype: inputs.ButtonInput,
             data: {text:"Add option", icon:"la-plus"},
             onChange: function(node)
             {
@@ -5131,7 +5143,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Name",
             key: "name",
             htmlAttr: "name",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/checkbox", {
@@ -5143,7 +5155,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Name",
             key: "name",
             htmlAttr: "name",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.extend("_base", "html/fileinput", {
@@ -5195,7 +5207,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "type",
     		htmlAttr: "class",
             validValues: ["table-primary", "table-secondary", "table-success", "table-danger", "table-warning", "table-info", "table-light", "table-dark", "table-white"],
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
     				value: "Default",
@@ -5235,7 +5247,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "responsive",
             htmlAttr: "class",
             validValues: ["table-responsive"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-responsive",
                 off: ""
@@ -5246,7 +5258,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "small",
             htmlAttr: "class",
             validValues: ["table-sm"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-sm",
                 off: ""
@@ -5257,7 +5269,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "hover",
             htmlAttr: "class",
             validValues: ["table-hover"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-hover",
                 off: ""
@@ -5268,7 +5280,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "bordered",
             htmlAttr: "class",
             validValues: ["table-bordered"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-bordered",
                 off: ""
@@ -5279,7 +5291,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "striped",
             htmlAttr: "class",
             validValues: ["table-striped"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-striped",
                 off: ""
@@ -5290,7 +5302,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "inverse",
             htmlAttr: "class",
             validValues: ["table-inverse"],
-            inputtype: ToggleInput,
+            inputtype: inputs.ToggleInput,
             data: {
                 on: "table-inverse",
                 off: ""
@@ -5301,7 +5313,7 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "head",
             htmlAttr: "class",
             child:"thead",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "thead-inverse", "thead-default"],
             data: {
                 options: [{
@@ -5325,7 +5337,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "success", "danger", "warning", "active"],
             data: {
                 options: [{
@@ -5365,7 +5377,7 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Type",
             key: "type",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "success", "danger", "warning", "info"],
             data: {
                 options: [{
@@ -5401,7 +5413,7 @@ define('skylark-vvveb/components/bootstrap4',[
         properties: [{
             name: "Column",
             key: "column",
-            inputtype: GridInput,
+            inputtype: inputs.GridInput,
             data: {hide_remove:true},
     		
     		beforeInit: function(node) {
@@ -5459,7 +5471,7 @@ define('skylark-vvveb/components/bootstrap4',[
     				columnNode: this,
     				col:12,
     				inline:true,
-    				inputtype: GridInput,
+    				inputtype: inputs.GridInput,
     				data: data,
     				onChange: function(node, value, input) {
 
@@ -5505,17 +5517,17 @@ define('skylark-vvveb/components/bootstrap4',[
         properties: [{
             name: "Column",
             key: "column1",
-            inputtype: GridInput
+            inputtype: inputs.GridInput
     	}, {
             name: "Column",
             key: "column1",
             inline:true,
             col:12,
-            inputtype: GridInput
+            inputtype: inputs.GridInput
     	}, {
             name: "",
             key: "addChild",
-            inputtype: ButtonInput,
+            inputtype: inputs.ButtonInput,
             data: {text:"Add column", icon:"la la-plus"},
             onChange: function(node)
             {
@@ -5539,9 +5551,9 @@ define('skylark-vvveb/components/bootstrap4',[
             name: "Text align",
             key: "text-align",
             htmlAttr: "class",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             validValues: ["", "text-left", "text-center", "text-right"],
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
             data: {
     			extraclass:"btn-group-sm btn-group-fullwidth",
                 options: [{
@@ -5576,9 +5588,11 @@ define('skylark-vvveb/components/bootstrap4',[
 });
 define('skylark-vvveb/components/server',[
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
 
 
     ComponentsGroup['Server Components'] = ["components/products", "components/product", "components/categories", "components/manufacturers", "components/search", "components/user", "components/product_gallery", "components/cart", "components/checkout", "components/filters", "components/product", "components/slider"];
@@ -5596,13 +5610,13 @@ define('skylark-vvveb/components/server',[
             name: "Id",
             key: "id",
             htmlAttr: "id",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },
     	{
             name: "Select",
             key: "id",
             htmlAttr: "id",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "",
@@ -5620,7 +5634,7 @@ define('skylark-vvveb/components/server',[
             name: "Select 2",
             key: "id",
             htmlAttr: "id",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "",
@@ -5661,7 +5675,7 @@ define('skylark-vvveb/components/server',[
         properties: [{
             name: false,
             key: "type",
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
     		htmlAttr:"data-type",
             data: {
                 inline: true,
@@ -5696,7 +5710,7 @@ define('skylark-vvveb/components/server',[
             htmlAttr:"data-products",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -5705,7 +5719,7 @@ define('skylark-vvveb/components/server',[
             group:"automatic",
             key: "limit",
     		htmlAttr:"data-limit",
-            inputtype: NumberInput,
+            inputtype: inputs.NumberInput,
             data: {
                 value: "8",//default
                 min: "1",
@@ -5726,7 +5740,7 @@ define('skylark-vvveb/components/server',[
                 max: "1024",
                 step: "1"
             },        
-            inputtype: NumberInput,
+            inputtype: inputs.NumberInput,
             getFromNode: function(node) {
                 return 0
             },
@@ -5735,7 +5749,7 @@ define('skylark-vvveb/components/server',[
             group:"automatic",
             key: "order",
     		htmlAttr:"data-order",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
     				value: "price_asc",
@@ -5764,7 +5778,7 @@ define('skylark-vvveb/components/server',[
     		htmlAttr:"data-category",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -5776,7 +5790,7 @@ define('skylark-vvveb/components/server',[
     		htmlAttr:"data-manufacturer",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
     		}
@@ -5787,7 +5801,7 @@ define('skylark-vvveb/components/server',[
     		htmlAttr:"data-manufacturer2",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -5801,16 +5815,16 @@ define('skylark-vvveb/components/server',[
         html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
         properties: [{
             nolabel:false,
-            inputtype: TextInput,
+            inputtype: inputs.TextInput,
             data: {text:"Fields"}
     	},{
             name: "Name",
             key: "category",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	},{
             name: "Image",
             key: "category",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}
         ]
     });
@@ -5824,7 +5838,7 @@ define('skylark-vvveb/components/server',[
             name: "Name",
             key: "name",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }]
     });
     Components.add("components/search", {
@@ -5836,17 +5850,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/user", {
@@ -5858,17 +5872,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/product_gallery", {
@@ -5880,17 +5894,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/cart", {
@@ -5902,17 +5916,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/checkout", {
@@ -5924,17 +5938,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/filters", {
@@ -5946,17 +5960,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/product", {
@@ -5968,17 +5982,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/slider", {
@@ -5990,17 +6004,17 @@ define('skylark-vvveb/components/server',[
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 });
@@ -6008,8 +6022,11 @@ define('skylark-vvveb/components/widgets',[
     "skylark-utils-dom/query",
     "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,Vvveb,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
+    var jQuery = $;
+
 
     ComponentsGroup['Widgets'] = ["widgets/googlemaps", "widgets/video", "widgets/chartjs", "widgets/facebookpage", "widgets/paypal", "widgets/instagram", "widgets/twitter"/*, "widgets/facebookcomments"*/];
 
@@ -6042,12 +6059,12 @@ define('skylark-vvveb/components/widgets',[
         properties: [{
             name: "Address",
             key: "q",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, 
     	{
             name: "Map type",
             key: "t",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "q",
@@ -6061,7 +6078,7 @@ define('skylark-vvveb/components/widgets',[
         {
             name: "Zoom",
             key: "z",
-            inputtype: RangeInput,
+            inputtype: inputs.RangeInput,
             data:{
     			max: 20, //max zoom level
     			min:1,
@@ -6148,7 +6165,7 @@ define('skylark-vvveb/components/widgets',[
         properties: [{
             name: "Provider",
             key: "t",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     text: "Youtube",
@@ -6165,23 +6182,23 @@ define('skylark-vvveb/components/widgets',[
          {
             name: "Video id",
             key: "video_id",
-            inputtype: TextInput,
+            inputtype: inputs.TextInput,
         },{
             name: "Url",
             key: "url",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{
             name: "Autoplay",
             key: "autoplay",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         },{
             name: "Controls",
             key: "controls",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         },{
             name: "Loop",
             key: "loop",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         }]
     });
 
@@ -6212,31 +6229,31 @@ define('skylark-vvveb/components/widgets',[
             key: "business",
             htmlAttr: "data-href",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item name",
             key: "item_name",
             htmlAttr: "data-numposts",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Color scheme",
             key: "colorscheme",
             htmlAttr: "data-colorscheme",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Order by",
             key: "order-by",
             htmlAttr: "data-order-by",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Currency code",
             key: "width",
             htmlAttr: "data-width",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}]
     });
 
@@ -6254,7 +6271,7 @@ define('skylark-vvveb/components/widgets',[
             key: "instgrm-permalink",
             htmlAttr: "data-instgrm-permalink",
             child: ".instagram-media",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }],
     });
 
@@ -6283,7 +6300,7 @@ define('skylark-vvveb/components/widgets',[
             key: "widget-id",
             htmlAttr: "data-widget-id",
             child: " > a, > iframe",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }],
     });
 
@@ -6318,25 +6335,25 @@ define('skylark-vvveb/components/widgets',[
             key: "business",
             htmlAttr: "value",
             child:"input[name='business']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item name",
             key: "item_name",
             htmlAttr: "value",
             child:"input[name='item_name']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item number",
             key: "item_number",
             htmlAttr: "value",
             child:"input[name='item_number']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Currency code",
             key: "currency_code",
             htmlAttr: "value",
             child:"input[name='currency_code']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}],
     });
         
@@ -6360,31 +6377,31 @@ define('skylark-vvveb/components/widgets',[
             key: "small-header",
             htmlAttr: "data-small-header",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Adapt container width",
             key: "adapt-container-width",
             htmlAttr: "data-adapt-container-width",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Hide cover",
             key: "hide-cover",
             htmlAttr: "data-hide-cover",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Show facepile",
             key: "show-facepile",
             htmlAttr: "data-show-facepile",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "App Id",
             key: "appid",
             htmlAttr: "data-appId",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}],
        onChange: function(node, input, value, component) {
     	   //console.log(component.html);
@@ -6500,7 +6517,7 @@ define('skylark-vvveb/components/widgets',[
     	{
             name: "Type",
             key: "type",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     text: "Line",
@@ -6964,7 +6981,7 @@ define('skylark-vvveb/plugins/codemirror',[
 				this.isActive = true;
 				this.codemirror.getDoc().on("change", function (e, v) { 
 					if (v.origin != "setValue")
-					delay(Vvveb.Builder.setHtml(e.getValue()), 1000);
+					Vvveb.delay(Vvveb.Builder.setHtml(e.getValue()), 1000);
 				});
 			}
 			
@@ -7012,18 +7029,19 @@ define('skylark-vvveb/plugins/codemirror',[
 
 
 define('skylark-vvveb/plugins/google-fonts',[
-	"../Components"
-],function(Components){
+	"../Components",
+	"../inputs"
+],function(Components,inputs){
 	Components.extend("_base", "_base", {
 		 properties: [
 		 {
 	        name: "Font family",
 	        key: "font-family",
 			htmlAttr: "style",
-	        sort: base_sort++,
+	        sort: Components.base_sort++,
 	        col:6,
 			inline:true,
-	        inputtype: SelectInput,
+	        inputtype: inputs.SelectInput,
 	        data: {
 				options: [{
 					value: "",
@@ -7039,8 +7057,9 @@ define('skylark-vvveb/plugins/google-fonts',[
 
  define('skylark-vvveb/plugins/jszip',[
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../Gui"
-],function($,Gui){
+],function($,Vvveb,Gui){
    return Gui.download = function () {
 
         function isLocalUrl(url)

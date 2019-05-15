@@ -1,7 +1,8 @@
  define([
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../Gui"
-],function($,Gui){
+],function($,Vvveb,Gui){
    return Gui.download = function () {
 
         function isLocalUrl(url)

@@ -5,5 +5,5 @@
  * @link https://github.com/skylark-integration/skylark-vvveb/
  * @license MIT
  */
-define(["skylark-utils-dom/query","../Gui"],function(t,e){return e.download=function(){function e(t){(function(t){return-1==t.indexOf("//")})(t)&&r.push(t)}var n=Vvveb.Builder.frameHtml,r=[];t("link[href$='.css']",n).each(function(t,n){e(n.getAttribute("href"))}),t("script[src$='.js']",n).each(function(t,n){e(n.getAttribute("src"))}),t("img[src]",n).each(function(t,n){e(n.getAttribute("src"))}),console.dir(r)}});
+define(["skylark-utils-dom/query","../Vvveb","../Gui"],function(t,e,n){return n.download=function(){function n(t){(function(t){return-1==t.indexOf("//")})(t)&&i.push(t)}var r=e.Builder.frameHtml,i=[];t("link[href$='.css']",r).each(function(t,e){n(e.getAttribute("href"))}),t("script[src$='.js']",r).each(function(t,e){n(e.getAttribute("src"))}),t("img[src]",r).each(function(t,e){n(e.getAttribute("src"))}),console.dir(i)}});
 //# sourceMappingURL=../sourcemaps/plugins/jszip.js.map

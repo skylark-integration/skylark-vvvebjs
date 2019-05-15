@@ -1,8 +1,10 @@
 define([
     "skylark-utils-dom/query",
+    "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
 
 
     ComponentsGroup['Server Components'] = ["components/products", "components/product", "components/categories", "components/manufacturers", "components/search", "components/user", "components/product_gallery", "components/cart", "components/checkout", "components/filters", "components/product", "components/slider"];
@@ -20,13 +22,13 @@ define([
             name: "Id",
             key: "id",
             htmlAttr: "id",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },
     	{
             name: "Select",
             key: "id",
             htmlAttr: "id",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "",
@@ -44,7 +46,7 @@ define([
             name: "Select 2",
             key: "id",
             htmlAttr: "id",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "",
@@ -85,7 +87,7 @@ define([
         properties: [{
             name: false,
             key: "type",
-            inputtype: RadioButtonInput,
+            inputtype: inputs.RadioButtonInput,
     		htmlAttr:"data-type",
             data: {
                 inline: true,
@@ -120,7 +122,7 @@ define([
             htmlAttr:"data-products",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -129,7 +131,7 @@ define([
             group:"automatic",
             key: "limit",
     		htmlAttr:"data-limit",
-            inputtype: NumberInput,
+            inputtype: inputs.NumberInput,
             data: {
                 value: "8",//default
                 min: "1",
@@ -150,7 +152,7 @@ define([
                 max: "1024",
                 step: "1"
             },        
-            inputtype: NumberInput,
+            inputtype: inputs.NumberInput,
             getFromNode: function(node) {
                 return 0
             },
@@ -159,7 +161,7 @@ define([
             group:"automatic",
             key: "order",
     		htmlAttr:"data-order",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data: {
                 options: [{
     				value: "price_asc",
@@ -188,7 +190,7 @@ define([
     		htmlAttr:"data-category",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -200,7 +202,7 @@ define([
     		htmlAttr:"data-manufacturer",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
     		}
@@ -211,7 +213,7 @@ define([
     		htmlAttr:"data-manufacturer2",
             inline:true,
             col:12,
-            inputtype: AutocompleteList,
+            inputtype: inputs.AutocompleteList,
             data: {
                 url: "/admin/?module=editor&action=productsAutocomplete",
             },
@@ -225,16 +227,16 @@ define([
         html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
         properties: [{
             nolabel:false,
-            inputtype: TextInput,
+            inputtype: inputs.TextInput,
             data: {text:"Fields"}
     	},{
             name: "Name",
             key: "category",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	},{
             name: "Image",
             key: "category",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}
         ]
     });
@@ -248,7 +250,7 @@ define([
             name: "Name",
             key: "name",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }]
     });
     Components.add("components/search", {
@@ -260,17 +262,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/user", {
@@ -282,17 +284,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/product_gallery", {
@@ -304,17 +306,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/cart", {
@@ -326,17 +328,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/checkout", {
@@ -348,17 +350,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/filters", {
@@ -370,17 +372,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/product", {
@@ -392,17 +394,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
     Components.add("components/slider", {
@@ -414,17 +416,17 @@ define([
             name: "asdasdad",
             key: "src",
             htmlAttr: "src",
-            inputtype: FileUploadInput
+            inputtype: inputs.FileUploadInput
         }, {
             name: "34234234",
             key: "width",
             htmlAttr: "width",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, {
             name: "d32d23",
             key: "height",
             htmlAttr: "height",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }]
     });
 });

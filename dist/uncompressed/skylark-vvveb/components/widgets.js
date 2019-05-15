@@ -2,8 +2,11 @@ define([
     "skylark-utils-dom/query",
     "../Vvveb",
     "../ComponentsGroup",
-    "../Components"
-],function($,Vvveb,ComponentsGroup,Components){
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
+    var jQuery = $;
+
 
     ComponentsGroup['Widgets'] = ["widgets/googlemaps", "widgets/video", "widgets/chartjs", "widgets/facebookpage", "widgets/paypal", "widgets/instagram", "widgets/twitter"/*, "widgets/facebookcomments"*/];
 
@@ -36,12 +39,12 @@ define([
         properties: [{
             name: "Address",
             key: "q",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }, 
     	{
             name: "Map type",
             key: "t",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     value: "q",
@@ -55,7 +58,7 @@ define([
         {
             name: "Zoom",
             key: "z",
-            inputtype: RangeInput,
+            inputtype: inputs.RangeInput,
             data:{
     			max: 20, //max zoom level
     			min:1,
@@ -142,7 +145,7 @@ define([
         properties: [{
             name: "Provider",
             key: "t",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     text: "Youtube",
@@ -159,23 +162,23 @@ define([
          {
             name: "Video id",
             key: "video_id",
-            inputtype: TextInput,
+            inputtype: inputs.TextInput,
         },{
             name: "Url",
             key: "url",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{
             name: "Autoplay",
             key: "autoplay",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         },{
             name: "Controls",
             key: "controls",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         },{
             name: "Loop",
             key: "loop",
-            inputtype: CheckboxInput
+            inputtype: inputs.CheckboxInput
         }]
     });
 
@@ -206,31 +209,31 @@ define([
             key: "business",
             htmlAttr: "data-href",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item name",
             key: "item_name",
             htmlAttr: "data-numposts",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Color scheme",
             key: "colorscheme",
             htmlAttr: "data-colorscheme",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Order by",
             key: "order-by",
             htmlAttr: "data-order-by",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Currency code",
             key: "width",
             htmlAttr: "data-width",
             child:".fb-comments",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}]
     });
 
@@ -248,7 +251,7 @@ define([
             key: "instgrm-permalink",
             htmlAttr: "data-instgrm-permalink",
             child: ".instagram-media",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }],
     });
 
@@ -277,7 +280,7 @@ define([
             key: "widget-id",
             htmlAttr: "data-widget-id",
             child: " > a, > iframe",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         }],
     });
 
@@ -312,25 +315,25 @@ define([
             key: "business",
             htmlAttr: "value",
             child:"input[name='business']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item name",
             key: "item_name",
             htmlAttr: "value",
             child:"input[name='item_name']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Item number",
             key: "item_number",
             htmlAttr: "value",
             child:"input[name='item_number']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Currency code",
             key: "currency_code",
             htmlAttr: "value",
             child:"input[name='currency_code']",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}],
     });
         
@@ -354,31 +357,31 @@ define([
             key: "small-header",
             htmlAttr: "data-small-header",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Adapt container width",
             key: "adapt-container-width",
             htmlAttr: "data-adapt-container-width",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Hide cover",
             key: "hide-cover",
             htmlAttr: "data-hide-cover",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "Show facepile",
             key: "show-facepile",
             htmlAttr: "data-show-facepile",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
         },{		
             name: "App Id",
             key: "appid",
             htmlAttr: "data-appId",
             child:".fb-page",
-            inputtype: TextInput
+            inputtype: inputs.TextInput
     	}],
        onChange: function(node, input, value, component) {
     	   //console.log(component.html);
@@ -494,7 +497,7 @@ define([
     	{
             name: "Type",
             key: "type",
-            inputtype: SelectInput,
+            inputtype: inputs.SelectInput,
             data:{
     			options: [{
                     text: "Line",

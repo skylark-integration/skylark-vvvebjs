@@ -2,6 +2,8 @@ define([
 	"skylark-utils-dom/query",
 	"./Vvveb"
 ],function($,Vvveb){
+	var jQuery = $;
+	
 	return Vvveb.Builder = {
 
 		component : {},
@@ -65,7 +67,7 @@ define([
 							if (component.image) {
 
 								item.css({
-									backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
+									backgroundImage: "url(" + component.image + ")", //backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
 									backgroundRepeat: "no-repeat"
 								})
 							}
@@ -281,7 +283,7 @@ define([
 			
 			self.frameHtml.on("mousemove touchmove", function(event) {
 				
-				if (event.target && isElement(event.target) && event.originalEvent)
+				if (event.target && Vvveb.isElement(event.target) && event.originalEvent)
 				{
 					self.highlightEl = target = jQuery(event.target);
 					var offset = target.offset();
@@ -302,13 +304,13 @@ define([
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (isIE11) 
+									 if (Vvveb.isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (isIE11) 
+									if (Vvveb.isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);

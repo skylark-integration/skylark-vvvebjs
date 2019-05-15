@@ -13,7 +13,7 @@ define([
 
 			$("#vvveb-code-editor textarea").keyup(function () 
 			{
-				delay(Vvveb.Builder.setHtml(this.value), 1000);
+				Vvveb.delay(Vvveb.Builder.setHtml(this.value), 1000);
 			});
 
 			//load code on document changes

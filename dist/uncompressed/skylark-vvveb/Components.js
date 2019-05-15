@@ -2,9 +2,14 @@ define([
 	"skylark-langx/langx",
 	"skylark-utils-dom/query",
 	"./Vvveb",
-	"./tmpl"
-],function($,Vvveb,tmpl){
+	"./tmpl",
+	"./inputs"
+],function(langx,$,Vvveb,tmpl,inputs){
+	var jQuery = $;
+
+	
 	return Vvveb.Components = {
+    	base_sort : 100,//start sorting for base component from 100 to allow extended properties to be first
 		
 		_components: {},
 		
@@ -297,7 +302,7 @@ define([
 					if (property.htmlAttr == "style")
 					{
 						//value = element.css(property.key);//jquery css returns computed style
-						var value = getStyle(element.get(0), property.key);//getStyle returns declared style
+						var value =  Vvveb.getStyle(element.get(0), property.key);//getStyle returns declared style
 					} else
 					{
 						var value = element.attr(property.htmlAttr);
@@ -316,7 +321,7 @@ define([
 				
 				fn(component, property);
 
-				if (property.inputtype == SectionInput)
+				if (property.inputtype == inputs.SectionInput)
 				{
 					section = rightPanel.find('.section[data-section="' + property.key + '"]');
 					

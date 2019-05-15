@@ -1,8 +1,12 @@
 define([
-	"skylark-langx/skylark"
+	"skylark-langx/skylark",
+	"skylark-bootstrap4"
+
 ],function(skylark){
 
-var delay = (function(){
+ var Vvveb = {};
+
+var delay = Vvveb.delay = (function(){
   var timer = 0;
   return function(callback, ms){
     clearTimeout (timer);
@@ -10,8 +14,7 @@ var delay = (function(){
   };
 })();
 
-function getStyle(el,styleProp)
-{
+var getStyle = Vvveb.getStyle = function (el,styleProp) {
 	value = "";
 	//var el = document.getElementById(el);
 	if (el.style && el.style.length > 0 && el.style[styleProp])//check inline
@@ -27,18 +30,17 @@ function getStyle(el,styleProp)
 	}
 	
 	return value;
-}
+} ;
 
-function isElement(obj){
+var isElement = Vvveb.isElement	=  function (obj){
    return (typeof obj==="object") &&
       (obj.nodeType===1) && (typeof obj.style === "object") &&
       (typeof obj.ownerDocument ==="object")/* && obj.tagName != "BODY"*/;
-}
+};
 
 
-var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
+var isIE11 = Vvveb.isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
 
-if (Vvveb === undefined) var Vvveb = {};
 
 Vvveb.defaultComponent = "_base";
 Vvveb.preservePropertySections = true;
@@ -49,7 +51,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 
 
 	// Toggle fullscreen
-	function launchFullScreen(document) {
+    Vvveb.launchFullScreen	=	function launchFullScreen(document) {
 	  if(document.documentElement.requestFullScreen) {
 	    
 			if (document.FullScreenElement)
@@ -78,7 +80,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 			else
 				document.documentElement.msRequestFullscreen();
 	  }
-	}
+	};
 
-	return skylark.attach("itg.vvveb",{});
+	return skylark.attach("itg.Vvveb",Vvveb);
 });

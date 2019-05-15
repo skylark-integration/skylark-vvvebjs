@@ -11,6 +11,10 @@ require.config({
      { name: "skylark-langx", location: "../node_modules/skylark-langx/dist/uncompressed/skylark-langx" },
      { name: "skylark-utils-dom", location: "../node_modules/skylark-utils-dom/dist/uncompressed/skylark-utils-dom"},
      { name: "skylark-bootstrap3", location: "../node_modules/skylark-bootstrap3/dist/uncompressed/skylark-bootstrap3"},
+     { name: "skylark-bootstrap4", location: "../node_modules/skylark-bootstrap4/dist/uncompressed/skylark-bootstrap4"},
+//     { name: "skylark-bootstrap4", location: "../../skylark-bootstrap4/src"},
+     { name: "skylark-ui-popper", location: "../node_modules/skylark-ui-popper/dist/uncompressed/skylark-ui-popper"},
+//     { name: "skylark-ui-popper", location: "../../../ui/bases/skylark-ui-popper/src"},
      { name: "skylark-codemirror", location: "../node_modules/skylark-codemirror/dist/uncompressed/skylark-codemirror"},
      { name: "skylark-vvveb", location: "../src" }
   ],

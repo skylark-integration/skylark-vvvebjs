@@ -2,7 +2,8 @@ define([
 	"skylark-utils-dom/query",
 	"./Vvveb",
 	"./Builder",
-	"./WysiwygEditor"
+	"./WysiwygEditor",
+	"skylark-bootstrap4/modal"
 ],function($,Vvveb){
 	var Gui = {
 		
@@ -14,8 +15,8 @@ define([
 				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
 				if (this.dataset.vvvebShortcut)
 				{
-					$(document).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-					$(window.FrameDocument, window.FrameWindow).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(document).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(window.FrameDocument, window.FrameWindow).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
 				}
 			});
 		},
@@ -101,7 +102,7 @@ define([
 		},
 		
 		fullscreen : function () {
-			launchFullScreen(document); // the whole page
+			Vvveb.launchFullScreen(document); // the whole page
 		},
 		
 		componentSearch : function () {
