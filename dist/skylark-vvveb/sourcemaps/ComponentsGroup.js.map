@@ -1,0 +1,1 @@
+{"version":3,"sources":["ComponentsGroup.js"],"names":["define","Vvveb","ComponentsGroup"],"mappings":";;;;;;;AAAAA,QACC,WACC,SAASC,GAEV,OAAOA,EAAMC","file":"../ComponentsGroup.js","sourcesContent":["define([\r\n\t\"./Vvveb\"\r\n],function(Vvveb){\r\n\r\n\treturn Vvveb.ComponentsGroup = {};\r\n\r\n});"]}

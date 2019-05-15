@@ -1,0 +1,432 @@
+define([
+    "skylark-utils-dom/query",
+    "../Vvveb",
+    "../ComponentsGroup",
+    "../Components",
+    "../inputs"
+],function($,Vvveb,ComponentsGroup,Components,inputs){
+
+
+    ComponentsGroup['Server Components'] = ["components/products", "components/product", "components/categories", "components/manufacturers", "components/search", "components/user", "components/product_gallery", "components/cart", "components/checkout", "components/filters", "components/product", "components/slider"];
+
+
+    Components.add("components/product", {
+        name: "Product",
+        attributes: ["data-component-product"],
+
+        image: "icons/map.svg",
+        html: '<iframe frameborder="0" src="https://maps.google.com/maps?&z=1&t=q&output=embed"></iframe>',
+        
+    	properties: [
+    	{
+            name: "Id",
+            key: "id",
+            htmlAttr: "id",
+            inputtype: inputs.TextInput
+        },
+    	{
+            name: "Select",
+            key: "id",
+            htmlAttr: "id",
+            inputtype: inputs.SelectInput,
+            data:{
+    			options: [{
+                    value: "",
+                    text: "None"
+                }, {
+                    value: "pull-left",
+                    text: "Left"
+                }, {
+                    value: "pull-right",
+                    text: "Right"
+                }]
+           },
+        },
+    	{
+            name: "Select 2",
+            key: "id",
+            htmlAttr: "id",
+            inputtype: inputs.SelectInput,
+            data:{
+    			options: [{
+                    value: "",
+                    text: "nimic"
+                }, {
+                    value: "pull-left",
+                    text: "gigi"
+                }, {
+                    value: "pull-right",
+                    text: "vasile"
+                }, {
+                    value: "pull-right",
+                    text: "sad34"
+                }]
+           },
+        }]
+    });    
+
+
+    Components.add("components/products", {
+        name: "Products",
+        attributes: ["data-component-products"],
+
+        image: "icons/products.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+
+        init: function (node)
+    	{
+    		$('.form-group[data-group]').hide();
+    		if (node.dataset.type != undefined)
+    		{
+    			$('.form-group[data-group="'+ node.dataset.type + '"]').show();
+    		} else
+    		{		
+    			$('.form-group[data-group]:first').show();
+    		}
+    	},
+        properties: [{
+            name: false,
+            key: "type",
+            inputtype: inputs.RadioButtonInput,
+    		htmlAttr:"data-type",
+            data: {
+                inline: true,
+                extraclass:"btn-group-fullwidth",
+                options: [{
+                    value: "autocomplete",
+                    text: "Autocomplete",
+                    title: "Autocomplete",
+                    icon:"la la-search",
+                    checked:true,
+                }, {
+                    value: "automatic",
+                    icon:"la la-cog",
+                    text: "Configuration",
+                    title: "Configuration",
+                }],
+            },
+    		onChange : function(element, value, input) {
+    			
+    			$('.form-group[data-group]').hide();
+    			$('.form-group[data-group="'+ input.value + '"]').show();
+
+    			return element;
+    		}, 
+    		init: function(node) {
+    			return node.dataset.type;
+    		},            
+        },{
+            name: "Products",
+            key: "products",
+            group:"autocomplete",
+            htmlAttr:"data-products",
+            inline:true,
+            col:12,
+            inputtype: inputs.AutocompleteList,
+            data: {
+                url: "/admin/?module=editor&action=productsAutocomplete",
+            },
+        },{
+            name: "Number of products",
+            group:"automatic",
+            key: "limit",
+    		htmlAttr:"data-limit",
+            inputtype: inputs.NumberInput,
+            data: {
+                value: "8",//default
+                min: "1",
+                max: "1024",
+                step: "1"
+            },        
+            getFromNode: function(node) {
+                return 10
+            },
+        },{
+            name: "Start from page",
+            group:"automatic",
+            key: "page",
+    		htmlAttr:"data-page",
+            data: {
+                value: "1",//default
+                min: "1",
+                max: "1024",
+                step: "1"
+            },        
+            inputtype: inputs.NumberInput,
+            getFromNode: function(node) {
+                return 0
+            },
+        },{
+            name: "Order by",
+            group:"automatic",
+            key: "order",
+    		htmlAttr:"data-order",
+            inputtype: inputs.SelectInput,
+            data: {
+                options: [{
+    				value: "price_asc",
+                    text: "Price Ascending"
+                }, {
+                    value: "price_desc",
+                    text: "Price Descending"
+                }, {
+                    value: "date_asc",
+                    text: "Date Ascending"
+                }, {
+                    value: "date_desc",
+                    text: "Date Descending"
+                }, {
+                    value: "sales_asc",
+                    text: "Sales Ascending"
+                }, {
+                    value: "sales_desc",
+                    text: "Sales Descending"
+                }]
+    		}
+    	},{
+            name: "Category",
+            group:"automatic",
+            key: "category",
+    		htmlAttr:"data-category",
+            inline:true,
+            col:12,
+            inputtype: inputs.AutocompleteList,
+            data: {
+                url: "/admin/?module=editor&action=productsAutocomplete",
+            },
+
+    	},{
+            name: "Manufacturer",
+            group:"automatic",
+            key: "manufacturer",
+    		htmlAttr:"data-manufacturer",
+            inline:true,
+            col:12,
+            inputtype: inputs.AutocompleteList,
+            data: {
+                url: "/admin/?module=editor&action=productsAutocomplete",
+    		}
+    	},{
+            name: "Manufacturer 2",
+            group:"automatic",
+            key: "manufacturer 2",
+    		htmlAttr:"data-manufacturer2",
+            inline:true,
+            col:12,
+            inputtype: inputs.AutocompleteList,
+            data: {
+                url: "/admin/?module=editor&action=productsAutocomplete",
+            },
+        }]
+    });
+
+    Components.add("components/manufacturers", {
+        name: "Manufacturers",
+        classes: ["component_manufacturers"],
+        image: "icons/categories.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            nolabel:false,
+            inputtype: inputs.TextInput,
+            data: {text:"Fields"}
+    	},{
+            name: "Name",
+            key: "category",
+            inputtype: inputs.TextInput
+    	},{
+            name: "Image",
+            key: "category",
+            inputtype: inputs.TextInput
+    	}
+        ]
+    });
+
+    Components.add("components/categories", {
+        name: "Categories",
+        classes: ["component_categories"],
+        image: "icons/categories.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "Name",
+            key: "name",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }]
+    });
+    Components.add("components/search", {
+        name: "Search",
+        classes: ["component_search"],
+        image: "icons/search.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/user", {
+        name: "User",
+        classes: ["component_user"],
+        image: "icons/user.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/product_gallery", {
+        name: "Product gallery",
+        classes: ["component_product_gallery"],
+        image: "icons/product_gallery.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/cart", {
+        name: "Cart",
+        classes: ["component_cart"],
+        image: "icons/cart.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/checkout", {
+        name: "Checkout",
+        classes: ["component_checkout"],
+        image: "icons/checkout.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/filters", {
+        name: "Filters",
+        classes: ["component_filters"],
+        image: "icons/filters.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/product", {
+        name: "Product",
+        classes: ["component_product"],
+        image: "icons/product.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+    Components.add("components/slider", {
+        name: "Slider",
+        classes: ["component_slider"],
+        image: "icons/slider.svg",
+        html: '<div class="form-group"><label>Your response:</label><textarea class="form-control"></textarea></div>',
+        properties: [{
+            name: "asdasdad",
+            key: "src",
+            htmlAttr: "src",
+            inputtype: inputs.FileUploadInput
+        }, {
+            name: "34234234",
+            key: "width",
+            htmlAttr: "width",
+            inputtype: inputs.TextInput
+        }, {
+            name: "d32d23",
+            key: "height",
+            htmlAttr: "height",
+            inputtype: inputs.TextInput
+        }]
+    });
+});

@@ -1,0 +1,37 @@
+{
+  "name": "skylark-vvveb",
+  "description": "A version of Vvveb.js that ported to running on skylarkjs",
+  "version": "0.9.0",
+  "keywords": [
+    "skylark",
+    "ui",
+    "bootstrap4"
+  ],
+  "homepage": "https://github.com/skylark-integration/skylark-vvveb/",
+  "author": "Hudaokeji, Inc.",
+  "scripts": {
+    "build": "sbundle build ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skylark-integration/skylark-vvveb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skylark-integration/skylark-vvveb/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "skylark-bootstrap3": "git+https://github.com/skylark-integration/skylark-bootstrap3.git#master",
+    "skylark-codemirror": "git+https://github.com/skylark-integration/skylark-codemirror.git#master",
+    "skylark-langx": "git+https://github.com/skylarklangx/skylark-langx.git#master",
+    "skylark-utils-dom": "git+https://github.com/skylarkutils/skylark-utils-dom.git#master"
+  },
+  "skylarkjs": {
+    "build": {
+      "prepare": {}
+    }
+  },
+  "engines": {
+    "node": ">=0.10.1"
+  }
+}

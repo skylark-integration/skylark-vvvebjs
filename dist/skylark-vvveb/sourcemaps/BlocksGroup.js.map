@@ -1,0 +1,1 @@
+{"version":3,"sources":["BlocksGroup.js"],"names":["define","Vvveb","BlocksGroup"],"mappings":";;;;;;;AAAAA,QACC,WACC,SAASC,GAEV,OAAOA,EAAMC","file":"../BlocksGroup.js","sourcesContent":["define([\r\n\t\"./Vvveb\"\r\n],function(Vvveb){\r\n\r\n\treturn Vvveb.BlocksGroup = {};\r\n\r\n});"]}
