@@ -88,7 +88,7 @@
 
 define('skylark-vvveb/Vvveb',[
 	"skylark-langx/skylark",
-	"skylark-bootstrap4"
+	"skylark-bootstrap3"
 
 ],function(skylark){
 
@@ -170,7 +170,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 	  }
 	};
 
-	return skylark.attach("itg.Vvveb",Vvveb);
+	return skylark.attach("intg.Vvveb",Vvveb);
 });
 define('skylark-vvveb/BlocksGroup',[
 	"./Vvveb"
@@ -197,7 +197,7 @@ define('skylark-vvveb/Blocks',[
 	};	
 });
 define('skylark-vvveb/Builder',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	var jQuery = $;
@@ -233,21 +233,24 @@ define('skylark-vvveb/Builder',[
 			self.dragElement = null;
 		},
 		
+	/* controls */    	
 		loadControlGroups : function() {	
 
 			var componentsList = $(".components-list");
 			componentsList.empty();
 			var item = {}, component = {};
+			var count = 0;
 			
 			componentsList.each(function ()
 			{
 				var list = $(this);
 				var type = this.dataset.type;
+				count ++;
 				
 				for (group in Vvveb.ComponentsGroup)	
 				{
-					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + '">' + group + '  <div class="header-arrow"></div>\
-										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + '">  <ol></ol></li>');
+					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + count + '">' + group + '  <div class="header-arrow"></div>\
+										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + count + '">  <ol></ol></li>');
 
 					var componentsSubList = list.find('li[data-section="' + group + '"]  ol');
 					
@@ -265,7 +268,7 @@ define('skylark-vvveb/Builder',[
 							if (component.image) {
 
 								item.css({
-									backgroundImage: "url(" + component.image + ")", //backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
+									backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
 									backgroundRepeat: "no-repeat"
 								})
 							}
@@ -322,12 +325,15 @@ define('skylark-vvveb/Builder',[
 		 },
 		
 		loadUrl : function(url, callback) {	
+			var self = this;
 			jQuery("#select-box").hide();
 			
 			self.initCallback = callback;
 			if (Vvveb.Builder.iframe.src != url) Vvveb.Builder.iframe.src = url;
-		},		
-		_loadIframe : function(url) {	// iframe 
+		},
+		
+	/* iframe */
+		_loadIframe : function(url) {	
 
 			var self = this;
 			self.iframe = this.documentFrame.get(0);
@@ -337,6 +343,9 @@ define('skylark-vvveb/Builder',[
 	        {
 					window.FrameWindow = self.iframe.contentWindow;
 					window.FrameDocument = self.iframe.contentWindow.document;
+					var addSectionBox = jQuery("#add-section-box"); 
+					var highlightBox = jQuery("#highlight-box").hide(); 
+					
 
 					$(window.FrameWindow).on( "beforeunload", function(event) {
 						if (Vvveb.Undo.undoIndex <= 0)
@@ -367,14 +376,18 @@ define('skylark-vvveb/Builder',[
 							{
 								var offset = self.highlightEl.offset();
 								
-								jQuery("#highlight-box").css(
+								highlightBox.css(
 									{"top": offset.top - self.frameDoc.scrollTop() , 
 									 "left": offset.left - self.frameDoc.scrollLeft() , 
 									 "width" : self.highlightEl.outerWidth(), 
 									 "height": self.highlightEl.outerHeight(),
 									 //"display": "block"
-									 });			
+									 });		
+									 
+								
+								addSectionBox.hide();
 							}
+							
 					});
 				
 					Vvveb.WysiwygEditor.init(window.FrameDocument);
@@ -398,6 +411,8 @@ define('skylark-vvveb/Builder',[
 			self.frameHead.append('<link data-vvveb-helpers href="' + Vvveb.baseUrl + '../../css/vvvebjs-editor-helpers.css" rel="stylesheet">');
 
 			self._initHighlight();
+			
+			$(window).triggerHandler("vvveb.iframe.loaded", self.frameDoc);
 	    },	
 	    
 	    _getElementType: function(el) {
@@ -474,14 +489,14 @@ define('skylark-vvveb/Builder',[
 			
 		},
 
-	 
-	    _initHighlight: function() { // iframe highlight
+	/* iframe highlight */    
+	    _initHighlight: function() {
 			
 			var self = Vvveb.Builder;
 			
 			self.frameHtml.on("mousemove touchmove", function(event) {
 				
-				if (event.target && Vvveb.isElement(event.target) && event.originalEvent)
+				if (event.target && isElement(event.target) && event.originalEvent)
 				{
 					self.highlightEl = target = jQuery(event.target);
 					var offset = target.offset();
@@ -502,13 +517,13 @@ define('skylark-vvveb/Builder',[
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (Vvveb.isIE11) 
+									 if (isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (Vvveb.isIE11) 
+									if (isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);
@@ -543,7 +558,14 @@ define('skylark-vvveb/Builder',[
 							  "display" : event.target.hasAttribute('contenteditable')?"none":"block",
 							  "border":self.isDragging?"1px dashed aqua":"",//when dragging highlight parent with green
 							 });
-							 
+
+						if (height < 50) 
+						{
+							jQuery("#section-actions").addClass("outside");	 
+						} else
+						{
+							jQuery("#section-actions").removeClass("outside");	
+						}
 						jQuery("#highlight-name").html(self._getElementType(event.target));
 						if (self.isDragging) jQuery("#highlight-name").hide(); else jQuery("#highlight-name").show();//hide tag name when dragging
 					}
@@ -557,14 +579,17 @@ define('skylark-vvveb/Builder',[
 					self.isDragging = false;
 					if (self.iconDrag) self.iconDrag.remove();
 					$("#component-clone").remove();
-					
-					if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
-					{
-						newElement = $(self.component.html);
-						self.dragElement.replaceWith(newElement);
-						self.dragElement = newElement;
+
+					if (self.dragMoveMutation === false)
+					{				
+						if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
+						{
+							newElement = $(self.component.html);
+							self.dragElement.replaceWith(newElement);
+							self.dragElement = newElement;
+						}
+						if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					}
-					if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					
 					self.dragElement.css("border", "");
 					
@@ -769,11 +794,21 @@ define('skylark-vvveb/Builder',[
 				
 				addSectionElement = self.highlightEl; 
 
-				var offset = jQuery(this).offset();			
+				var offset = jQuery(addSectionElement).offset();			
+				var top = (offset.top - self.frameDoc.scrollTop()) + addSectionElement.outerHeight();
+				var left = (offset.left - self.frameDoc.scrollLeft()) + (addSectionElement.outerWidth() / 2) - (addSectionBox.outerWidth() / 2);
+				var outerHeight = $(window.FrameWindow).height() + self.frameDoc.scrollTop();
+
+				//check if box is out of viewport and move inside
+				if (left < 0) left = 0;
+				if (top < 0) top = 0;
+				if ((left + addSectionBox.outerWidth()) > self.frameDoc.outerWidth()) left = self.frameDoc.outerWidth() - addSectionBox.outerWidth();
+				if (((top + addSectionBox.outerHeight()) + self.frameDoc.scrollTop()) > outerHeight) top = top - addSectionBox.outerHeight();
+				
 				
 				addSectionBox.css(
-					{"top": offset.top - self.frameDoc.scrollTop() - $(this).outerHeight(), 
-					 "left": offset.left - (addSectionBox.outerWidth() / 2) - (275) - self.frameDoc.scrollLeft(), 
+					{"top": top, 
+					 "left": left, 
 					 "display": "block",
 					 });
 				
@@ -823,8 +858,8 @@ define('skylark-vvveb/Builder',[
 			
 		},	
 
-	
-		_initDragdrop : function() {//drag and drop
+	/* drag and drop */
+		_initDragdrop : function() {
 
 			var self = this;
 			self.isDragging = false;	
@@ -928,6 +963,8 @@ define('skylark-vvveb/Builder',[
 			var hasDoctpe = (doc.doctype !== null);
 			var html = "";
 			
+			$(window).triggerHandler("vvveb.getHtml.before", doc);
+			
 			if (hasDoctpe) html =
 			"<!DOCTYPE "
 	         + doc.doctype.name
@@ -938,7 +975,12 @@ define('skylark-vvveb/Builder',[
 	          
 	         html +=  doc.documentElement.innerHTML + "\n</html>";
 	         
-	         return this.removeHelpers(html, keepHelperAttributes);
+	         html = this.removeHelpers(html, keepHelperAttributes);
+	         
+	         var filter = $(window).triggerHandler("vvveb.getHtml.after", html);
+	         if (filter) return filter;
+	         
+	         return html;
 		},
 		
 		setHtml: function(html) 
@@ -1003,7 +1045,7 @@ define('skylark-vvveb/Builder',[
 
 
 define('skylark-vvveb/CodeEditor',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	return Vvveb.CodeEditor = {
@@ -1017,7 +1059,7 @@ define('skylark-vvveb/CodeEditor',[
 
 			$("#vvveb-code-editor textarea").keyup(function () 
 			{
-				Vvveb.delay(Vvveb.Builder.setHtml(this.value), 1000);
+				delay(Vvveb.Builder.setHtml(this.value), 1000);
 			});
 
 			//load code on document changes
@@ -1048,6 +1090,7 @@ define('skylark-vvveb/CodeEditor',[
 			this.isActive = false;
 			this.destroy();
 		}
+
 	}
 
 });
@@ -1102,11 +1145,11 @@ define('skylark-vvveb/tmpl',[
 
 });
 define('skylark-vvveb/inputs',[
-	"skylark-utils-dom/langx",
-	"skylark-utils-dom/query",
+	"skylark-langx/langx",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
-	"skylark-bootstrap4/button",
+	"skylark-bootstrap3/button",
 ],function(langx, $,Vvveb,tmpl) {
 	var Input = {
 		
@@ -1669,7 +1712,7 @@ define('skylark-vvveb/inputs',[
 
 define('skylark-vvveb/Components',[
 	"skylark-langx/langx",
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
 	"./inputs"
@@ -1691,6 +1734,8 @@ define('skylark-vvveb/Components',[
 		_classesRegexLookup: {},
 		
 		componentPropertiesElement: "#right-panel .component-properties",
+
+		componentPropertiesDefaultSection: "content",
 
 		get: function(type) {
 			return this._components[type];
@@ -1759,8 +1804,8 @@ define('skylark-vvveb/Components',[
 			 
 			 if (inheritData = this._components[inheritType])
 			 {
-				newData = langx.extend(true,{}, inheritData, data);
-				newData.properties = langx.merge( langx.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
+				newData = $.extend(true,{}, inheritData, data);
+				newData.properties = $.merge( $.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
 			 }
 			 
 			 //sort by order
@@ -1876,17 +1921,27 @@ define('skylark-vvveb/Components',[
 		render: function(type) {
 
 			var component = this._components[type];
+
+			var componentsPanel = jQuery(this.componentPropertiesElement);
+			var defaultSection = this.componentPropertiesDefaultSection;
+			var componentsPanelSections = {};
+
+			jQuery(this.componentPropertiesElement + " .tab-pane").each(function ()
+			{
+				var sectionName = this.dataset.section;
+				componentsPanelSections[sectionName] = $(this);
+				
+			});
 			
-			var rightPanel = jQuery(this.componentPropertiesElement);
-			var section = rightPanel.find('.section[data-section="default"]');
+			var section = componentsPanelSections[defaultSection].find('.section[data-section="default"]');
 			
 			if (!(Vvveb.preservePropertySections && section.length))
 			{
-				rightPanel.html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
-				section = rightPanel.find(".section");
+				componentsPanelSections[defaultSection].html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
+				section = componentsPanelSections[defaultSection].find(".section");
 			}
 
-			rightPanel.find('[data-header="default"] span').html(component.name);
+			componentsPanelSections[defaultSection].find('[data-header="default"] span').html(component.name);
 			section.html("")	
 		
 			if (component.beforeInit) component.beforeInit(Vvveb.Builder.selectedEl.get(0));
@@ -1916,7 +1971,11 @@ define('skylark-vvveb/Components',[
 							}
 							else if (property.htmlAttr == "style") 
 							{
-								element = element.css(property.key, value);
+								element = Vvveb.StyleManager.setStyle(element, property.key, value);
+							}
+							else if (property.htmlAttr == "innerHTML") 
+							{
+								element = Vvveb.ContentManager.setHtml(element, value);
 							}
 							else
 							{
@@ -1971,7 +2030,11 @@ define('skylark-vvveb/Components',[
 					if (property.htmlAttr == "style")
 					{
 						//value = element.css(property.key);//jquery css returns computed style
-						var value =  Vvveb.getStyle(element.get(0), property.key);//getStyle returns declared style
+						var value = Vvveb.StyleManager.getStyle(element, property.key);//getStyle returns declared style
+					} else
+					if (property.htmlAttr == "innerHTML")
+					{
+						var value = Vvveb.ContentManager.getHtml(element);
 					} else
 					{
 						var value = element.attr(property.htmlAttr);
@@ -1989,18 +2052,25 @@ define('skylark-vvveb/Components',[
 				}
 				
 				fn(component, property);
-
-				if (property.inputtype == inputs.SectionInput)
+				
+				var propertySection = defaultSection;
+				if (property.section)
 				{
-					section = rightPanel.find('.section[data-section="' + property.key + '"]');
+					propertySection = property.section;
+				}
+				
+
+				if (property.inputtype == SectionInput)
+				{
+					section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					
 					if (Vvveb.preservePropertySections && section.length)
 					{
 						section.html("");
 					} else 
 					{
-						rightPanel.append(property.input);
-						section = rightPanel.find('.section[data-section="' + property.key + '"]');
+						componentsPanelSections[propertySection].append(property.input);
+						section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					}
 				}
 				else
@@ -2021,8 +2091,31 @@ define('skylark-vvveb/Components',[
 		}
 	};	
 });
+define('skylark-vvveb/ContentManager',[
+	"skylark-jquery",
+	"./Vvveb"
+],function($,Vvveb){
+	return Vvveb.ContentManager = {
+		getAttr: function(element, attrName) {
+			return element.attr(attrName);
+		},
+		
+		setAttr: function(element, attrName, value) {
+			return element.attr(attrName, value);
+		},
+		
+		setHtml: function(element, html) {
+			return element.html(html);
+		},
+		
+		getHtml: function(element) {
+			return element.html();
+		}
+	}
+
+});
 define('skylark-vvveb/FileManager',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl"
 ],function($,Vvveb,tmpl){
@@ -2066,18 +2159,19 @@ define('skylark-vvveb/FileManager',[
 			});
 		},
 		
-		addPage: function(name, title, url) {
+		addPage: function(name, data) {
 			
-			this.pages[name] = {title:title, url:url};
+			this.pages[name] = data;
+			data['name'] = name;
 			
 			this.tree.append(
-				tmpl("vvveb-filemanager-page", {name:name, title:title, url:url}));
+				tmpl("vvveb-filemanager-page", data));
 		},
 		
 		addPages: function(pages) {
 			for (page in pages)
 			{
-				this.addPage(pages[page]['name'], pages[page]['title'], pages[page]['url']);
+				this.addPage(pages[page]['name'], pages[page]);
 			}
 		},
 		
@@ -2086,7 +2180,7 @@ define('skylark-vvveb/FileManager',[
 				tmpl("vvveb-filemanager-component", {name:name, url:url, title:title}));
 		},
 		
-		getComponents: function() {
+		getComponents: function(allowedComponents = {}) {
 
 				var tree = [];
 				function getNodeTree (node, parent) {
@@ -2097,6 +2191,10 @@ define('skylark-vvveb/FileManager',[
 							if (child && child["attributes"] != undefined && 
 								(matchChild = Vvveb.Components.matchNode(child))) 
 							{
+								if (Array.isArray(allowedComponents)
+									&& allowedComponents.indexOf(matchChild.type) == -1)
+								continue;
+							
 								element = {
 									name: matchChild.name,
 									image: matchChild.image,
@@ -2122,10 +2220,11 @@ define('skylark-vvveb/FileManager',[
 			return tree;
 		},
 		
-		loadComponents: function() {
+		loadComponents: function(allowedComponents = {}) {
 
-			tree = this.getComponents();
-			html = drawComponentsTree(tree);
+			var tree = this.getComponents(allowedComponents);
+			var html = drawComponentsTree(tree);
+			var j = 0;
 
 			function drawComponentsTree(tree)
 			{
@@ -2171,7 +2270,7 @@ define('skylark-vvveb/FileManager',[
 			return this.loadPage(this.currentPage);
 		},
 		
-		loadPage: function(name, disableCache = true) {
+		loadPage: function(name, allowedComponents = false, disableCache = true) {
 			$("[data-page]", this.tree).removeClass("active");
 			$("[data-page='" + name + "']", this.tree).addClass("active");
 			
@@ -2180,7 +2279,7 @@ define('skylark-vvveb/FileManager',[
 			
 			Vvveb.Builder.loadUrl(url + (disableCache ? (url.indexOf('?') > -1?'&':'?') + Math.random():''), 
 				function () { 
-					Vvveb.FileManager.loadComponents(); 
+					Vvveb.FileManager.loadComponents(allowedComponents); 
 				});
 		},
 
@@ -2191,6 +2290,40 @@ define('skylark-vvveb/FileManager',[
 	}
 });
 
+define('skylark-vvveb/StyleManager',[
+	"skylark-jquery",
+	"./Vvveb"
+],function($,Vvveb){
+	return Vvveb.StyleManager = {
+		setStyle: function(element, styleProp, value) {
+			return element.css(styleProp, value);
+		},
+		
+		
+		_getCssStyle: function(element, styleProp){
+			var value = "";
+			var el = element.get(0);
+			
+			if (el.style && el.style.length > 0 && el.style[styleProp])//check inline
+				var value = el.style[styleProp];
+			else
+			if (el.currentStyle)	//check defined css
+				var value = el.currentStyle[styleProp];
+			else if (window.getComputedStyle)
+			{
+				var value = document.defaultView.getDefaultComputedStyle ? 
+								document.defaultView.getDefaultComputedStyle(el,null).getPropertyValue(styleProp) : 
+								window.getComputedStyle(el,null).getPropertyValue(styleProp);
+			}
+			
+			return value;
+		},
+		
+		getStyle: function(element,styleProp){
+			return this._getCssStyle(element, styleProp);
+		}
+	}	
+});
 define('skylark-vvveb/Undo',[
 	"./Vvveb"
 ],function(Vvveb){
@@ -2303,7 +2436,7 @@ define('skylark-vvveb/Undo',[
 });
 
 define('skylark-vvveb/WysiwygEditor',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Undo"
 ],function($,Vvveb){
@@ -2381,11 +2514,11 @@ define('skylark-vvveb/WysiwygEditor',[
 });
 	
 define('skylark-vvveb/Gui',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Builder",
 	"./WysiwygEditor",
-	"skylark-bootstrap4/modal"
+	"skylark-bootstrap3/modal"
 ],function($,Vvveb){
 	var Gui = {
 		
@@ -2397,8 +2530,8 @@ define('skylark-vvveb/Gui',[
 				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
 				if (this.dataset.vvvebShortcut)
 				{
-					$(document).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-					$(window.FrameDocument, window.FrameWindow).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(document).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(window.FrameDocument, window.FrameWindow).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
 				}
 			});
 		},
@@ -2448,7 +2581,7 @@ define('skylark-vvveb/Gui',[
 			var link = document.createElement('a');
 			if ('download' in link)
 			{
-				link.download = filename;
+				link.dataset.download = filename;
 				link.href = uriContent;
 				link.target = "_blank";
 				
@@ -2484,7 +2617,7 @@ define('skylark-vvveb/Gui',[
 		},
 		
 		fullscreen : function () {
-			Vvveb.launchFullScreen(document); // the whole page
+			launchFullScreen(document); // the whole page
 		},
 		
 		componentSearch : function () {
@@ -2540,8 +2673,8 @@ define('skylark-vvveb/Gui',[
 			});
 		},
 
-	
-		newPage : function () { //Pages, file/components tree 
+	//Pages, file/components tree 
+		newPage : function () {
 			
 			var newPageModal = $('#new-page-modal');
 			
@@ -2580,7 +2713,45 @@ define('skylark-vvveb/Gui',[
 			//aria-pressed attribute is updated after action is called and we check for false instead of true
 			var designerMode = this.attributes["aria-pressed"].value != "true";
 			Vvveb.Builder.setDesignerMode(designerMode);
-		}
+		},
+	//layout
+		togglePanel: function (panel, cssVar) {
+			var panel = $(panel);
+			var body = $("body");
+			var prevValue = body.css(cssVar);
+			if (prevValue !== "0px") 
+			{
+				panel.data("layout-toggle", prevValue);
+				body.css(cssVar, "0px");
+				panel.hide();
+			} else
+			{
+				prevValue= panel.data("layout-toggle");
+				body.css(cssVar, '');
+				panel.show();
+				
+			}
+		},
+
+		toggleFileManager: function () {
+			Vvveb.Gui.togglePanel("#filemanager", "--builder-filemanager-height");
+		},
+		
+		toggleLeftColumn: function () {
+			Vvveb.Gui.togglePanel("#left-panel", "--builder-left-panel-width");
+		},
+		
+		toggleRightColumn: function () {
+			Vvveb.Gui.togglePanel("#right-panel", "--builder-right-panel-width");
+			var rightColumnEnabled = this.attributes["aria-pressed"].value == "true";
+
+			$("#vvveb-builder").toggleClass("no-right-panel");
+			$(".component-properties-tab").toggle();
+			
+			Vvveb.Components.componentPropertiesElement = (rightColumnEnabled ? "#right-panel" :"#left-panel") +" .component-properties";
+			if ($("#properties").is(":visible")) $('.component-tab a').show().tab('show'); 
+
+		},
 		
 	}
 
@@ -3483,21 +3654,29 @@ define('skylark-vvveb/blocks/bootstrap4',[
 
 });
 define('skylark-vvveb/components/bootstrap4',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
     "../inputs"
 ],function($,Vvveb,ComponentsGroup,Components,inputs){
 
-    bgcolorClasses = ["bg-primary", "bg-secondary", "bg-success", "bg-danger", "bg-warning", "bg-info", "bg-light", "bg-dark", "bg-white"]
+    var bgcolorClasses = [
+        "bg-primary", 
+        "bg-secondary", 
+        "bg-success", 
+        "bg-danger", 
+        "bg-warning", 
+        "bg-info", 
+        "bg-light", 
+        "bg-dark", 
+        "bg-white"
+    ],
 
-    bgcolorSelectOptions = 
-    [{
-    	value: "Default",
-    	text: ""
-    }, 
-    {
+    bgcolorSelectOptions = [{
+	   value: "Default",
+	   text: ""
+    }, {
     	value: "bg-primary",
     	text: "Primary"
     }, {
@@ -3542,10 +3721,35 @@ define('skylark-vvveb/components/bootstrap4',[
     	return newNode;
     }
 
-    ComponentsGroup['Bootstrap 4'] =
-    ["html/container", "html/gridrow", "html/button", "html/buttongroup", "html/buttontoolbar", "html/heading", "html/image", "html/jumbotron", "html/alert", "html/card", "html/listgroup", "html/hr", "html/taglabel", "html/badge", "html/progress", "html/navbar", "html/breadcrumbs", "html/pagination", "html/form", "html/textinput", "html/textareainput", "html/selectinput", "html/fileinput", "html/checkbox", "html/radiobutton", "html/table", "html/paragraph"];
-
-
+    ComponentsGroup['Bootstrap 4'] = [
+        "html/container", 
+        "html/gridrow", 
+        "html/button", 
+        "html/buttongroup", 
+        "html/buttontoolbar", 
+        "html/heading", 
+        "html/image", 
+        "html/jumbotron", 
+        "html/alert", 
+        "html/card", 
+        "html/listgroup", 
+        "html/hr", 
+        "html/taglabel", 
+        "html/badge", 
+        "html/progress", 
+        "html/navbar", 
+        "html/breadcrumbs", 
+        "html/pagination", 
+        "html/form", 
+        "html/textinput", 
+        "html/textareainput", 
+        "html/selectinput", 
+        "html/fileinput", 
+        "html/checkbox", 
+        "html/radiobutton", 
+        "html/table", 
+        "html/paragraph"
+    ];
 
     Components.add("_base", {
         name: "Element",
@@ -3577,16 +3781,15 @@ define('skylark-vvveb/components/bootstrap4',[
 
     //display
     Components.extend("_base", "_base", {
-    	 properties: [
-         {
+    	 properties: [{
             key: "display_header",
             inputtype: inputs.SectionInput,
             name:false,
             sort: Components.base_sort++,
             data: {header:"Display"},
         }, {
-            name: "Display",
             key: "display",
+            name: "Display",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -3609,8 +3812,8 @@ define('skylark-vvveb/components/bootstrap4',[
                 }]
             }
         }, {
-            name: "Position",
             key: "position",
+            name: "Position",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -3633,8 +3836,8 @@ define('skylark-vvveb/components/bootstrap4',[
                 }]
             }
         }, {
-            name: "Top",
             key: "top",
+            name: "Top",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -3642,8 +3845,8 @@ define('skylark-vvveb/components/bootstrap4',[
             parent:"",
             inputtype: inputs.CssUnitInput
     	}, {
-            name: "Left",
             key: "left",
+            name: "Left",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -4461,7 +4664,24 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "type",
             htmlAttr: "class",
             inputtype: inputs.SelectInput,
-            validValues: ["btn-default", "btn-primary", "btn-info", "btn-success", "btn-warning", "btn-info", "btn-light", "btn-dark", "btn-outline-primary", "btn-outline-info", "btn-outline-success", "btn-outline-warning", "btn-outline-info", "btn-outline-light", "btn-outline-dark", "btn-link"],
+            validValues: [
+                "btn-default", 
+                "btn-primary", 
+                "btn-info", 
+                "btn-success", 
+                "btn-warning", 
+                "btn-info", 
+                "btn-light", 
+                "btn-dark", 
+                "btn-outline-primary", 
+                "btn-outline-info", 
+                "btn-outline-success", 
+                "btn-outline-warning", 
+                "btn-outline-info", 
+                "btn-outline-light", 
+                "btn-outline-dark", 
+                "btn-link"
+            ],
             data: {
                 options: [{
                     value: "btn-default",
@@ -5587,7 +5807,7 @@ define('skylark-vvveb/components/bootstrap4',[
 
 });
 define('skylark-vvveb/components/server',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
@@ -6019,7 +6239,7 @@ define('skylark-vvveb/components/server',[
     });
 });
 define('skylark-vvveb/components/widgets',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
@@ -6028,7 +6248,14 @@ define('skylark-vvveb/components/widgets',[
     var jQuery = $;
 
 
-    ComponentsGroup['Widgets'] = ["widgets/googlemaps", "widgets/video", "widgets/chartjs", "widgets/facebookpage", "widgets/paypal", "widgets/instagram", "widgets/twitter"/*, "widgets/facebookcomments"*/];
+    ComponentsGroup['Widgets'] = [
+        "widgets/googlemaps", 
+        "widgets/video", 
+        "widgets/chartjs", 
+        "widgets/facebookpage", 
+        "widgets/paypal", 
+        "widgets/instagram", 
+        "widgets/twitter"/*, "widgets/facebookcomments"*/];
 
     Components.extend("_base", "widgets/googlemaps", {
         name: "Google Maps",
@@ -6103,16 +6330,14 @@ define('skylark-vvveb/components/widgets',[
         controls: true,
         loop: false,
 
-    	init: function (node)
-    	{
+    	init: function (node) {
     		iframe = jQuery('iframe', node);
     		video = jQuery('video', node);
     		
     		$("#right-panel [data-key=url]").hide();
     		
     		//check if html5
-    		if (video.length) 
-    		{
+    		if (video.length) {
     			this.url = video.src;
     		} else if (iframe.length) //vimeo or youtube
     		{
@@ -6131,8 +6356,7 @@ define('skylark-vvveb/components/widgets',[
     		$("#right-panel input[name=url]").val(this.url);
     	},
     	
-    	onChange: function (node, property, value)
-    	{
+    	onChange: function (node, property, value)	{
     		this[property.key] = value;
 
     		//if (property.key == "t")
@@ -7056,7 +7280,7 @@ define('skylark-vvveb/plugins/google-fonts',[
 });
 
  define('skylark-vvveb/plugins/jszip',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../Gui"
 ],function($,Vvveb,Gui){
@@ -7146,7 +7370,9 @@ define('skylark-vvveb/main',[
 	"./CodeEditor",
 	"./ComponentsGroup",
 	"./Components",
+	"./ContentManager",
 	"./FileManager",
+	"./StyleManager",
 	"./Gui",
 	"./inputs",
 	"./tmpl",

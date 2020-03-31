@@ -1,5 +1,5 @@
 define([
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl"
 ],function($,Vvveb,tmpl){
@@ -43,18 +43,19 @@ define([
 			});
 		},
 		
-		addPage: function(name, title, url) {
+		addPage: function(name, data) {
 			
-			this.pages[name] = {title:title, url:url};
+			this.pages[name] = data;
+			data['name'] = name;
 			
 			this.tree.append(
-				tmpl("vvveb-filemanager-page", {name:name, title:title, url:url}));
+				tmpl("vvveb-filemanager-page", data));
 		},
 		
 		addPages: function(pages) {
 			for (page in pages)
 			{
-				this.addPage(pages[page]['name'], pages[page]['title'], pages[page]['url']);
+				this.addPage(pages[page]['name'], pages[page]);
 			}
 		},
 		
@@ -63,7 +64,7 @@ define([
 				tmpl("vvveb-filemanager-component", {name:name, url:url, title:title}));
 		},
 		
-		getComponents: function() {
+		getComponents: function(allowedComponents = {}) {
 
 				var tree = [];
 				function getNodeTree (node, parent) {
@@ -74,6 +75,10 @@ define([
 							if (child && child["attributes"] != undefined && 
 								(matchChild = Vvveb.Components.matchNode(child))) 
 							{
+								if (Array.isArray(allowedComponents)
+									&& allowedComponents.indexOf(matchChild.type) == -1)
+								continue;
+							
 								element = {
 									name: matchChild.name,
 									image: matchChild.image,
@@ -99,10 +104,11 @@ define([
 			return tree;
 		},
 		
-		loadComponents: function() {
+		loadComponents: function(allowedComponents = {}) {
 
-			tree = this.getComponents();
-			html = drawComponentsTree(tree);
+			var tree = this.getComponents(allowedComponents);
+			var html = drawComponentsTree(tree);
+			var j = 0;
 
 			function drawComponentsTree(tree)
 			{
@@ -148,7 +154,7 @@ define([
 			return this.loadPage(this.currentPage);
 		},
 		
-		loadPage: function(name, disableCache = true) {
+		loadPage: function(name, allowedComponents = false, disableCache = true) {
 			$("[data-page]", this.tree).removeClass("active");
 			$("[data-page='" + name + "']", this.tree).addClass("active");
 			
@@ -157,7 +163,7 @@ define([
 			
 			Vvveb.Builder.loadUrl(url + (disableCache ? (url.indexOf('?') > -1?'&':'?') + Math.random():''), 
 				function () { 
-					Vvveb.FileManager.loadComponents(); 
+					Vvveb.FileManager.loadComponents(allowedComponents); 
 				});
 		},
 

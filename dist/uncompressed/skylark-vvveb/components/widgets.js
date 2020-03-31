@@ -1,5 +1,5 @@
 define([
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
@@ -8,7 +8,14 @@ define([
     var jQuery = $;
 
 
-    ComponentsGroup['Widgets'] = ["widgets/googlemaps", "widgets/video", "widgets/chartjs", "widgets/facebookpage", "widgets/paypal", "widgets/instagram", "widgets/twitter"/*, "widgets/facebookcomments"*/];
+    ComponentsGroup['Widgets'] = [
+        "widgets/googlemaps", 
+        "widgets/video", 
+        "widgets/chartjs", 
+        "widgets/facebookpage", 
+        "widgets/paypal", 
+        "widgets/instagram", 
+        "widgets/twitter"/*, "widgets/facebookcomments"*/];
 
     Components.extend("_base", "widgets/googlemaps", {
         name: "Google Maps",
@@ -83,16 +90,14 @@ define([
         controls: true,
         loop: false,
 
-    	init: function (node)
-    	{
+    	init: function (node) {
     		iframe = jQuery('iframe', node);
     		video = jQuery('video', node);
     		
     		$("#right-panel [data-key=url]").hide();
     		
     		//check if html5
-    		if (video.length) 
-    		{
+    		if (video.length) {
     			this.url = video.src;
     		} else if (iframe.length) //vimeo or youtube
     		{
@@ -111,8 +116,7 @@ define([
     		$("#right-panel input[name=url]").val(this.url);
     	},
     	
-    	onChange: function (node, property, value)
-    	{
+    	onChange: function (node, property, value)	{
     		this[property.key] = value;
 
     		//if (property.key == "t")

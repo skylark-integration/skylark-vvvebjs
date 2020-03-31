@@ -1,6 +1,6 @@
 define([
 	"skylark-langx/langx",
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
 	"./inputs"
@@ -22,6 +22,8 @@ define([
 		_classesRegexLookup: {},
 		
 		componentPropertiesElement: "#right-panel .component-properties",
+
+		componentPropertiesDefaultSection: "content",
 
 		get: function(type) {
 			return this._components[type];
@@ -90,8 +92,8 @@ define([
 			 
 			 if (inheritData = this._components[inheritType])
 			 {
-				newData = langx.extend(true,{}, inheritData, data);
-				newData.properties = langx.merge( langx.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
+				newData = $.extend(true,{}, inheritData, data);
+				newData.properties = $.merge( $.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
 			 }
 			 
 			 //sort by order
@@ -207,17 +209,27 @@ define([
 		render: function(type) {
 
 			var component = this._components[type];
+
+			var componentsPanel = jQuery(this.componentPropertiesElement);
+			var defaultSection = this.componentPropertiesDefaultSection;
+			var componentsPanelSections = {};
+
+			jQuery(this.componentPropertiesElement + " .tab-pane").each(function ()
+			{
+				var sectionName = this.dataset.section;
+				componentsPanelSections[sectionName] = $(this);
+				
+			});
 			
-			var rightPanel = jQuery(this.componentPropertiesElement);
-			var section = rightPanel.find('.section[data-section="default"]');
+			var section = componentsPanelSections[defaultSection].find('.section[data-section="default"]');
 			
 			if (!(Vvveb.preservePropertySections && section.length))
 			{
-				rightPanel.html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
-				section = rightPanel.find(".section");
+				componentsPanelSections[defaultSection].html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
+				section = componentsPanelSections[defaultSection].find(".section");
 			}
 
-			rightPanel.find('[data-header="default"] span').html(component.name);
+			componentsPanelSections[defaultSection].find('[data-header="default"] span').html(component.name);
 			section.html("")	
 		
 			if (component.beforeInit) component.beforeInit(Vvveb.Builder.selectedEl.get(0));
@@ -247,7 +259,11 @@ define([
 							}
 							else if (property.htmlAttr == "style") 
 							{
-								element = element.css(property.key, value);
+								element = Vvveb.StyleManager.setStyle(element, property.key, value);
+							}
+							else if (property.htmlAttr == "innerHTML") 
+							{
+								element = Vvveb.ContentManager.setHtml(element, value);
 							}
 							else
 							{
@@ -302,7 +318,11 @@ define([
 					if (property.htmlAttr == "style")
 					{
 						//value = element.css(property.key);//jquery css returns computed style
-						var value =  Vvveb.getStyle(element.get(0), property.key);//getStyle returns declared style
+						var value = Vvveb.StyleManager.getStyle(element, property.key);//getStyle returns declared style
+					} else
+					if (property.htmlAttr == "innerHTML")
+					{
+						var value = Vvveb.ContentManager.getHtml(element);
 					} else
 					{
 						var value = element.attr(property.htmlAttr);
@@ -320,18 +340,25 @@ define([
 				}
 				
 				fn(component, property);
-
-				if (property.inputtype == inputs.SectionInput)
+				
+				var propertySection = defaultSection;
+				if (property.section)
 				{
-					section = rightPanel.find('.section[data-section="' + property.key + '"]');
+					propertySection = property.section;
+				}
+				
+
+				if (property.inputtype == SectionInput)
+				{
+					section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					
 					if (Vvveb.preservePropertySections && section.length)
 					{
 						section.html("");
 					} else 
 					{
-						rightPanel.append(property.input);
-						section = rightPanel.find('.section[data-section="' + property.key + '"]');
+						componentsPanelSections[propertySection].append(property.input);
+						section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					}
 				}
 				else

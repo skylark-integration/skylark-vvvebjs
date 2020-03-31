@@ -1,9 +1,9 @@
 define([
-	"skylark-utils-dom/langx",
-	"skylark-utils-dom/query",
+	"skylark-langx/langx",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
-	"skylark-bootstrap4/button",
+	"skylark-bootstrap3/button",
 ],function(langx, $,Vvveb,tmpl) {
 	var Input = {
 		

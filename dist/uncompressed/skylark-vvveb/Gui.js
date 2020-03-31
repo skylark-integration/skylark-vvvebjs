@@ -1,9 +1,9 @@
 define([
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Builder",
 	"./WysiwygEditor",
-	"skylark-bootstrap4/modal"
+	"skylark-bootstrap3/modal"
 ],function($,Vvveb){
 	var Gui = {
 		
@@ -15,8 +15,8 @@ define([
 				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
 				if (this.dataset.vvvebShortcut)
 				{
-					$(document).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-					$(window.FrameDocument, window.FrameWindow).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(document).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(window.FrameDocument, window.FrameWindow).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
 				}
 			});
 		},
@@ -66,7 +66,7 @@ define([
 			var link = document.createElement('a');
 			if ('download' in link)
 			{
-				link.download = filename;
+				link.dataset.download = filename;
 				link.href = uriContent;
 				link.target = "_blank";
 				
@@ -102,7 +102,7 @@ define([
 		},
 		
 		fullscreen : function () {
-			Vvveb.launchFullScreen(document); // the whole page
+			launchFullScreen(document); // the whole page
 		},
 		
 		componentSearch : function () {
@@ -158,8 +158,8 @@ define([
 			});
 		},
 
-	
-		newPage : function () { //Pages, file/components tree 
+	//Pages, file/components tree 
+		newPage : function () {
 			
 			var newPageModal = $('#new-page-modal');
 			
@@ -198,7 +198,45 @@ define([
 			//aria-pressed attribute is updated after action is called and we check for false instead of true
 			var designerMode = this.attributes["aria-pressed"].value != "true";
 			Vvveb.Builder.setDesignerMode(designerMode);
-		}
+		},
+	//layout
+		togglePanel: function (panel, cssVar) {
+			var panel = $(panel);
+			var body = $("body");
+			var prevValue = body.css(cssVar);
+			if (prevValue !== "0px") 
+			{
+				panel.data("layout-toggle", prevValue);
+				body.css(cssVar, "0px");
+				panel.hide();
+			} else
+			{
+				prevValue= panel.data("layout-toggle");
+				body.css(cssVar, '');
+				panel.show();
+				
+			}
+		},
+
+		toggleFileManager: function () {
+			Vvveb.Gui.togglePanel("#filemanager", "--builder-filemanager-height");
+		},
+		
+		toggleLeftColumn: function () {
+			Vvveb.Gui.togglePanel("#left-panel", "--builder-left-panel-width");
+		},
+		
+		toggleRightColumn: function () {
+			Vvveb.Gui.togglePanel("#right-panel", "--builder-right-panel-width");
+			var rightColumnEnabled = this.attributes["aria-pressed"].value == "true";
+
+			$("#vvveb-builder").toggleClass("no-right-panel");
+			$(".component-properties-tab").toggle();
+			
+			Vvveb.Components.componentPropertiesElement = (rightColumnEnabled ? "#right-panel" :"#left-panel") +" .component-properties";
+			if ($("#properties").is(":visible")) $('.component-tab a').show().tab('show'); 
+
+		},
 		
 	}
 

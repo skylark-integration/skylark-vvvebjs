@@ -1,6 +1,6 @@
 define([
 	"skylark-langx/skylark",
-	"skylark-bootstrap4"
+	"skylark-bootstrap3"
 
 ],function(skylark){
 
@@ -82,5 +82,5 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 	  }
 	};
 
-	return skylark.attach("itg.Vvveb",Vvveb);
+	return skylark.attach("intg.Vvveb",Vvveb);
 });

@@ -22,10 +22,9 @@
   "license": "MIT",
   "dependencies": {
     "skylark-bootstrap3": "git+https://github.com/skylark-integration/skylark-bootstrap3.git#master",
-    "skylark-bootstrap4": "git+https://github.com/skylark-integration/skylark-bootstrap4.git#master",
     "skylark-codemirror": "git+https://github.com/skylark-integration/skylark-codemirror.git#master",
-    "skylark-langx": "git+https://github.com/skylarklangx/skylark-langx.git#master",
-    "skylark-utils-dom": "git+https://github.com/skylarkutils/skylark-utils-dom.git#master"
+    "skylark-jquery": "git+https://github.com/skylark-integration/skylark-jquery.git#master",
+    "skylark-langx": "git+https://github.com/skylarklangx/skylark-langx.git#master"
   },
   "skylarkjs": {
     "build": {

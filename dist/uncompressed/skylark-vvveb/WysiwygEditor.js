@@ -1,5 +1,5 @@
 define([
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Undo"
 ],function($,Vvveb){

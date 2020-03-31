@@ -86,7 +86,7 @@
 
 })(function(define,require) {
 
-define('skylark-langx/_attach',[],function(){
+define('skylark-langx-ns/_attach',[],function(){
     return  function attach(obj1,path,obj2) {
         if (typeof path == "string") {
             path = path.split(".");//[path]
@@ -104,7 +104,7 @@ define('skylark-langx/_attach',[],function(){
         return ns[name] = obj2;
     }
 });
-define('skylark-langx/skylark',[
+define('skylark-langx-ns/ns',[
     "./_attach"
 ], function(_attach) {
     var skylark = {
@@ -115,16 +115,22 @@ define('skylark-langx/skylark',[
     return skylark;
 });
 
-define('skylark-utils-dom/skylark',["skylark-langx/skylark"], function(skylark) {
-    return skylark;
+define('skylark-langx-ns/main',[
+	"./ns"
+],function(skylark){
+	return skylark;
+});
+define('skylark-langx-ns', ['skylark-langx-ns/main'], function (main) { return main; });
+
+define('skylark-langx/skylark',[
+    "skylark-langx-ns"
+], function(ns) {
+	return ns;
 });
 
-define('skylark-utils-dom/dom',["./skylark"], function(skylark) {
-	return skylark.dom = skylark.attach("utils.dom",{});
-});
-
-define('skylark-langx/types',[
-],function(){
+define('skylark-langx-types/types',[
+    "skylark-langx-ns"
+],function(skylark){
     var toString = {}.toString;
     
     var type = (function() {
@@ -304,7 +310,7 @@ define('skylark-langx/types',[
       return value === undefined
     }
 
-    return {
+    return skylark.attach("langx.types",{
 
         isArray: isArray,
 
@@ -345,234 +351,20 @@ define('skylark-langx/types',[
         isWindow: isWindow,
 
         type: type
-    };
+    });
 
 });
-define('skylark-langx/arrays',[
-	"./types"
-],function(types,objects){
-	var filter = Array.prototype.filter,
-		isArrayLike = types.isArrayLike;
-
-    /**
-     * The base implementation of `_.findIndex` and `_.findLastIndex` without
-     * support for iteratee shorthands.
-     *
-     * @param {Array} array The array to inspect.
-     * @param {Function} predicate The function invoked per iteration.
-     * @param {number} fromIndex The index to search from.
-     * @param {boolean} [fromRight] Specify iterating from right to left.
-     * @returns {number} Returns the index of the matched value, else `-1`.
-     */
-    function baseFindIndex(array, predicate, fromIndex, fromRight) {
-      var length = array.length,
-          index = fromIndex + (fromRight ? 1 : -1);
-
-      while ((fromRight ? index-- : ++index < length)) {
-        if (predicate(array[index], index, array)) {
-          return index;
-        }
-      }
-      return -1;
-    }
-
-    /**
-     * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
-     *
-     * @param {Array} array The array to inspect.
-     * @param {*} value The value to search for.
-     * @param {number} fromIndex The index to search from.
-     * @returns {number} Returns the index of the matched value, else `-1`.
-     */
-    function baseIndexOf(array, value, fromIndex) {
-      if (value !== value) {
-        return baseFindIndex(array, baseIsNaN, fromIndex);
-      }
-      var index = fromIndex - 1,
-          length = array.length;
-
-      while (++index < length) {
-        if (array[index] === value) {
-          return index;
-        }
-      }
-      return -1;
-    }
-
-    /**
-     * The base implementation of `isNaN` without support for number objects.
-     *
-     * @private
-     * @param {*} value The value to check.
-     * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
-     */
-    function baseIsNaN(value) {
-      return value !== value;
-    }
-
-
-    function compact(array) {
-        return filter.call(array, function(item) {
-            return item != null;
-        });
-    }
-
-    function filter2(array,func) {
-      return filter.call(array,func);
-    }
-
-    function flatten(array) {
-        if (isArrayLike(array)) {
-            var result = [];
-            for (var i = 0; i < array.length; i++) {
-                var item = array[i];
-                if (isArrayLike(item)) {
-                    for (var j = 0; j < item.length; j++) {
-                        result.push(item[j]);
-                    }
-                } else {
-                    result.push(item);
-                }
-            }
-            return result;
-        } else {
-            return array;
-        }
-        //return array.length > 0 ? concat.apply([], array) : array;
-    }
-
-    function grep(array, callback) {
-        var out = [];
-
-        each(array, function(i, item) {
-            if (callback(item, i)) {
-                out.push(item);
-            }
-        });
-
-        return out;
-    }
-
-    function inArray(item, array) {
-        if (!array) {
-            return -1;
-        }
-        var i;
-
-        if (array.indexOf) {
-            return array.indexOf(item);
-        }
-
-        i = array.length;
-        while (i--) {
-            if (array[i] === item) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    function makeArray(obj, offset, startWith) {
-       if (isArrayLike(obj) ) {
-        return (startWith || []).concat(Array.prototype.slice.call(obj, offset || 0));
-      }
-
-      // array of single index
-      return [ obj ];             
-    }
-
-
-    function forEach (arr, fn) {
-      if (arr.forEach) return arr.forEach(fn)
-      for (var i = 0; i < arr.length; i++) fn(arr[i], i);
-    }
-
-    function map(elements, callback) {
-        var value, values = [],
-            i, key
-        if (isArrayLike(elements))
-            for (i = 0; i < elements.length; i++) {
-                value = callback.call(elements[i], elements[i], i);
-                if (value != null) values.push(value)
-            }
-        else
-            for (key in elements) {
-                value = callback.call(elements[key], elements[key], key);
-                if (value != null) values.push(value)
-            }
-        return flatten(values)
-    }
-
-
-    function merge( first, second ) {
-      var l = second.length,
-          i = first.length,
-          j = 0;
-
-      if ( typeof l === "number" ) {
-        for ( ; j < l; j++ ) {
-          first[ i++ ] = second[ j ];
-        }
-      } else {
-        while ( second[j] !== undefined ) {
-          first[ i++ ] = second[ j++ ];
-        }
-      }
-
-      first.length = i;
-
-      return first;
-    }
-
-    function reduce(array,callback,initialValue) {
-        return Array.prototype.reduce.call(array,callback,initialValue);
-    }
-
-    function uniq(array) {
-        return filter.call(array, function(item, idx) {
-            return array.indexOf(item) == idx;
-        })
-    }
-
-    return {
-        baseFindIndex: baseFindIndex,
-
-        baseIndexOf : baseIndexOf,
-        
-        compact: compact,
-
-        first : function(items,n) {
-            if (n) {
-                return items.slice(0,n);
-            } else {
-                return items[0];
-            }
-        },
-
-        filter : filter2,
-        
-        flatten: flatten,
-
-        inArray: inArray,
-
-        makeArray: makeArray,
-
-        merge : merge,
-
-        forEach : forEach,
-
-        map : map,
-        
-        reduce : reduce,
-
-        uniq : uniq
-
-    }
-});
-define('skylark-langx/numbers',[
+define('skylark-langx-types/main',[
 	"./types"
 ],function(types){
+	return types;
+});
+define('skylark-langx-types', ['skylark-langx-types/main'], function (main) { return main; });
+
+define('skylark-langx-numbers/numbers',[
+    "skylark-langx-ns",
+    "skylark-langx-types"
+],function(skylark,types){
 	var isObject = types.isObject,
 		isSymbol = types.isSymbol;
 
@@ -709,17 +501,25 @@ define('skylark-langx/numbers',[
 	    : (reIsBadHex.test(value) ? NAN : +value);
 	}
 
-	return  {
+	return  skylark.attach("langx.numbers",{
 		toFinite : toFinite,
 		toNumber : toNumber,
 		toInteger : toInteger
-	}
+	});
 });
-define('skylark-langx/objects',[
-    "./_attach",
-	"./types",
-    "./numbers"
-],function(_attach,types,numbers){
+define('skylark-langx-numbers/main',[
+	"./numbers"
+],function(numbers){
+	return numbers;
+});
+define('skylark-langx-numbers', ['skylark-langx-numbers/main'], function (main) { return main; });
+
+define('skylark-langx-objects/objects',[
+    "skylark-langx-ns/ns",
+    "skylark-langx-ns/_attach",
+	"skylark-langx-types",
+    "skylark-langx-numbers"
+],function(skylark,_attach,types,numbers){
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
         slice = Array.prototype.slice,
         isBoolean = types.isBoolean,
@@ -1156,7 +956,7 @@ define('skylark-langx/objects',[
 
     }
 
-    return {
+    return skylark.attach("langx.objects",{
         allKeys: allKeys,
 
         attach : _attach,
@@ -1192,16 +992,268 @@ define('skylark-langx/objects',[
         safeMixin: safeMixin,
 
         values: values
-    };
-
+    });
 
 
 });
-define('skylark-langx/klass',[
-    "./arrays",
-    "./objects",
-    "./types"
-],function(arrays,objects,types){
+define('skylark-langx-objects/main',[
+	"./objects"
+],function(objects){
+	return objects;
+});
+define('skylark-langx-objects', ['skylark-langx-objects/main'], function (main) { return main; });
+
+define('skylark-langx-arrays/arrays',[
+  "skylark-langx-ns/ns",
+  "skylark-langx-types",
+  "skylark-langx-objects"
+],function(skylark,types,objects){
+  var filter = Array.prototype.filter,
+      find = Array.prototype.find,
+    isArrayLike = types.isArrayLike;
+
+    /**
+     * The base implementation of `_.findIndex` and `_.findLastIndex` without
+     * support for iteratee shorthands.
+     *
+     * @param {Array} array The array to inspect.
+     * @param {Function} predicate The function invoked per iteration.
+     * @param {number} fromIndex The index to search from.
+     * @param {boolean} [fromRight] Specify iterating from right to left.
+     * @returns {number} Returns the index of the matched value, else `-1`.
+     */
+    function baseFindIndex(array, predicate, fromIndex, fromRight) {
+      var length = array.length,
+          index = fromIndex + (fromRight ? 1 : -1);
+
+      while ((fromRight ? index-- : ++index < length)) {
+        if (predicate(array[index], index, array)) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
+    /**
+     * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
+     *
+     * @param {Array} array The array to inspect.
+     * @param {*} value The value to search for.
+     * @param {number} fromIndex The index to search from.
+     * @returns {number} Returns the index of the matched value, else `-1`.
+     */
+    function baseIndexOf(array, value, fromIndex) {
+      if (value !== value) {
+        return baseFindIndex(array, baseIsNaN, fromIndex);
+      }
+      var index = fromIndex - 1,
+          length = array.length;
+
+      while (++index < length) {
+        if (array[index] === value) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
+    /**
+     * The base implementation of `isNaN` without support for number objects.
+     *
+     * @private
+     * @param {*} value The value to check.
+     * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+     */
+    function baseIsNaN(value) {
+      return value !== value;
+    }
+
+
+    function compact(array) {
+        return filter.call(array, function(item) {
+            return item != null;
+        });
+    }
+
+    function filter2(array,func) {
+      return filter.call(array,func);
+    }
+
+    function flatten(array) {
+        if (isArrayLike(array)) {
+            var result = [];
+            for (var i = 0; i < array.length; i++) {
+                var item = array[i];
+                if (isArrayLike(item)) {
+                    for (var j = 0; j < item.length; j++) {
+                        result.push(item[j]);
+                    }
+                } else {
+                    result.push(item);
+                }
+            }
+            return result;
+        } else {
+            return array;
+        }
+        //return array.length > 0 ? concat.apply([], array) : array;
+    }
+
+    function grep(array, callback) {
+        var out = [];
+
+        objects.each(array, function(i, item) {
+            if (callback(item, i)) {
+                out.push(item);
+            }
+        });
+
+        return out;
+    }
+
+    function inArray(item, array) {
+        if (!array) {
+            return -1;
+        }
+        var i;
+
+        if (array.indexOf) {
+            return array.indexOf(item);
+        }
+
+        i = array.length;
+        while (i--) {
+            if (array[i] === item) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    function makeArray(obj, offset, startWith) {
+       if (isArrayLike(obj) ) {
+        return (startWith || []).concat(Array.prototype.slice.call(obj, offset || 0));
+      }
+
+      // array of single index
+      return [ obj ];             
+    }
+
+
+    function forEach (arr, fn) {
+      if (arr.forEach) return arr.forEach(fn)
+      for (var i = 0; i < arr.length; i++) fn(arr[i], i);
+    }
+
+    function map(elements, callback) {
+        var value, values = [],
+            i, key
+        if (isArrayLike(elements))
+            for (i = 0; i < elements.length; i++) {
+                value = callback.call(elements[i], elements[i], i);
+                if (value != null) values.push(value)
+            }
+        else
+            for (key in elements) {
+                value = callback.call(elements[key], elements[key], key);
+                if (value != null) values.push(value)
+            }
+        return flatten(values)
+    }
+
+
+    function merge( first, second ) {
+      var l = second.length,
+          i = first.length,
+          j = 0;
+
+      if ( typeof l === "number" ) {
+        for ( ; j < l; j++ ) {
+          first[ i++ ] = second[ j ];
+        }
+      } else {
+        while ( second[j] !== undefined ) {
+          first[ i++ ] = second[ j++ ];
+        }
+      }
+
+      first.length = i;
+
+      return first;
+    }
+
+    function reduce(array,callback,initialValue) {
+        return Array.prototype.reduce.call(array,callback,initialValue);
+    }
+
+    function uniq(array) {
+        return filter.call(array, function(item, idx) {
+            return array.indexOf(item) == idx;
+        })
+    }
+
+    function find2(array,func) {
+      return find.call(array,func);
+    }
+
+    return skylark.attach("langx.arrays",{
+        baseFindIndex: baseFindIndex,
+
+        baseIndexOf : baseIndexOf,
+        
+        compact: compact,
+
+        first : function(items,n) {
+            if (n) {
+                return items.slice(0,n);
+            } else {
+                return items[0];
+            }
+        },
+
+        filter : filter2,
+
+        find : find2,
+        
+        flatten: flatten,
+
+        grep: grep,
+
+        inArray: inArray,
+
+        makeArray: makeArray,
+
+        merge : merge,
+
+        forEach : forEach,
+
+        map : map,
+        
+        reduce : reduce,
+
+        uniq : uniq
+
+    });
+});
+define('skylark-langx-arrays/main',[
+	"./arrays"
+],function(arrays){
+	return arrays;
+});
+define('skylark-langx-arrays', ['skylark-langx-arrays/main'], function (main) { return main; });
+
+define('skylark-langx/arrays',[
+	"skylark-langx-arrays"
+],function(arrays){
+  return arrays;
+});
+define('skylark-langx-klass/klass',[
+  "skylark-langx-ns/ns",
+  "skylark-langx-types",
+  "skylark-langx-objects",
+  "skylark-langx-arrays",
+],function(skylark,types,objects,arrays){
     var uniq = arrays.uniq,
         has = objects.has,
         mixin = objects.mixin,
@@ -1445,7 +1497,19 @@ let longEar = klass({
 
     var createClass = f1();
 
-    return createClass;
+    return skylark.attach("langx.klass",createClass);
+});
+define('skylark-langx-klass/main',[
+	"./klass"
+],function(klass){
+	return klass;
+});
+define('skylark-langx-klass', ['skylark-langx-klass/main'], function (main) { return main; });
+
+define('skylark-langx/klass',[
+    "skylark-langx-klass"
+],function(klass){
+    return klass;
 });
 define('skylark-langx/ArrayStore',[
     "./klass"
@@ -1791,8 +1855,9 @@ define('skylark-langx/ArrayStore',[
 
 	return ArrayStore;
 });
-define('skylark-langx/aspect',[
-],function(){
+define('skylark-langx-aspect/aspect',[
+    "skylark-langx-ns"
+],function(skylark){
 
   var undefined, nextId = 0;
     function advise(dispatcher, type, advice, receiveArguments){
@@ -1908,18 +1973,31 @@ define('skylark-langx/aspect',[
         };
     }
 
-    return {
+    return skylark.attach("langx.aspect",{
         after: aspect("after"),
  
         around: aspect("around"),
         
         before: aspect("before")
-    };
+    });
 });
-define('skylark-langx/funcs',[
-    "./objects",
-	"./types"
-],function(objects,types){
+define('skylark-langx-aspect/main',[
+	"./aspect"
+],function(aspect){
+	return aspect;
+});
+define('skylark-langx-aspect', ['skylark-langx-aspect/main'], function (main) { return main; });
+
+define('skylark-langx/aspect',[
+    "skylark-langx-aspect"
+],function(aspect){
+  return aspect;
+});
+define('skylark-langx-funcs/funcs',[
+  "skylark-langx-ns/ns",
+  "skylark-langx-types",
+  "skylark-langx-objects"
+],function(skylark,types,objects){
 	var mixin = objects.mixin,
         slice = Array.prototype.slice,
         isFunction = types.isFunction,
@@ -1983,76 +2061,133 @@ define('skylark-langx/funcs',[
         };
     })();
 
-  var templateSettings = {
-    evaluate: /<%([\s\S]+?)%>/g,
-    interpolate: /<%=([\s\S]+?)%>/g,
-    escape: /<%-([\s\S]+?)%>/g
-  };
 
-
-  function template(text, settings, oldSettings) {
-    if (!settings && oldSettings) settings = oldSettings;
-    settings = objects.defaults({}, settings,templateSettings);
-
-    // Combine delimiters into one regular expression via alternation.
-    var matcher = RegExp([
-      (settings.escape || noMatch).source,
-      (settings.interpolate || noMatch).source,
-      (settings.evaluate || noMatch).source
-    ].join('|') + '|$', 'g');
-
-    // Compile the template source, escaping string literals appropriately.
-    var index = 0;
-    var source = "__p+='";
-    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
-      source += text.slice(index, offset).replace(escapeRegExp, escapeChar);
-      index = offset + match.length;
-
-      if (escape) {
-        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
-      } else if (interpolate) {
-        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
-      } else if (evaluate) {
-        source += "';\n" + evaluate + "\n__p+='";
-      }
-
-      // Adobe VMs need the match returned to produce the correct offset.
-      return match;
-    });
-    source += "';\n";
-
-    // If a variable is not specified, place data values in local scope.
-    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
-
-    source = "var __t,__p='',__j=Array.prototype.join," +
-      "print=function(){__p+=__j.call(arguments,'');};\n" +
-      source + 'return __p;\n';
-
-    var render;
-    try {
-      render = new Function(settings.variable || 'obj', '_', source);
-    } catch (e) {
-      e.source = source;
-      throw e;
-    }
-
-    var template = function(data) {
-      return render.call(this, data, _);
+    // By default, Underscore uses ERB-style template delimiters, change the
+    // following template settings to use alternative delimiters.
+    var templateSettings = {
+        evaluate: /<%([\s\S]+?)%>/g,
+        interpolate: /<%=([\s\S]+?)%>/g,
+        escape: /<%-([\s\S]+?)%>/g
     };
 
-    // Provide the compiled source as a convenience for precompilation.
-    var argument = settings.variable || 'obj';
-    template.source = 'function(' + argument + '){\n' + source + '}';
+    // When customizing `templateSettings`, if you don't want to define an
+    // interpolation, evaluation or escaping regex, we need one that is
+    // guaranteed not to match.
+    var noMatch = /(.)^/;
 
-    return template;
-  };
 
-    return {
+    // Certain characters need to be escaped so that they can be put into a
+    // string literal.
+    var escapes = {
+      "'":      "'",
+      '\\':     '\\',
+      '\r':     'r',
+      '\n':     'n',
+      '\t':     't',
+      '\u2028': 'u2028',
+      '\u2029': 'u2029'
+    };
+
+    var escaper = /\\|'|\r|\n|\t|\u2028|\u2029/g;
+
+
+    function template(text, data, settings) {
+        var render;
+        settings = objects.defaults({}, settings,templateSettings);
+
+        // Combine delimiters into one regular expression via alternation.
+        var matcher = RegExp([
+          (settings.escape || noMatch).source,
+          (settings.interpolate || noMatch).source,
+          (settings.evaluate || noMatch).source
+        ].join('|') + '|$', 'g');
+
+        // Compile the template source, escaping string literals appropriately.
+        var index = 0;
+        var source = "__p+='";
+        text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
+          source += text.slice(index, offset)
+              .replace(escaper, function(match) { return '\\' + escapes[match]; });
+
+          if (escape) {
+            source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
+          }
+          if (interpolate) {
+            source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
+          }
+          if (evaluate) {
+            source += "';\n" + evaluate + "\n__p+='";
+          }
+          index = offset + match.length;
+          return match;
+        });
+        source += "';\n";
+
+        // If a variable is not specified, place data values in local scope.
+        if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+
+        source = "var __t,__p='',__j=Array.prototype.join," +
+          "print=function(){__p+=__j.call(arguments,'');};\n" +
+          source + 'return __p;\n';
+
+        try {
+          render = new Function(settings.variable || 'obj', '_', source);
+        } catch (e) {
+          e.source = source;
+          throw e;
+        }
+
+        if (data) {
+          return render(data,this)
+        }
+        var template = proxy(function(data) {
+          return render.call(this, data,this);
+        },this);
+
+        // Provide the compiled source as a convenience for precompilation.
+        var argument = settings.variable || 'obj';
+        template.source = 'function(' + argument + '){\n' + source + '}';
+
+        return template;
+    }
+
+
+    /**
+     * Creates a function that negates the result of the predicate `func`. The
+     * `func` predicate is invoked with the `this` binding and arguments of the
+     * created function.
+     * @category Function
+     * @param {Function} predicate The predicate to negate.
+     * @returns {Function} Returns the new negated function.
+     * @example
+     *
+     * function isEven(n) {
+     *   return n % 2 == 0
+     * }
+     *
+     * filter([1, 2, 3, 4, 5, 6], negate(isEven))
+     * // => [1, 3, 5]
+     */
+    function negate(predicate) {
+      if (typeof predicate !== 'function') {
+        throw new TypeError('Expected a function')
+      }
+      return function(...args) {
+        return !predicate.apply(this, args)
+      }
+    }
+
+
+    return skylark.attach("langx.funcs",{
+        bind : proxy,
+        
         debounce: debounce,
 
         delegate: delegate,
 
         defer: defer,
+
+        negate: negate,
 
         noop : noop,
 
@@ -2068,12 +2203,19 @@ define('skylark-langx/funcs',[
 
         templateSettings : templateSettings,
         template : template
-    };
+    });
 });
-define('skylark-langx/Deferred',[
-    "./arrays",
-	"./funcs",
-    "./objects"
+define('skylark-langx-funcs/main',[
+	"./funcs"
+],function(funcs){
+	return funcs;
+});
+define('skylark-langx-funcs', ['skylark-langx-funcs/main'], function (main) { return main; });
+
+define('skylark-langx-async/Deferred',[
+    "skylark-langx-arrays",
+	"skylark-langx-funcs",
+    "skylark-langx-objects"
 ],function(arrays,funcs,objects){
     "use strict";
     
@@ -2296,13 +2438,16 @@ define('skylark-langx/Deferred',[
 
     return Deferred;
 });
-define('skylark-langx/async',[
-    "./Deferred",
-    "./objects"
-],function(Deferred,objects){
+define('skylark-langx-async/async',[
+    "skylark-langx-ns",
+    "skylark-langx-objects",
+    "./Deferred"
+],function(skylark,objects,Deferred){
     var each = objects.each;
     
     var async = {
+        Deferred : Deferred,
+
         parallel : function(arr,args,ctx) {
             var rets = [];
             ctx = ctx || null;
@@ -2350,9 +2495,23 @@ define('skylark-langx/async',[
         }
     };
 
-	return async;	
+	return skylark.attach("langx.async",async);	
 });
-define('skylark-langx/datetimes',[],function(){
+define('skylark-langx-async/main',[
+	"./async"
+],function(async){
+	return async;
+});
+define('skylark-langx-async', ['skylark-langx-async/main'], function (main) { return main; });
+
+define('skylark-langx/async',[
+    "skylark-langx-async"
+],function(async){
+    return async;
+});
+define('skylark-langx-datetimes/datetimes',[
+    "skylark-langx-ns"
+],function(skylark){
      function parseMilliSeconds(str) {
 
         var strs = str.split(' ');
@@ -2411,16 +2570,34 @@ define('skylark-langx/datetimes',[],function(){
         }
     };
 	
-	return {
+	return skylark.attach("langx.datetimes",{
 		parseMilliSeconds
-	};
+	});
 });
-define('skylark-langx/Evented',[
-    "./klass",
-    "./arrays",
-    "./objects",
-    "./types"
-],function(klass,arrays,objects,types){
+define('skylark-langx-datetimes/main',[
+	"./datetimes"
+],function(datetimes){
+	return datetimes;
+});
+define('skylark-langx-datetimes', ['skylark-langx-datetimes/main'], function (main) { return main; });
+
+define('skylark-langx/datetimes',[
+    "skylark-langx-datetimes"
+],function(datetimes){
+    return datetimes;
+});
+define('skylark-langx/Deferred',[
+    "skylark-langx-async/Deferred"
+],function(Deferred){
+    return Deferred;
+});
+define('skylark-langx-emitter/Emitter',[
+  "skylark-langx-ns/ns",
+  "skylark-langx-types",
+  "skylark-langx-objects",
+  "skylark-langx-arrays",
+  "skylark-langx-klass"
+],function(skylark,types,objects,arrays,klass){
     var slice = Array.prototype.slice,
         compact = arrays.compact,
         isDefined = types.isDefined,
@@ -2428,7 +2605,8 @@ define('skylark-langx/Evented',[
         isFunction = types.isFunction,
         isString = types.isString,
         isEmptyObject = types.isEmptyObject,
-        mixin = objects.mixin;
+        mixin = objects.mixin,
+        safeMixin = objects.safeMixin;
 
     function parse(event) {
         var segs = ("" + event).split(".");
@@ -2438,7 +2616,7 @@ define('skylark-langx/Evented',[
         };
     }
 
-    var Evented = klass({
+    var Emitter = klass({
         on: function(events, selector, data, callback, ctx, /*used internally*/ one) {
             var self = this,
                 _hub = this._hub || (this._hub = {});
@@ -2490,7 +2668,7 @@ define('skylark-langx/Evented',[
             return this.on(events, selector, data, callback, ctx, 1);
         },
 
-        trigger: function(e /*,argument list*/ ) {
+        emit: function(e /*,argument list*/ ) {
             if (!this._hub) {
                 return this;
             }
@@ -2691,14 +2869,53 @@ define('skylark-langx/Evented',[
             }
 
             return this;
+        },
+
+        trigger  : function() {
+            return this.emit.apply(this,arguments);
         }
     });
 
-    return Evented;
+    Emitter.createEvent = function (type,props) {
+        var e = new CustomEvent(type,props);
+        return safeMixin(e, props);
+    };
+
+    return skylark.attach("langx.Emitter",Emitter);
 
 });
-define('skylark-langx/hoster',[
-],function(){
+define('skylark-langx-emitter/Evented',[
+  "skylark-langx-ns/ns",
+	"./Emitter"
+],function(skylark,Emitter){
+	return skylark.attach("langx.Evented",Emitter);
+});
+define('skylark-langx-emitter/main',[
+	"./Emitter",
+	"./Evented"
+],function(Emitter){
+	return Emitter;
+});
+define('skylark-langx-emitter', ['skylark-langx-emitter/main'], function (main) { return main; });
+
+define('skylark-langx/Emitter',[
+    "skylark-langx-emitter"
+],function(Evented){
+    return Evented;
+});
+define('skylark-langx/Evented',[
+    "skylark-langx-emitter"
+],function(Evented){
+    return Evented;
+});
+define('skylark-langx/funcs',[
+    "skylark-langx-funcs"
+],function(funcs){
+    return funcs;
+});
+define('skylark-langx-hoster/hoster',[
+    "skylark-langx-ns"
+],function(skylark){
 	// The javascript host environment, brower and nodejs are supported.
 	var hoster = {
 		"isBrowser" : true, // default
@@ -2775,10 +2992,48 @@ define('skylark-langx/hoster',[
 	    }
 	}
 
-	return  hoster;
+	return  skylark.attach("langx.hoster",hoster);
 });
-define('skylark-langx/strings',[
-],function(){
+define('skylark-langx-hoster/main',[
+	"./hoster"
+],function(hoster){
+	return hoster;
+});
+define('skylark-langx-hoster', ['skylark-langx-hoster/main'], function (main) { return main; });
+
+define('skylark-langx/hoster',[
+	"skylark-langx-hoster"
+],function(hoster){
+	return hoster;
+});
+define('skylark-langx/numbers',[
+	"skylark-langx-numbers"
+],function(numbers){
+	return numbers;
+});
+define('skylark-langx/objects',[
+    "skylark-langx-objects"
+],function(objects){
+    return objects;
+});
+define('skylark-langx-strings/strings',[
+    "skylark-langx-ns"
+],function(skylark){
+    // add default escape function for escaping HTML entities
+    var escapeCharMap = Object.freeze({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '`': '&#x60;',
+        '=': '&#x3D;',
+    });
+    function replaceChar(c) {
+        return escapeCharMap[c];
+    }
+    var escapeChars = /[&<>"'`=]/g;
+
 
      /*
      * Converts camel case into dashes.
@@ -2808,10 +3063,29 @@ define('skylark-langx/strings',[
         }
     }
 
+    function escapeHTML(str) {
+        if (str == null) {
+            return '';
+        }
+        if (!str) {
+            return String(str);
+        }
+
+        return str.toString().replace(escapeChars, replaceChar);
+    }
+
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0;
+            var v = c === 'x' ? r : ((r & 0x3) | 0x8);
+            return v.toString(16);
+        });
+    }
 
     function trim(str) {
         return str == null ? "" : String.prototype.trim.call(str);
     }
+
     function substitute( /*String*/ template,
         /*Object|Array*/
         map,
@@ -2871,7 +3145,125 @@ define('skylark-langx/strings',[
         return prefix ? prefix + id : id;
     }
 
-	return {
+
+    /**
+     * https://github.com/cho45/micro-template.js
+     * (c) cho45 http://cho45.github.com/mit-license
+     */
+    function template (id, data) {
+
+        function include(name, args) {
+            var stash = {};
+            for (var key in template.context.stash) if (template.context.stash.hasOwnProperty(key)) {
+                stash[key] = template.context.stash[key];
+            }
+            if (args) for (var key in args) if (args.hasOwnProperty(key)) {
+                stash[key] = args[key];
+            }
+            var context = template.context;
+            context.ret += template(name, stash);
+            template.context = context;
+        }
+
+        function wrapper(name, fun) {
+            var current = template.context.ret;
+            template.context.ret = '';
+            fun.apply(template.context);
+            var content = template.context.ret;
+            var orig_content = template.context.stash.content;
+            template.context.stash.content = content;
+            template.context.ret = current + template(name, template.context.stash);
+            template.context.stash.content = orig_content;
+        }
+
+        var me = arguments.callee;
+        if (!me.cache[id]) me.cache[id] = (function () {
+            var name = id, string = /^[\w\-]+$/.test(id) ? me.get(id): (name = 'template(string)', id); // no warnings
+            var line = 1, body = (
+                "try { " +
+                    (me.variable ?  "var " + me.variable + " = this.stash;" : "with (this.stash) { ") +
+                        "this.ret += '"  +
+                        string.
+                            replace(/<%/g, '\x11').replace(/%>/g, '\x13'). // if you want other tag, just edit this line
+                            replace(/'(?![^\x11\x13]+?\x13)/g, '\\x27').
+                            replace(/^\s*|\s*$/g, '').
+                            replace(/\n|\r\n/g, function () { return "';\nthis.line = " + (++line) + "; this.ret += '\\n" }).
+                            replace(/\x11=raw(.+?)\x13/g, "' + ($1) + '").
+                            replace(/\x11=(.+?)\x13/g, "' + this.escapeHTML($1) + '").
+                            replace(/\x11(.+?)\x13/g, "'; $1; this.ret += '") +
+                    "'; " + (me.variable ? "" : "}") + "return this.ret;" +
+                "} catch (e) { throw 'TemplateError: ' + e + ' (on " + name + "' + ' line ' + this.line + ')'; } " +
+                "//@ sourceURL=" + name + "\n" // source map
+            ).replace(/this\.ret \+= '';/g, '');
+            var func = new Function(body);
+            var map  = { '&' : '&amp;', '<' : '&lt;', '>' : '&gt;', '\x22' : '&#x22;', '\x27' : '&#x27;' };
+            var escapeHTML = function (string) { return (''+string).replace(/[&<>\'\"]/g, function (_) { return map[_] }) };
+            return function (stash) { return func.call(me.context = { escapeHTML: escapeHTML, line: 1, ret : '', stash: stash }) };
+        })();
+        return data ? me.cache[id](data) : me.cache[id];
+    }
+
+    template.cache = {};
+    
+
+    template.get = function (id) {
+        return document.getElementById(id).innerHTML;
+    };
+
+    function rtrim(str) {
+        return str.replace(/\s+$/g, '');
+    }
+
+    // Slugify a string
+    function slugify(str) {
+        str = str.replace(/^\s+|\s+$/g, '');
+
+        // Make the string lowercase
+        str = str.toLowerCase();
+
+        // Remove accents, swap ñ for n, etc
+        var from = "ÁÄÂÀÃÅČÇĆĎÉĚËÈÊẼĔȆÍÌÎÏŇÑÓÖÒÔÕØŘŔŠŤÚŮÜÙÛÝŸŽáäâàãåčçćďéěëèêẽĕȇíìîïňñóöòôõøðřŕšťúůüùûýÿžþÞĐđßÆa·/_,:;";
+        var to   = "AAAAAACCCDEEEEEEEEIIIINNOOOOOORRSTUUUUUYYZaaaaaacccdeeeeeeeeiiiinnooooooorrstuuuuuyyzbBDdBAa------";
+        for (var i=0, l=from.length ; i<l ; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        // Remove invalid chars
+        //str = str.replace(/[^a-z0-9 -]/g, '') 
+        // Collapse whitespace and replace by -
+        str = str.replace(/\s+/g, '-') 
+        // Collapse dashes
+        .replace(/-+/g, '-'); 
+
+        return str;
+    }    
+
+    // return boolean if string 'true' or string 'false', or if a parsable string which is a number
+    // also supports JSON object and/or arrays parsing
+    function toType(str) {
+        var type = typeof str;
+        if (type !== 'string') {
+            return str;
+        }
+        var nb = parseFloat(str);
+        if (!isNaN(nb) && isFinite(str)) {
+            return nb;
+        }
+        if (str === 'false') {
+            return false;
+        }
+        if (str === 'true') {
+            return true;
+        }
+
+        try {
+            str = JSON.parse(str);
+        } catch (e) {}
+
+        return str;
+    }
+
+	return skylark.attach("langx.strings",{
         camelCase: function(str) {
             return str.replace(/-([\da-z])/g, function(a) {
                 return a.toUpperCase().replace('-', '');
@@ -2882,9 +3274,15 @@ define('skylark-langx/strings',[
 
         deserializeValue: deserializeValue,
 
+        escapeHTML : escapeHTML,
+
+        generateUUID : generateUUID,
+
         lowerFirst: function(str) {
             return str.charAt(0).toLowerCase() + str.slice(1);
         },
+
+        rtrim : rtrim,
 
         serializeValue: function(value) {
             return JSON.stringify(value)
@@ -2893,6 +3291,10 @@ define('skylark-langx/strings',[
 
         substitute: substitute,
 
+        slugify : slugify,
+
+        //template : template,
+
         trim: trim,
 
         uniqueId: uniqueId,
@@ -2900,486 +3302,20 @@ define('skylark-langx/strings',[
         upperFirst: function(str) {
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
-	} ; 
+	}) ; 
 
 });
-define('skylark-langx/Xhr',[
-    "./arrays",
-    "./Deferred",
-    "./Evented",
-    "./objects",
-    "./funcs",
-    "./types"
-],function(arrays,Deferred,Evented,objects,funcs,types){
-    var each = objects.each,
-        mixin = objects.mixin,
-        noop = funcs.noop,
-        isArray = types.isArray,
-        isFunction = types.isFunction,
-        isPlainObject = types.isPlainObject,
-        type = types.type;
- 
-     var getAbsoluteUrl = (function() {
-        var a;
-
-        return function(url) {
-            if (!a) a = document.createElement('a');
-            a.href = url;
-
-            return a.href;
-        };
-    })();
-   
-    var Xhr = (function(){
-        var jsonpID = 0,
-            key,
-            name,
-            rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-            scriptTypeRE = /^(?:text|application)\/javascript/i,
-            xmlTypeRE = /^(?:text|application)\/xml/i,
-            jsonType = 'application/json',
-            htmlType = 'text/html',
-            blankRE = /^\s*$/;
-
-        var XhrDefaultOptions = {
-            async: true,
-
-            // Default type of request
-            type: 'GET',
-            // Callback that is executed before request
-            beforeSend: noop,
-            // Callback that is executed if the request succeeds
-            success: noop,
-            // Callback that is executed the the server drops error
-            error: noop,
-            // Callback that is executed on request complete (both: error and success)
-            complete: noop,
-            // The context for the callbacks
-            context: null,
-            // Whether to trigger "global" Ajax events
-            global: true,
-
-            // MIME types mapping
-            // IIS returns Javascript as "application/x-javascript"
-            accepts: {
-                script: 'text/javascript, application/javascript, application/x-javascript',
-                json: 'application/json',
-                xml: 'application/xml, text/xml',
-                html: 'text/html',
-                text: 'text/plain'
-            },
-            // Whether the request is to another domain
-            crossDomain: false,
-            // Default timeout
-            timeout: 0,
-            // Whether data should be serialized to string
-            processData: true,
-            // Whether the browser should be allowed to cache GET responses
-            cache: true,
-
-            xhrFields : {
-                withCredentials : true
-            }
-        };
-
-        function mimeToDataType(mime) {
-            if (mime) {
-                mime = mime.split(';', 2)[0];
-            }
-            if (mime) {
-                if (mime == htmlType) {
-                    return "html";
-                } else if (mime == jsonType) {
-                    return "json";
-                } else if (scriptTypeRE.test(mime)) {
-                    return "script";
-                } else if (xmlTypeRE.test(mime)) {
-                    return "xml";
-                }
-            }
-            return "text";
-        }
-
-        function appendQuery(url, query) {
-            if (query == '') return url
-            return (url + '&' + query).replace(/[&?]{1,2}/, '?')
-        }
-
-        // serialize payload and append it to the URL for GET requests
-        function serializeData(options) {
-            options.data = options.data || options.query;
-            if (options.processData && options.data && type(options.data) != "string") {
-                options.data = param(options.data, options.traditional);
-            }
-            if (options.data && (!options.type || options.type.toUpperCase() == 'GET')) {
-                options.url = appendQuery(options.url, options.data);
-                options.data = undefined;
-            }
-        }
-
-        function serialize(params, obj, traditional, scope) {
-            var t, array = isArray(obj),
-                hash = isPlainObject(obj)
-            each(obj, function(key, value) {
-                t =type(value);
-                if (scope) key = traditional ? scope :
-                    scope + '[' + (hash || t == 'object' || t == 'array' ? key : '') + ']'
-                // handle data in serializeArray() format
-                if (!scope && array) params.add(value.name, value.value)
-                // recurse into nested objects
-                else if (t == "array" || (!traditional && t == "object"))
-                    serialize(params, value, traditional, key)
-                else params.add(key, value)
-            })
-        }
-
-        var param = function(obj, traditional) {
-            var params = []
-            params.add = function(key, value) {
-                if (isFunction(value)) value = value()
-                if (value == null) value = ""
-                this.push(escape(key) + '=' + escape(value))
-            }
-            serialize(params, obj, traditional)
-            return params.join('&').replace(/%20/g, '+')
-        };
-
-        var Xhr = Evented.inherit({
-            klassName : "Xhr",
-
-            _request  : function(args) {
-                var _ = this._,
-                    self = this,
-                    options = mixin({},XhrDefaultOptions,_.options,args),
-                    xhr = _.xhr = new XMLHttpRequest();
-
-                serializeData(options)
-
-                var dataType = options.dataType || options.handleAs,
-                    mime = options.mimeType || options.accepts[dataType],
-                    headers = options.headers,
-                    xhrFields = options.xhrFields,
-                    isFormData = options.data && options.data instanceof FormData,
-                    basicAuthorizationToken = options.basicAuthorizationToken,
-                    type = options.type,
-                    url = options.url,
-                    async = options.async,
-                    user = options.user , 
-                    password = options.password,
-                    deferred = new Deferred(),
-                    contentType = isFormData ? false : 'application/x-www-form-urlencoded';
-
-                if (xhrFields) {
-                    for (name in xhrFields) {
-                        xhr[name] = xhrFields[name];
-                    }
-                }
-
-                if (mime && mime.indexOf(',') > -1) {
-                    mime = mime.split(',', 2)[0];
-                }
-                if (mime && xhr.overrideMimeType) {
-                    xhr.overrideMimeType(mime);
-                }
-
-                //if (dataType) {
-                //    xhr.responseType = dataType;
-                //}
-
-                var finish = function() {
-                    xhr.onloadend = noop;
-                    xhr.onabort = noop;
-                    xhr.onprogress = noop;
-                    xhr.ontimeout = noop;
-                    xhr = null;
-                }
-                var onloadend = function() {
-                    var result, error = false
-                    if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && getAbsoluteUrl(url).startsWith('file:'))) {
-                        dataType = dataType || mimeToDataType(options.mimeType || xhr.getResponseHeader('content-type'));
-
-                        result = xhr.responseText;
-                        try {
-                            if (dataType == 'script') {
-                                eval(result);
-                            } else if (dataType == 'xml') {
-                                result = xhr.responseXML;
-                            } else if (dataType == 'json') {
-                                result = blankRE.test(result) ? null : JSON.parse(result);
-                            } else if (dataType == "blob") {
-                                result = Blob([xhrObj.response]);
-                            } else if (dataType == "arraybuffer") {
-                                result = xhr.reponse;
-                            }
-                        } catch (e) { 
-                            error = e;
-                        }
-
-                        if (error) {
-                            deferred.reject(error,xhr.status,xhr);
-                        } else {
-                            deferred.resolve(result,xhr.status,xhr);
-                        }
-                    } else {
-                        deferred.reject(new Error(xhr.statusText),xhr.status,xhr);
-                    }
-                    finish();
-                };
-
-                var onabort = function() {
-                    if (deferred) {
-                        deferred.reject(new Error("abort"),xhr.status,xhr);
-                    }
-                    finish();                 
-                }
- 
-                var ontimeout = function() {
-                    if (deferred) {
-                        deferred.reject(new Error("timeout"),xhr.status,xhr);
-                    }
-                    finish();                 
-                }
-
-                var onprogress = function(evt) {
-                    if (deferred) {
-                        deferred.notify(evt,xhr.status,xhr);
-                    }
-                }
-
-                xhr.onloadend = onloadend;
-                xhr.onabort = onabort;
-                xhr.ontimeout = ontimeout;
-                xhr.onprogress = onprogress;
-
-                xhr.open(type, url, async, user, password);
-               
-                if (headers) {
-                    for ( var key in headers) {
-                        var value = headers[key];
- 
-                        if(key.toLowerCase() === 'content-type'){
-                            contentType = headers[hdr];
-                        } else {
-                           xhr.setRequestHeader(key, value);
-                        }
-                    }
-                }   
-
-                if  (contentType && contentType !== false){
-                    xhr.setRequestHeader('Content-Type', contentType);
-                }
-
-                if(!headers || !('X-Requested-With' in headers)){
-                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                }
-
-
-                //If basicAuthorizationToken is defined set its value into "Authorization" header
-                if (basicAuthorizationToken) {
-                    xhr.setRequestHeader("Authorization", basicAuthorizationToken);
-                }
-
-                xhr.send(options.data ? options.data : null);
-
-                return deferred.promise;
-
-            },
-
-            "abort": function() {
-                var _ = this._,
-                    xhr = _.xhr;
-
-                if (xhr) {
-                    xhr.abort();
-                }    
-            },
-
-
-            "request": function(args) {
-                return this._request(args);
-            },
-
-            get : function(args) {
-                args = args || {};
-                args.type = "GET";
-                return this._request(args);
-            },
-
-            post : function(args) {
-                args = args || {};
-                args.type = "POST";
-                return this._request(args);
-            },
-
-            patch : function(args) {
-                args = args || {};
-                args.type = "PATCH";
-                return this._request(args);
-            },
-
-            put : function(args) {
-                args = args || {};
-                args.type = "PUT";
-                return this._request(args);
-            },
-
-            del : function(args) {
-                args = args || {};
-                args.type = "DELETE";
-                return this._request(args);
-            },
-
-            "init": function(options) {
-                this._ = {
-                    options : options || {}
-                };
-            }
-        });
-
-        ["request","get","post","put","del","patch"].forEach(function(name){
-            Xhr[name] = function(url,args) {
-                var xhr = new Xhr({"url" : url});
-                return xhr[name](args);
-            };
-        });
-
-        Xhr.defaultOptions = XhrDefaultOptions;
-        Xhr.param = param;
-
-        return Xhr;
-    })();
-
-	return Xhr;	
+define('skylark-langx-strings/main',[
+	"./strings"
+],function(strings){
+	return strings;
 });
-define('skylark-langx/Restful',[
-    "./Evented",
-    "./objects",
-    "./strings",
-    "./Xhr"
-],function(Evented,objects,strings,Xhr){
-    var mixin = objects.mixin,
-        substitute = strings.substitute;
+define('skylark-langx-strings', ['skylark-langx-strings/main'], function (main) { return main; });
 
-    var Restful = Evented.inherit({
-        "klassName" : "Restful",
-
-        "idAttribute": "id",
-        
-        getBaseUrl : function(args) {
-            //$$baseEndpoint : "/files/${fileId}/comments",
-            var baseEndpoint = substitute(this.baseEndpoint,args),
-                baseUrl = this.server + this.basePath + baseEndpoint;
-            if (args[this.idAttribute]!==undefined) {
-                baseUrl = baseUrl + "/" + args[this.idAttribute]; 
-            }
-            return baseUrl;
-        },
-        _head : function(args) {
-            //get resource metadata .
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, required
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}
-        },
-        _get : function(args) {
-            //get resource ,one or list .
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, null if list
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}
-            return Xhr.get(this.getBaseUrl(args),args);
-        },
-        _post  : function(args,verb) {
-            //create or move resource .
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, required
-            //  "data" : body // the own data,required
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}
-            //verb : the verb ,ex: copy,touch,trash,untrash,watch
-            var url = this.getBaseUrl(args);
-            if (verb) {
-                url = url + "/" + verb;
-            }
-            return Xhr.post(url, args);
-        },
-
-        _put  : function(args,verb) {
-            //update resource .
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, required
-            //  "data" : body // the own data,required
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}
-            //verb : the verb ,ex: copy,touch,trash,untrash,watch
-            var url = this.getBaseUrl(args);
-            if (verb) {
-                url = url + "/" + verb;
-            }
-            return Xhr.put(url, args);
-        },
-
-        _delete : function(args) {
-            //delete resource . 
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, required
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}         
-
-            // HTTP request : DELETE http://center.utilhub.com/registry/v1/apps/{appid}
-            var url = this.getBaseUrl(args);
-            return Xhr.del(url);
-        },
-
-        _patch : function(args){
-            //update resource metadata. 
-            //args : id and other info for the resource ,ex
-            //{
-            //  "id" : 234,  // the own id, required
-            //  "data" : body // the own data,required
-            //  "fileId"   : 2 // the parent resource id, option by resource
-            //}
-            var url = this.getBaseUrl(args);
-            return Xhr.patch(url, args);
-        },
-        query: function(params) {
-            
-            return this._post(params);
-        },
-
-        retrieve: function(params) {
-            return this._get(params);
-        },
-
-        create: function(params) {
-            return this._post(params);
-        },
-
-        update: function(params) {
-            return this._put(params);
-        },
-
-        delete: function(params) {
-            // HTTP request : DELETE http://center.utilhub.com/registry/v1/apps/{appid}
-            return this._delete(params);
-        },
-
-        patch: function(params) {
-           // HTTP request : PATCH http://center.utilhub.com/registry/v1/apps/{appid}
-            return this._patch(params);
-        },
-        init: function(params) {
-            mixin(this,params);
- //           this._xhr = XHRx();
-       }
-    });
-
-    return Restful;
+define('skylark-langx/strings',[
+    "skylark-langx-strings"
+],function(strings){
+    return strings;
 });
 define('skylark-langx/Stateful',[
 	"./Evented",
@@ -3593,12 +3529,13 @@ define('skylark-langx/Stateful',[
 
 	return Stateful;
 });
-define('skylark-langx/topic',[
-	"./Evented"
-],function(Evented){
+define('skylark-langx-topic/topic',[
+	"skylark-langx-ns",
+	"skylark-langx-emitter/Evented"
+],function(skylark,Evented){
 	var hub = new Evented();
 
-	return {
+	return skylark.attach("langx.topic",{
 	    publish: function(name, arg1,argn) {
 	        var data = [].slice.call(arguments, 1);
 
@@ -3621,7 +3558,24 @@ define('skylark-langx/topic',[
 
         }
 
-	}
+	});
+});
+define('skylark-langx-topic/main',[
+	"./topic"
+],function(topic){
+	return topic;
+});
+define('skylark-langx-topic', ['skylark-langx-topic/main'], function (main) { return main; });
+
+define('skylark-langx/topic',[
+	"skylark-langx-topic"
+],function(topic){
+	return topic;
+});
+define('skylark-langx/types',[
+    "skylark-langx-types"
+],function(types){
+    return types;
 });
 define('skylark-langx/langx',[
     "./skylark",
@@ -3631,19 +3585,18 @@ define('skylark-langx/langx',[
     "./async",
     "./datetimes",
     "./Deferred",
+    "./Emitter",
     "./Evented",
     "./funcs",
     "./hoster",
     "./klass",
     "./numbers",
     "./objects",
-    "./Restful",
     "./Stateful",
     "./strings",
     "./topic",
-    "./types",
-    "./Xhr"
-], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Evented,funcs,hoster,klass,numbers,objects,Restful,Stateful,strings,topic,types,Xhr) {
+    "./types"
+], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Emitter,Evented,funcs,hoster,klass,numbers,objects,Stateful,strings,topic,types) {
     "use strict";
     var toString = {}.toString,
         concat = Array.prototype.concat,
@@ -3654,13 +3607,6 @@ define('skylark-langx/langx',[
         safeMixin = objects.safeMixin,
         isFunction = types.isFunction;
 
-
-    function createEvent(type, props) {
-        var e = new CustomEvent(type, props);
-
-        return safeMixin(e, props);
-    }
-    
 
     function funcArg(context, arg, idx, payload) {
         return isFunction(arg) ? arg.call(context, idx, payload) : arg;
@@ -3699,7 +3645,7 @@ define('skylark-langx/langx',[
     }
 
     mixin(langx, {
-        createEvent : createEvent,
+        createEvent : Emitter.createEvent,
 
         funcArg: funcArg,
 
@@ -3721,34 +3667,25 @@ define('skylark-langx/langx',[
         
         Deferred: Deferred,
 
+        Emitter: Emitter,
+
         Evented: Evented,
 
         hoster : hoster,
 
         klass : klass,
-
-        Restful: Restful,
-        
+       
         Stateful: Stateful,
 
-        topic : topic,
-
-        Xhr: Xhr
-
+        topic : topic
     });
 
     return skylark.langx = langx;
 });
-define('skylark-utils-dom/langx',[
+define('skylark-domx-browser/browser',[
+    "skylark-langx/skylark",
     "skylark-langx/langx"
-], function(langx) {
-    return langx;
-});
-
-define('skylark-utils-dom/browser',[
-    "./dom",
-    "./langx"
-], function(dom,langx) {
+], function(skylark,langx) {
     "use strict";
 
     var browser = langx.hoster.browser;
@@ -3871,282 +3808,21 @@ define('skylark-utils-dom/browser',[
 
     testEl = null;
 
-    return dom.browser = browser;
+    return skylark.attach("domx.browser",browser);
 });
 
-define('skylark-utils-dom/styler',[
-    "./dom",
-    "./langx"
-], function(dom, langx) {
-    var every = Array.prototype.every,
-        forEach = Array.prototype.forEach,
-        camelCase = langx.camelCase,
-        dasherize = langx.dasherize;
-
-    function maybeAddPx(name, value) {
-        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value
-    }
-
-    var cssNumber = {
-            'column-count': 1,
-            'columns': 1,
-            'font-weight': 1,
-            'line-height': 1,
-            'opacity': 1,
-            'z-index': 1,
-            'zoom': 1
-        },
-        classReCache = {
-
-        };
-
-    function classRE(name) {
-        return name in classReCache ?
-            classReCache[name] : (classReCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
-    }
-
-    // access className property while respecting SVGAnimatedString
-    /*
-     * Adds the specified class(es) to each element in the set of matched elements.
-     * @param {HTMLElement} node
-     * @param {String} value
-     */
-    function className(node, value) {
-        var klass = node.className || '',
-            svg = klass && klass.baseVal !== undefined
-
-        if (value === undefined) return svg ? klass.baseVal : klass
-        svg ? (klass.baseVal = value) : (node.className = value)
-    }
-
-    function disabled(elm, value ) {
-        if (arguments.length < 2) {
-            return !!this.dom.disabled;
-        }
-
-        elm.disabled = value;
-
-        return this;
-    }
-
-    var elementDisplay = {};
-
-    function defaultDisplay(nodeName) {
-        var element, display
-        if (!elementDisplay[nodeName]) {
-            element = document.createElement(nodeName)
-            document.body.appendChild(element)
-            display = getStyles(element).getPropertyValue("display")
-            element.parentNode.removeChild(element)
-            display == "none" && (display = "block")
-            elementDisplay[nodeName] = display
-        }
-        return elementDisplay[nodeName]
-    }
-    /*
-     * Display the matched elements.
-     * @param {HTMLElement} elm
-     */
-    function show(elm) {
-        styler.css(elm, "display", "");
-        if (styler.css(elm, "display") == "none") {
-            styler.css(elm, "display", defaultDisplay(elm.nodeName));
-        }
-        return this;
-    }
-
-    function isInvisible(elm) {
-        return styler.css(elm, "display") == "none" || styler.css(elm, "opacity") == 0;
-    }
-
-    /*
-     * Hide the matched elements.
-     * @param {HTMLElement} elm
-     */
-    function hide(elm) {
-        styler.css(elm, "display", "none");
-        return this;
-    }
-
-    /*
-     * Adds the specified class(es) to each element in the set of matched elements.
-     * @param {HTMLElement} elm
-     * @param {String} name
-     */
-    function addClass(elm, name) {
-        if (!name) return this
-        var cls = className(elm),
-            names;
-        if (langx.isString(name)) {
-            names = name.split(/\s+/g);
-        } else {
-            names = name;
-        }
-        names.forEach(function(klass) {
-            var re = classRE(klass);
-            if (!cls.match(re)) {
-                cls += (cls ? " " : "") + klass;
-            }
-        });
-
-        className(elm, cls);
-
-        return this;
-    }
-
-    function getStyles( elem ) {
-
-        // Support: IE <=11 only, Firefox <=30 (#15098, #14150)
-        // IE throws on elements created in popups
-        // FF meanwhile throws on frame elements through "defaultView.getComputedStyle"
-        var view = elem.ownerDocument.defaultView;
-
-        if ( !view || !view.opener ) {
-            view = window;
-        }
-
-        return view.getComputedStyle( elem);
-    }
-
-
-    /*
-     * Get the value of a computed style property for the first element in the set of matched elements or set one or more CSS properties for every matched element.
-     * @param {HTMLElement} elm
-     * @param {String} property
-     * @param {Any} value
-     */
-    function css(elm, property, value) {
-        if (arguments.length < 3) {
-            var computedStyle,
-                computedStyle = getStyles(elm)
-            if (langx.isString(property)) {
-                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(dasherize(property))
-            } else if (langx.isArrayLike(property)) {
-                var props = {}
-                forEach.call(property, function(prop) {
-                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(dasherize(prop)))
-                })
-                return props
-            }
-        }
-
-        var css = '';
-        if (typeof(property) == 'string') {
-            if (!value && value !== 0) {
-                elm.style.removeProperty(dasherize(property));
-            } else {
-                css = dasherize(property) + ":" + maybeAddPx(property, value)
-            }
-        } else {
-            for (key in property) {
-                if (property[key] === undefined) {
-                    continue;
-                }
-                if (!property[key] && property[key] !== 0) {
-                    elm.style.removeProperty(dasherize(key));
-                } else {
-                    css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';'
-                }
-            }
-        }
-
-        elm.style.cssText += ';' + css;
-        return this;
-    }
-
-    /*
-     * Determine whether any of the matched elements are assigned the given class.
-     * @param {HTMLElement} elm
-     * @param {String} name
-     */
-    function hasClass(elm, name) {
-        var re = classRE(name);
-        return elm.className && elm.className.match(re);
-    }
-
-    /*
-     * Remove a single class, multiple classes, or all classes from each element in the set of matched elements.
-     * @param {HTMLElement} elm
-     * @param {String} name
-     */
-    function removeClass(elm, name) {
-        if (name) {
-            var cls = className(elm),
-                names;
-
-            if (langx.isString(name)) {
-                names = name.split(/\s+/g);
-            } else {
-                names = name;
-            }
-
-            names.forEach(function(klass) {
-                var re = classRE(klass);
-                if (cls.match(re)) {
-                    cls = cls.replace(re, " ");
-                }
-            });
-
-            className(elm, cls.trim());
-        } else {
-            className(elm, "");
-        }
-
-        return this;
-    }
-
-    /*
-     * Add or remove one or more classes from the specified element.
-     * @param {HTMLElement} elm
-     * @param {String} name
-     * @param {} when
-     */
-    function toggleClass(elm, name, when) {
-        var self = this;
-        name.split(/\s+/g).forEach(function(klass) {
-            if (when === undefined) {
-                when = !self.hasClass(elm, klass);
-            }
-            if (when) {
-                self.addClass(elm, klass);
-            } else {
-                self.removeClass(elm, klass)
-            }
-        });
-
-        return self;
-    }
-
-    var styler = function() {
-        return styler;
-    };
-
-    langx.mixin(styler, {
-        autocssfix: false,
-        cssHooks: {
-
-        },
-
-        addClass: addClass,
-        className: className,
-        css: css,
-        disabled : disabled,        
-        hasClass: hasClass,
-        hide: hide,
-        isInvisible: isInvisible,
-        removeClass: removeClass,
-        show: show,
-        toggleClass: toggleClass
-    });
-
-    return dom.styler = styler;
+define('skylark-domx-browser/main',[
+	"./browser"
+],function(browser){
+	return browser;
 });
-define('skylark-utils-dom/noder',[
-    "./dom",
-    "./langx",
-    "./browser",
-    "./styler"
-], function(dom, langx, browser, styler) {
+define('skylark-domx-browser', ['skylark-domx-browser/main'], function (main) { return main; });
+
+define('skylark-domx-noder/noder',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-browser"
+], function(skylark, langx, browser) {
     var isIE = !!navigator.userAgent.match(/Trident/g) || !!navigator.userAgent.match(/MSIE/g),
         fragmentRE = /^\s*<(\w+|!)[^>]*>/,
         singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
@@ -4217,7 +3893,28 @@ define('skylark-utils-dom/noder',[
         return el;
     };
 
+    function enhancePlaceContent(placing,node) {
+        if (langx.isFunction(placing)) {
+            return placing.apply(node,[]);
+        }
+        if (langx.isArrayLike(placing)) {
+            var neddsFlattern;
+            for (var i=0;i<placing.length;i++) {
+                if (langx.isFunction(placing[i])) {
+                    placing[i] = placing[i].apply(node,[]);
+                    if (langx.isArrayLike(placing[i])) {
+                        neddsFlattern = true;
+                    }
+                }
+            }
+            if (neddsFlattern) {
+                placing = langx.flatten(placing);
+            }
+        }
+        return placing;
+    }
     function after(node, placing, copyByClone) {
+        placing = enhancePlaceContent(placing,node);
         var refNode = node,
             parent = refNode.parentNode;
         if (parent) {
@@ -4236,6 +3933,7 @@ define('skylark-utils-dom/noder',[
     }
 
     function append(node, placing, copyByClone) {
+        placing = enhancePlaceContent(placing,node);
         var parentNode = node,
             nodes = ensureNodes(placing, copyByClone);
         for (var i = 0; i < nodes.length; i++) {
@@ -4245,6 +3943,7 @@ define('skylark-utils-dom/noder',[
     }
 
     function before(node, placing, copyByClone) {
+        placing = enhancePlaceContent(placing,node);
         var refNode = node,
             parent = refNode.parentNode;
         if (parent) {
@@ -4273,7 +3972,14 @@ define('skylark-utils-dom/noder',[
      * @param } parent
      */
     function createElement(tag, props, parent) {
-        var node = document.createElement(tag);
+        var node;
+
+        if (/svg/i.test(tag)) {
+            node = document.createElementNS("http://www.w3.org/2000/svg", tag)
+        } else {
+            node = document.createElement(tag);
+        }
+
         if (props) {
             for (var name in props) {
                 node.setAttribute(name, props[name]);
@@ -4458,6 +4164,8 @@ define('skylark-utils-dom/noder',[
             } else {
                 node.appendChild(html);
             }
+
+            return this;
         }
     }
 
@@ -4501,6 +4209,16 @@ define('skylark-utils-dom/noder',[
     function isInDocument(node) {
       return (node === document.body) ? true : document.body.contains(node);
     }        
+
+    var blockNodes = ["div", "p", "ul", "ol", "li", "blockquote", "hr", "pre", "h1", "h2", "h3", "h4", "h5", "table"];
+
+    function isBlockNode(node) {
+        if (!node || node.nodeType === 3) {
+          return false;
+        }
+        return new RegExp("^(" + (blockNodes.join('|')) + ")$").test(node.nodeName.toLowerCase());
+    }
+
 
     /*   
      * Get the owner document object for the specified element.
@@ -4553,31 +4271,10 @@ define('skylark-utils-dom/noder',[
      */
     function offsetParent(elm) {
         var parent = elm.offsetParent || document.body;
-        while (parent && !rootNodeRE.test(parent.nodeName) && styler.css(parent, "position") == "static") {
+        while (parent && !rootNodeRE.test(parent.nodeName) && document.defaultView.getComputedStyle(parent).position == "static") {
             parent = parent.offsetParent;
         }
         return parent;
-    }
-
-    /*   
-     *
-     * @param {Node} elm
-     * @param {Node} params
-     */
-    function overlay(elm, params) {
-        var overlayDiv = createElement("div", params);
-        styler.css(overlayDiv, {
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            zIndex: 0x7FFFFFFF,
-            opacity: 0.7
-        });
-        elm.appendChild(overlayDiv);
-        return overlayDiv;
-
     }
 
     /*   
@@ -4607,7 +4304,7 @@ define('skylark-utils-dom/noder',[
     }
 
     function scrollParent( elm, includeHidden ) {
-        var position = styler.css(elm,"position" ),
+        var position = document.defaultView.getComputedStyle(elm).position,
             excludeStaticParent = position === "absolute",
             overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
             scrollParent = this.parents().filter( function() {
@@ -4624,7 +4321,17 @@ define('skylark-utils-dom/noder',[
             scrollParent;
     };
 
-        /*   
+
+    function reflow(elm) {
+        if (el == null) {
+          elm = document;
+        }
+        elm.offsetHeight;
+
+        return this;      
+    }
+
+    /*   
      * Replace an old node with the specified node.
      * @param {Node} node
      * @param {Node} oldNode
@@ -4632,65 +4339,6 @@ define('skylark-utils-dom/noder',[
     function replace(node, oldNode) {
         oldNode.parentNode.replaceChild(node, oldNode);
         return this;
-    }
-
-    /*   
-     * Replace an old node with the specified node.
-     * @param {HTMLElement} elm
-     * @param {Node} params
-     */
-    function throb(elm, params) {
-        params = params || {};
-        var self = this,
-            text = params.text,
-            style = params.style,
-            time = params.time,
-            callback = params.callback,
-            timer,
-
-            throbber = this.createElement("div", {
-                "class": params.className || "throbber"
-            }),
-            _overlay = overlay(throbber, {
-                "class": 'overlay fade'
-            }),
-            throb = this.createElement("div", {
-                "class": "throb"
-            }),
-            textNode = this.createTextNode(text || ""),
-            remove = function() {
-                if (timer) {
-                    clearTimeout(timer);
-                    timer = null;
-                }
-                if (throbber) {
-                    self.remove(throbber);
-                    throbber = null;
-                }
-            },
-            update = function(params) {
-                if (params && params.text && throbber) {
-                    textNode.nodeValue = params.text;
-                }
-            };
-        if (params.style) {
-            styler.css(throbber,params.style);
-        }
-        throb.appendChild(textNode);
-        throbber.appendChild(throb);
-        elm.appendChild(throbber);
-        var end = function() {
-            remove();
-            if (callback) callback();
-        };
-        if (time) {
-            timer = setTimeout(end, time);
-        }
-
-        return {
-            remove: remove,
-            update: update
-        };
     }
 
 
@@ -4804,6 +4452,8 @@ define('skylark-utils-dom/noder',[
 
         isWindow: langx.isWindow,
 
+        nodeName : nodeName,
+
         offsetParent: offsetParent,
 
         ownerDoc: ownerDoc,
@@ -4818,13 +4468,13 @@ define('skylark-utils-dom/noder',[
 
         append: append,
 
+        reflow: reflow,
+
         remove: remove,
 
         removeChild : removeChild,
 
         replace: replace,
-
-        throb: throb,
 
         traverse: traverse,
 
@@ -4837,14 +4487,21 @@ define('skylark-utils-dom/noder',[
         unwrap: unwrap
     });
 
-    return dom.noder = noder;
+    return skylark.attach("domx.noder" , noder);
 });
-define('skylark-utils-dom/finder',[
-    "./dom",
-    "./langx",
-    "./browser",
-    "./noder"
-], function(dom, langx, browser, noder, velm) {
+define('skylark-domx-noder/main',[
+	"./noder"
+],function(noder){
+	return noder;
+});
+define('skylark-domx-noder', ['skylark-domx-noder/main'], function (main) { return main; });
+
+define('skylark-domx-finder/finder',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-noder"
+], function(skylark, langx, browser, noder) {
     var local = {},
         filter = Array.prototype.filter,
         slice = Array.prototype.slice,
@@ -5193,6 +4850,9 @@ define('skylark-utils-dom/finder',[
 
         'visible': function(elm) {
             return elm.offsetWidth && elm.offsetWidth
+        },
+        'empty': function(elm) {
+            return !elm.hasChildNodes();
         }
     };
 
@@ -5602,14 +5262,17 @@ define('skylark-utils-dom/finder',[
                     break;
                 }
             }
-            ret.push(node); // TODO
+            if (!selector || matches(node, selector)) {
+              ret.push(node); 
+            }
         }
 
-        if (selector) {
-            ret = local.filter(ret, selector);
-        }
+        //if (selector) {
+        //    ret = local.filter(ret, selector);
+        //}
         return ret;
     }
+
 
     /*
      * Returns a element by its ID.
@@ -5948,13 +5611,893 @@ define('skylark-utils-dom/finder',[
         siblings: siblings
     });
 
-    return dom.finder = finder;
+    return skylark.attach("domx.finder", finder);
 });
-define('skylark-utils-dom/datax',[
-    "./dom",
-    "./langx",
-    "./finder"
-], function(dom, langx, finder) {
+define('skylark-domx-finder/main',[
+	"./finder"
+],function(finder){
+
+	return finder;
+});
+define('skylark-domx-finder', ['skylark-domx-finder/main'], function (main) { return main; });
+
+define('skylark-domx-query/query',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-noder",
+    "skylark-domx-finder"
+], function(skylark, langx, noder, finder) {
+    var some = Array.prototype.some,
+        push = Array.prototype.push,
+        every = Array.prototype.every,
+        concat = Array.prototype.concat,
+        slice = Array.prototype.slice,
+        map = Array.prototype.map,
+        filter = Array.prototype.filter,
+        forEach = Array.prototype.forEach,
+        indexOf = Array.prototype.indexOf,
+        sort = Array.prototype.sort,
+        isQ;
+
+    var rquickExpr = /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/;
+
+    var funcArg = langx.funcArg,
+        isArrayLike = langx.isArrayLike,
+        isString = langx.isString,
+        uniq = langx.uniq,
+        isFunction = langx.isFunction;
+
+    var type = langx.type,
+        isArray = langx.isArray,
+
+        isWindow = langx.isWindow,
+
+        isDocument = langx.isDocument,
+
+        isObject = langx.isObject,
+
+        isPlainObject = langx.isPlainObject,
+
+        compact = langx.compact,
+
+        flatten = langx.flatten,
+
+        camelCase = langx.camelCase,
+
+        dasherize = langx.dasherize,
+        children = finder.children;
+
+    function wrapper_node_operation(func, context, oldValueFunc) {
+        return function(html) {
+            var argType, nodes = langx.map(arguments, function(arg) {
+                argType = type(arg)
+                return argType == "function" || argType == "object" || argType == "array" || arg == null ?
+                    arg : noder.createFragment(arg)
+            });
+            if (nodes.length < 1) {
+                return this
+            }
+            this.each(function(idx) {
+                func.apply(context, [this, nodes, idx > 0]);
+            });
+            return this;
+        }
+    }
+
+    function wrapper_map(func, context) {
+        return function() {
+            var self = this,
+                params = slice.call(arguments);
+            var result = langx.map(self, function(elem, idx) {
+                return func.apply(context, [elem].concat(params));
+            });
+            return query(uniq(result));
+        }
+    }
+
+    function wrapper_selector(func, context, last) {
+        return function(selector) {
+            var self = this,
+                params = slice.call(arguments);
+            var result = this.map(function(idx, elem) {
+                // if (elem.nodeType == 1) {
+                //if (elem.querySelector) {
+                    return func.apply(context, last ? [elem] : [elem, selector]);
+                //}
+            });
+            if (last && selector) {
+                return result.filter(selector);
+            } else {
+                return result;
+            }
+        }
+    }
+
+    function wrapper_selector_until(func, context, last) {
+        return function(util, selector) {
+            var self = this,
+                params = slice.call(arguments);
+            //if (selector === undefined) { //TODO : needs confirm?
+            //    selector = util;
+            //    util = undefined;
+            //}
+            var result = this.map(function(idx, elem) {
+                // if (elem.nodeType == 1) { // TODO
+                //if (elem.querySelector) {
+                    return func.apply(context, last ? [elem, util] : [elem, selector, util]);
+                //}
+            });
+            if (last && selector) {
+                return result.filter(selector);
+            } else {
+                return result;
+            }
+        }
+    }
+
+
+    function wrapper_every_act(func, context) {
+        return function() {
+            var self = this,
+                params = slice.call(arguments);
+            this.each(function(idx,node) {
+                func.apply(context, [this].concat(params));
+            });
+            return self;
+        }
+    }
+
+    function wrapper_every_act_firstArgFunc(func, context, oldValueFunc) {
+        return function(arg1) {
+            var self = this,
+                params = slice.call(arguments);
+            forEach.call(self, function(elem, idx) {
+                var newArg1 = funcArg(elem, arg1, idx, oldValueFunc(elem));
+                func.apply(context, [elem, arg1].concat(params.slice(1)));
+            });
+            return self;
+        }
+    }
+
+    function wrapper_some_chk(func, context) {
+        return function() {
+            var self = this,
+                params = slice.call(arguments);
+            return some.call(self, function(elem) {
+                return func.apply(context, [elem].concat(params));
+            });
+        }
+    }
+
+    function wrapper_name_value(func, context, oldValueFunc) {
+        return function(name, value) {
+            var self = this;
+
+            if (langx.isPlainObject(name) || langx.isDefined(value)) {
+                forEach.call(self, function(elem, idx) {
+                    var newValue;
+                    if (oldValueFunc) {
+                        newValue = funcArg(elem, value, idx, oldValueFunc(elem, name));
+                    } else {
+                        newValue = value
+                    }
+                    func.apply(context, [elem,name,newValue]);
+                });
+                return self;
+            } else {
+                if (self[0]) {
+                    return func.apply(context, [self[0], name]);
+                }
+            }
+
+        }
+    }
+
+    function wrapper_value(func, context, oldValueFunc) {
+        return function(value) {
+            var self = this;
+
+            if (langx.isDefined(value)) {
+                forEach.call(self, function(elem, idx) {
+                    var newValue;
+                    if (oldValueFunc) {
+                        newValue = funcArg(elem, value, idx, oldValueFunc(elem));
+                    } else {
+                        newValue = value
+                    }
+                    func.apply(context, [elem, newValue]);
+                });
+                return self;
+            } else {
+                if (self[0]) {
+                    return func.apply(context, [self[0]]);
+                }
+            }
+
+        }
+    }
+
+    var NodeList = langx.klass({
+        klassName: "SkNodeList",
+        init: function(selector, context) {
+            var self = this,
+                match, nodes, node, props;
+
+            if (selector) {
+                self.context = context = context || noder.doc();
+
+                if (isString(selector)) {
+                    // a html string or a css selector is expected
+                    self.selector = selector;
+
+                    if (selector.charAt(0) === "<" && selector.charAt(selector.length - 1) === ">" && selector.length >= 3) {
+                        match = [null, selector, null];
+                    } else {
+                        match = rquickExpr.exec(selector);
+                    }
+
+                    if (match) {
+                        if (match[1]) {
+                            // if selector is html
+                            nodes = noder.createFragment(selector);
+
+                            if (langx.isPlainObject(context)) {
+                                props = context;
+                            }
+
+                        } else {
+                            node = finder.byId(match[2], noder.ownerDoc(context));
+
+                            if (node) {
+                                // if selector is id
+                                nodes = [node];
+                            }
+
+                        }
+                    } else {
+                        // if selector is css selector
+                        if (langx.isString(context)) {
+                            context = finder.find(context);
+                        }
+
+                        nodes = finder.descendants(context, selector);
+                    }
+                } else {
+                    if (selector !== window && isArrayLike(selector)) {
+                        // a dom node array is expected
+                        nodes = selector;
+                    } else {
+                        // a dom node is expected
+                        nodes = [selector];
+                    }
+                    //self.add(selector, false);
+                }
+            }
+
+
+            if (nodes) {
+
+                push.apply(self, nodes);
+
+                if (props) {
+                    for ( var name  in props ) {
+                        // Properties of context are called as methods if possible
+                        if ( langx.isFunction( this[ name ] ) ) {
+                            this[ name ]( props[ name ] );
+                        } else {
+                            this.attr( name, props[ name ] );
+                        }
+                    }
+                }
+            }
+
+            return self;
+        }
+    });
+
+    var query = (function() {
+        isQ = function(object) {
+            return object instanceof NodeList;
+        }
+        init = function(selector, context) {
+            return new NodeList(selector, context);
+        }
+
+        var $ = function(selector, context) {
+            if (isFunction(selector)) {
+                $.ready(function() {
+                    selector($);
+                });
+            } else if (isQ(selector)) {
+                return selector;
+            } else {
+                if (context && isQ(context) && isString(selector)) {
+                    return context.find(selector);
+                }
+                return init(selector, context);
+            }
+        };
+
+        $.fn = NodeList.prototype;
+        langx.mixin($.fn, {
+            // `map` and `slice` in the jQuery API work differently
+            // from their array counterparts
+            length : 0,
+
+            map: function(fn) {
+                return $(uniq(langx.map(this, function(el, i) {
+                    return fn.call(el, i, el)
+                })));
+            },
+
+            slice: function() {
+                return $(slice.apply(this, arguments))
+            },
+
+            forEach: function() {
+                return forEach.apply(this,arguments);
+            },
+
+            get: function(idx) {
+                return idx === undefined ? slice.call(this) : this[idx >= 0 ? idx : idx + this.length]
+            },
+
+            indexOf: function() {
+                return indexOf.apply(this,arguments);
+            },
+
+            sort : function() {
+                return sort.apply(this,arguments);
+            },
+
+            toArray: function() {
+                return slice.call(this);
+            },
+
+            size: function() {
+                return this.length
+            },
+
+            //remove: wrapper_every_act(noder.remove, noder),
+            remove : function(selector) {
+                if (selector) {
+                    return this.find(selector).remove();
+                }
+                this.each(function(i,node){
+                    noder.remove(node);
+                });
+                return this;
+            },
+
+            each: function(callback) {
+                langx.each(this, callback);
+                return this;
+            },
+
+            filter: function(selector) {
+                if (isFunction(selector)) return this.not(this.not(selector))
+                return $(filter.call(this, function(element) {
+                    return finder.matches(element, selector)
+                }))
+            },
+
+            add: function(selector, context) {
+                return $(uniq(this.toArray().concat($(selector, context).toArray())));
+            },
+
+            is: function(selector) {
+                if (this.length > 0) {
+                    var self = this;
+                    if (langx.isString(selector)) {
+                        return some.call(self,function(elem) {
+                            return finder.matches(elem, selector);
+                        });
+                    } else if (langx.isArrayLike(selector)) {
+                       return some.call(self,function(elem) {
+                            return langx.inArray(elem, selector) > -1;
+                        });
+                    } else if (langx.isHtmlNode(selector)) {
+                       return some.call(self,function(elem) {
+                            return elem ==  selector;
+                        });
+                    }
+                }
+                return false;
+            },
+            
+            not: function(selector) {
+                var nodes = []
+                if (isFunction(selector) && selector.call !== undefined)
+                    this.each(function(idx,node) {
+                        if (!selector.call(this, idx,node)) nodes.push(this)
+                    })
+                else {
+                    var excludes = typeof selector == 'string' ? this.filter(selector) :
+                        (isArrayLike(selector) && isFunction(selector.item)) ? slice.call(selector) : $(selector)
+                    this.forEach(function(el) {
+                        if (excludes.indexOf(el) < 0) nodes.push(el)
+                    })
+                }
+                return $(nodes)
+            },
+
+            has: function(selector) {
+                return this.filter(function() {
+                    return isObject(selector) ?
+                        noder.contains(this, selector) :
+                        $(this).find(selector).size()
+                })
+            },
+
+            eq: function(idx) {
+                return idx === -1 ? this.slice(idx) : this.slice(idx, +idx + 1);
+            },
+
+            first: function() {
+                return this.eq(0);
+            },
+
+            last: function() {
+                return this.eq(-1);
+            },
+
+            find: wrapper_selector(finder.descendants, finder),
+
+            closest: wrapper_selector(finder.closest, finder),
+            /*
+                        closest: function(selector, context) {
+                            var node = this[0],
+                                collection = false
+                            if (typeof selector == 'object') collection = $(selector)
+                            while (node && !(collection ? collection.indexOf(node) >= 0 : finder.matches(node, selector)))
+                                node = node !== context && !isDocument(node) && node.parentNode
+                            return $(node)
+                        },
+            */
+
+
+            parents: wrapper_selector(finder.ancestors, finder),
+
+            parentsUntil: wrapper_selector_until(finder.ancestors, finder),
+
+
+            parent: wrapper_selector(finder.parent, finder),
+
+            children: wrapper_selector(finder.children, finder),
+
+            contents: wrapper_map(noder.contents, noder),
+
+            empty: wrapper_every_act(noder.empty, noder),
+
+            html: wrapper_value(noder.html, noder),
+
+            // `pluck` is borrowed from Prototype.js
+            pluck: function(property) {
+                return langx.map(this, function(el) {
+                    return el[property]
+                })
+            },
+
+            pushStack : function(elms) {
+                var ret = $(elms);
+                ret.prevObject = this;
+                return ret;
+            },
+            
+            replaceWith: function(newContent) {
+                return this.before(newContent).remove();
+            },
+
+            wrap: function(html) {
+                /*
+                var func = isFunction(structure)
+                if (this[0] && !func)
+                    var dom = $(structure).get(0),
+                        clone = dom.parentNode || this.length > 1
+
+                return this.each(function(index,node) {
+                    $(this).wrapAll(
+                        func ? structure.call(this, index,node) :
+                        clone ? dom.cloneNode(true) : dom
+                    )
+                })
+                */
+                var htmlIsFunction = typeof html === "function";
+
+                return this.each( function( i ) {
+                    $( this ).wrapAll( htmlIsFunction ? html.call( this, i ) : html );
+                } );                
+            },
+
+            wrapAll: function(html) {
+                /*
+                if (this[0]) {
+                    $(this[0]).before(wrappingElement = $(wrappingElement));
+                    var children;
+                    // drill down to the inmost element
+                    while ((children = wrappingElement.children()).length) {
+                        wrappingElement = children.first();
+                    }
+                    $(wrappingElement).append(this);
+                }
+                return this
+                */
+                var wrap;
+
+                if ( this[ 0 ] ) {
+                    if ( typeof html === "function" ) {
+                        html = html.call( this[ 0 ] );
+                    }
+
+                    // The elements to wrap the target around
+                    wrap = $( html, this[ 0 ].ownerDocument ).eq( 0 ).clone( true );
+
+                    if ( this[ 0 ].parentNode ) {
+                        wrap.insertBefore( this[ 0 ] );
+                    }
+
+                    wrap.map( function() {
+                        var elem = this;
+
+                        while ( elem.firstElementChild ) {
+                            elem = elem.firstElementChild;
+                        }
+
+                        return elem;
+                    } ).append( this );
+                }
+
+                return this;
+
+            },
+
+            wrapInner: function(html) {
+                /*
+                var func = isFunction(wrappingElement)
+                return this.each(function(index,node) {
+                    var self = $(this),
+                        contents = self.contents(),
+                        dom = func ? wrappingElement.call(this, index,node) : wrappingElement
+                    contents.length ? contents.wrapAll(dom) : self.append(dom)
+                })
+                */
+                if ( typeof html === "function" ) {
+                    return this.each( function( i ) {
+                        $( this ).wrapInner( html.call( this, i ) );
+                    } );
+                }
+
+                return this.each( function() {
+                    var self = $( this ),
+                        contents = self.contents();
+
+                    if ( contents.length ) {
+                        contents.wrapAll( html );
+
+                    } else {
+                        self.append( html );
+                    }
+                } );
+
+            },
+
+            unwrap: function(selector) {
+                /*
+                if (this.parent().children().length === 0) {
+                    // remove dom without text
+                    this.parent(selector).not("body").each(function() {
+                        $(this).replaceWith(document.createTextNode(this.childNodes[0].textContent));
+                    });
+                } else {
+                    this.parent().each(function() {
+                        $(this).replaceWith($(this).children())
+                    });
+                }
+                return this
+                */
+                this.parent(selector).not("body").each( function() {
+                    $(this).replaceWith(this.childNodes);
+                });
+                return this;
+
+            },
+
+            clone: function() {
+                return this.map(function() {
+                    return this.cloneNode(true)
+                })
+            },
+
+
+            toggle: function(setting) {
+                return this.each(function() {
+                    var el = $(this);
+                    (setting === undefined ? el.css("display") == "none" : setting) ? el.show(): el.hide()
+                })
+            },
+
+            prev: function(selector) {
+                return $(this.pluck('previousElementSibling')).filter(selector || '*')
+            },
+
+            prevAll: wrapper_selector(finder.previousSiblings, finder),
+
+            next: function(selector) {
+                return $(this.pluck('nextElementSibling')).filter(selector || '*')
+            },
+
+            nextAll: wrapper_selector(finder.nextSiblings, finder),
+
+            siblings: wrapper_selector(finder.siblings, finder),
+
+            index: function(elem) {
+                if (elem) {
+                    return this.indexOf($(elem)[0]);
+                } else {
+                    return this.parent().children().indexOf(this[0]);
+                }
+            }
+        });
+
+        // for now
+        $.fn.detach = $.fn.remove;
+
+        $.fn.hover = function(fnOver, fnOut) {
+            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+        };
+
+
+        var traverseNode = noder.traverse;
+
+
+        $.fn.after = wrapper_node_operation(noder.after, noder);
+
+        $.fn.prepend = wrapper_node_operation(noder.prepend, noder);
+
+        $.fn.before = wrapper_node_operation(noder.before, noder);
+
+        $.fn.append = wrapper_node_operation(noder.append, noder);
+
+
+        langx.each( {
+            appendTo: "append",
+            prependTo: "prepend",
+            insertBefore: "before",
+            insertAfter: "after",
+            replaceAll: "replaceWith"
+        }, function( name, original ) {
+            $.fn[ name ] = function( selector ) {
+                var elems,
+                    ret = [],
+                    insert = $( selector ),
+                    last = insert.length - 1,
+                    i = 0;
+
+                for ( ; i <= last; i++ ) {
+                    elems = i === last ? this : this.clone( true );
+                    $( insert[ i ] )[ original ]( elems );
+
+                    // Support: Android <=4.0 only, PhantomJS 1 only
+                    // .get() because push.apply(_, arraylike) throws on ancient WebKit
+                    push.apply( ret, elems.get() );
+                }
+
+                return this.pushStack( ret );
+            };
+        } );
+
+/*
+        $.fn.insertAfter = function(html) {
+            $(html).after(this);
+            return this;
+        };
+
+        $.fn.insertBefore = function(html) {
+            $(html).before(this);
+            return this;
+        };
+
+        $.fn.appendTo = function(html) {
+            $(html).append(this);
+            return this;
+        };
+
+        $.fn.prependTo = function(html) {
+            $(html).prepend(this);
+            return this;
+        };
+
+        $.fn.replaceAll = function(selector) {
+            $(selector).replaceWith(this);
+            return this;
+        };
+*/
+        return $;
+    })();
+
+    (function($) {
+        $.fn.scrollParent = function( includeHidden ) {
+            var position = this.css( "position" ),
+                excludeStaticParent = position === "absolute",
+                overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
+                scrollParent = this.parents().filter( function() {
+                    var parent = $( this );
+                    if ( excludeStaticParent && parent.css( "position" ) === "static" ) {
+                        return false;
+                    }
+                    return overflowRegex.test( parent.css( "overflow" ) + parent.css( "overflow-y" ) +
+                        parent.css( "overflow-x" ) );
+                } ).eq( 0 );
+
+            return position === "fixed" || !scrollParent.length ?
+                $( this[ 0 ].ownerDocument || document ) :
+                scrollParent;
+        };
+
+    })(query);
+
+
+    (function($) {
+        $.fn.end = function() {
+            return this.prevObject || $()
+        }
+
+        $.fn.andSelf = function() {
+            return this.add(this.prevObject || $())
+        }
+
+        $.fn.addBack = function(selector) {
+            if (this.prevObject) {
+                if (selector) {
+                    return this.add(this.prevObject.filter(selector));
+                } else {
+                    return this.add(this.prevObject);
+                }
+            } else {
+                return this;
+            }
+        }
+
+        'filter,add,not,eq,first,last,find,closest,parents,parent,children,siblings,prev,prevAll,next,nextAll'.split(',').forEach(function(property) {
+            var fn = $.fn[property]
+            $.fn[property] = function() {
+                var ret = fn.apply(this, arguments)
+                ret.prevObject = this
+                return ret
+            }
+        })
+    })(query);
+
+
+    (function($) {
+        $.fn.query = $.fn.find;
+
+        $.fn.place = function(refNode, position) {
+            // summary:
+            //      places elements of this node list relative to the first element matched
+            //      by queryOrNode. Returns the original NodeList. See: `dojo/dom-construct.place`
+            // queryOrNode:
+            //      may be a string representing any valid CSS3 selector or a DOM node.
+            //      In the selector case, only the first matching element will be used
+            //      for relative positioning.
+            // position:
+            //      can be one of:
+            //
+            //      -   "last" (default)
+            //      -   "first"
+            //      -   "before"
+            //      -   "after"
+            //      -   "only"
+            //      -   "replace"
+            //
+            //      or an offset in the childNodes
+            if (langx.isString(refNode)) {
+                refNode = finder.descendant(refNode);
+            } else if (isQ(refNode)) {
+                refNode = refNode[0];
+            }
+            return this.each(function(i, node) {
+                switch (position) {
+                    case "before":
+                        noder.before(refNode, node);
+                        break;
+                    case "after":
+                        noder.after(refNode, node);
+                        break;
+                    case "replace":
+                        noder.replace(refNode, node);
+                        break;
+                    case "only":
+                        noder.empty(refNode);
+                        noder.append(refNode, node);
+                        break;
+                    case "first":
+                        noder.prepend(refNode, node);
+                        break;
+                        // else fallthrough...
+                    default: // aka: last
+                        noder.append(refNode, node);
+                }
+            });
+        };
+
+        $.fn.addContent = function(content, position) {
+            if (content.template) {
+                content = langx.substitute(content.template, content);
+            }
+            return this.append(content);
+        };
+
+
+
+        $.fn.disableSelection = ( function() {
+            var eventType = "onselectstart" in document.createElement( "div" ) ?
+                "selectstart" :
+                "mousedown";
+
+            return function() {
+                return this.on( eventType + ".ui-disableSelection", function( event ) {
+                    event.preventDefault();
+                } );
+            };
+        } )();
+
+        $.fn.enableSelection = function() {
+            return this.off( ".ui-disableSelection" );
+        };
+
+        $.fn.reflow = function() {
+            return noder.flow(this[0]);
+        };
+
+        $.fn.isBlockNode = function() {
+            return noder.isBlockNode(this[0]);
+        };
+       
+
+    })(query);
+
+    query.fn.plugin = function(name,options) {
+        var args = slice.call( arguments, 1 ),
+            self = this,
+            returnValue = this;
+
+        this.each(function(){
+            returnValue = plugins.instantiate.apply(self,[this,name].concat(args));
+        });
+        return returnValue;
+    };
+
+
+    query.wraps = {
+        wrapper_node_operation,
+        wrapper_map,
+        wrapper_value,
+        wrapper_selector,
+        wrapper_some_chk,
+        wrapper_selector_until,
+        wrapper_every_act_firstArgFunc,
+        wrapper_every_act,
+        wrapper_name_value
+
+    };
+
+    return skylark.attach("domx.query", query);
+
+});
+define('skylark-domx-query/main',[
+	"./query"
+],function(query){
+	return query;
+});
+define('skylark-domx-query', ['skylark-domx-query/main'], function (main) { return main; });
+
+define('skylark-domx-data/data',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-finder",
+    "skylark-domx-noder"
+], function(skylark, langx, finder,noder) {
     var map = Array.prototype.map,
         filter = Array.prototype.filter,
         camelCase = langx.camelCase,
@@ -5975,6 +6518,107 @@ define('skylark-utils-dom/datax',[
             'frameborder': 'frameBorder',
             'contenteditable': 'contentEditable'
         };
+
+    // Strip and collapse whitespace according to HTML spec
+    function stripAndCollapse( value ) {
+      var tokens = value.match( /[^\x20\t\r\n\f]+/g ) || [];
+      return tokens.join( " " );
+    }
+
+
+    var valHooks = {
+      option: {
+        get: function( elem ) {
+          var val = elem.getAttribute( "value" );
+          return val != null ?  val :  stripAndCollapse(text( elem ) );
+        }
+      },
+      select: {
+        get: function( elem ) {
+          var value, option, i,
+            options = elem.options,
+            index = elem.selectedIndex,
+            one = elem.type === "select-one",
+            values = one ? null : [],
+            max = one ? index + 1 : options.length;
+
+          if ( index < 0 ) {
+            i = max;
+
+          } else {
+            i = one ? index : 0;
+          }
+
+          // Loop through all the selected options
+          for ( ; i < max; i++ ) {
+            option = options[ i ];
+
+            if ( option.selected &&
+
+                // Don't return options that are disabled or in a disabled optgroup
+                !option.disabled &&
+                ( !option.parentNode.disabled ||
+                  !noder.nodeName( option.parentNode, "optgroup" ) ) ) {
+
+              // Get the specific value for the option
+              value = val(option);
+
+              // We don't need an array for one selects
+              if ( one ) {
+                return value;
+              }
+
+              // Multi-Selects return an array
+              values.push( value );
+            }
+          }
+
+          return values;
+        },
+
+        set: function( elem, value ) {
+          var optionSet, option,
+            options = elem.options,
+            values = langx.makeArray( value ),
+            i = options.length;
+
+          while ( i-- ) {
+            option = options[ i ];
+
+            /* eslint-disable no-cond-assign */
+
+            if ( option.selected =
+              langx.inArray( valHooks.option.get( option ), values ) > -1
+            ) {
+              optionSet = true;
+            }
+
+            /* eslint-enable no-cond-assign */
+          }
+
+          // Force browsers to behave consistently when non-matching value is set
+          if ( !optionSet ) {
+            elem.selectedIndex = -1;
+          }
+          return values;
+        }
+      }
+    };
+
+
+    // Radios and checkboxes getter/setter
+    langx.each( [ "radio", "checkbox" ], function() {
+      valHooks[ this ] = {
+        set: function( elem, value ) {
+          if ( langx.isArray( value ) ) {
+            return ( elem.checked = langx.inArray( val(elem), value ) > -1 );
+          }
+        }
+      };
+    });
+
+
+
     /*
      * Set property values
      * @param {Object} elm  
@@ -6009,9 +6653,7 @@ define('skylark-utils-dom/datax',[
                 }
                 return this;
             } else {
-                if (elm.hasAttribute && elm.hasAttribute(name)) {
-                    return elm.getAttribute(name);
-                }
+                return elm.getAttribute(name);
             }
         } else {
             elm.setAttribute(name, value);
@@ -6194,7 +6836,9 @@ define('skylark-utils-dom/datax',[
      * @param {String} value
      */
     function val(elm, value) {
+        var hooks = valHooks[ elm.type ] || valHooks[ elm.nodeName.toLowerCase() ];
         if (value === undefined) {
+/*
             if (elm.multiple) {
                 // select multiple values
                 var selectedOptions = filter.call(finder.find(elm, "option"), (function(option) {
@@ -6202,12 +6846,54 @@ define('skylark-utils-dom/datax',[
                 }));
                 return pluck(selectedOptions, "value");
             } else {
-                return elm.value;
+                if (/input|textarea/i.test(elm.tagName)) {
+                  return elm.value;
+                }
+                return text(elm);
             }
+*/
+
+          if ( hooks &&  "get" in hooks &&  ( ret = hooks.get( elm, "value" ) ) !== undefined ) {
+            return ret;
+          }
+
+          ret = elm.value;
+
+          // Handle most common string cases
+          if ( typeof ret === "string" ) {
+            return ret.replace( /\r/g, "" );
+          }
+
+          // Handle cases where value is null/undef or number
+          return ret == null ? "" : ret;
+
         } else {
-            elm.value = value;
+/*          
+            if (/input|textarea/i.test(elm.tagName)) {
+              elm.value = value;
+            } else {
+              text(elm,value);
+            }
             return this;
-        }
+*/
+          // Treat null/undefined as ""; convert numbers to string
+          if ( value == null ) {
+            value = "";
+
+          } else if ( typeof value === "number" ) {
+            value += "";
+
+          } else if ( langx.isArray( value ) ) {
+            value = langx.map( value, function( value1 ) {
+              return value1 == null ? "" : value1 + "";
+            } );
+          }
+
+          // If set returns undefined, fall back to normal setting
+          if ( !hooks || !( "set" in hooks ) || hooks.set( elm, value, "value" ) === undefined ) {
+            elm.value = value;
+          }
+        }      
     }
 
 
@@ -6241,19 +6927,241 @@ define('skylark-utils-dom/datax',[
 
         text: text,
 
-        val: val
+        val: val,
+
+        valHooks : valHooks
     });
 
-    return dom.datax = datax;
+    return skylark.attach("domx.data", datax);
 });
-define('skylark-utils-dom/eventer',[
-    "./dom",
-    "./langx",
-    "./browser",
-    "./finder",
-    "./noder",
-    "./datax"
-], function(dom, langx, browser, finder, noder, datax) {
+define('skylark-domx-velm/velm',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-noder",
+    "skylark-domx-finder",
+    "skylark-domx-query"
+], function(skylark, langx, noder, finder, $) {
+    var map = Array.prototype.map,
+        slice = Array.prototype.slice;
+    /*
+     * VisualElement is a skylark class type wrapping a visule dom node,
+     * provides a number of prototype methods and supports chain calls.
+     */
+    var VisualElement = langx.klass({
+        klassName: "VisualElement",
+
+        "_construct": function(node) {
+            if (langx.isString(node)) {
+                if (node.charAt(0) === "<") {
+                    //html
+                    node = noder.createFragment(node)[0];
+                } else {
+                    // id
+                    node = document.getElementById(node);
+                }
+            }
+            this._elm = node;
+        }
+    });
+
+    VisualElement.prototype.$ = VisualElement.prototype.query = function(selector) {
+        return $(selector,this._elm);
+    };
+
+    VisualElement.prototype.elm = function() {
+        return this._elm;
+    };
+
+    /*
+     * the VisualElement object wrapping document.body
+     */
+    var root = new VisualElement(document.body),
+        velm = function(node) {
+            if (node) {
+                return new VisualElement(node);
+            } else {
+                return root;
+            }
+        };
+    /*
+     * Extend VisualElement prototype with wrapping the specified methods.
+     * @param {ArrayLike} fn
+     * @param {Object} context
+     */
+    function _delegator(fn, context) {
+        return function() {
+            var self = this,
+                elem = self._elm,
+                ret = fn.apply(context, [elem].concat(slice.call(arguments)));
+
+            if (ret) {
+                if (ret === context) {
+                    return self;
+                } else {
+                    if (ret instanceof HTMLElement) {
+                        ret = new VisualElement(ret);
+                    } else if (langx.isArrayLike(ret)) {
+                        ret = map.call(ret, function(el) {
+                            if (el instanceof HTMLElement) {
+                                return new VisualElement(el);
+                            } else {
+                                return el;
+                            }
+                        })
+                    }
+                }
+            }
+            return ret;
+        };
+    }
+
+    langx.mixin(velm, {
+        batch: function(nodes, action, args) {
+            nodes.forEach(function(node) {
+                var elm = (node instanceof VisualElement) ? node : velm(node);
+                elm[action].apply(elm, args);
+            });
+
+            return this;
+        },
+
+        root: new VisualElement(document.body),
+
+        VisualElement: VisualElement,
+
+        partial: function(name, fn) {
+            var props = {};
+
+            props[name] = fn;
+
+            VisualElement.partial(props);
+        },
+
+        delegate: function(names, context) {
+            var props = {};
+
+            names.forEach(function(name) {
+                props[name] = _delegator(context[name], context);
+            });
+
+            VisualElement.partial(props);
+        }
+    });
+
+    // from ./finder
+    velm.delegate([
+        "ancestor",
+        "ancestors",
+        "children",
+        "descendant",
+        "find",
+        "findAll",
+        "firstChild",
+        "lastChild",
+        "matches",
+        "nextSibling",
+        "nextSiblings",
+        "parent",
+        "previousSibling",
+        "previousSiblings",
+        "siblings"
+    ], finder);
+
+    /*
+     * find a dom element matched by the specified selector.
+     * @param {String} selector
+     */
+    velm.find = function(selector) {
+        if (selector === "body") {
+            return this.root;
+        } else {
+            return this.root.descendant(selector);
+        }
+    };
+
+
+    // from ./noder
+    velm.delegate([
+        "after",
+        "append",
+        "before",
+        "clone",
+        "contains",
+        "contents",
+        "empty",
+        "html",
+        "isChildOf",
+        "isDocument",
+        "isInDocument",
+        "isWindow",
+        "ownerDoc",
+        "prepend",
+        "remove",
+        "removeChild",
+        "replace",
+        "reverse",
+        "throb",
+        "traverse",
+        "wrapper",
+        "wrapperInner",
+        "unwrap"
+    ], noder);
+
+
+    return skylark.attach("domx.velm", velm);
+});
+define('skylark-domx-velm/main',[
+	"./velm"
+],function(velm){
+	return velm;
+});
+define('skylark-domx-velm', ['skylark-domx-velm/main'], function (main) { return main; });
+
+define('skylark-domx-data/main',[
+    "./data",
+    "skylark-domx-velm",
+    "skylark-domx-query"    
+],function(data,velm,$){
+    // from ./data
+    velm.delegate([
+        "attr",
+        "data",
+        "prop",
+        "removeAttr",
+        "removeData",
+        "text",
+        "val"
+    ], data);
+
+    $.fn.text = $.wraps.wrapper_value(data.text, data, data.text);
+
+    $.fn.attr = $.wraps.wrapper_name_value(data.attr, data, data.attr);
+
+    $.fn.removeAttr = $.wraps.wrapper_every_act(data.removeAttr, data);
+
+    $.fn.prop = $.wraps.wrapper_name_value(data.prop, data, data.prop);
+
+    $.fn.removeProp = $.wraps.wrapper_every_act(data.removeProp, data);
+
+    $.fn.data = $.wraps.wrapper_name_value(data.data, data, data.data);
+
+    $.fn.removeData = $.wraps.wrapper_every_act(data.removeData, data);
+
+    $.fn.val = $.wraps.wrapper_value(data.val, data, data.val);
+
+
+    return data;
+});
+define('skylark-domx-data', ['skylark-domx-data/main'], function (main) { return main; });
+
+define('skylark-domx-eventer/eventer',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-finder",
+    "skylark-domx-noder",
+    "skylark-domx-data"
+], function(skylark, langx, browser, finder, noder, datax) {
     var mixin = langx.mixin,
         each = langx.each,
         slice = Array.prototype.slice,
@@ -6292,99 +7200,101 @@ define('skylark-utils-dom/eventer',[
         };
     }
 
+
+    var NativeEventCtors = [
+            window["CustomEvent"], // 0 default
+            window["CompositionEvent"], // 1
+            window["DragEvent"], // 2
+            window["Event"], // 3
+            window["FocusEvent"], // 4
+            window["KeyboardEvent"], // 5
+            window["MessageEvent"], // 6
+            window["MouseEvent"], // 7
+            window["MouseScrollEvent"], // 8
+            window["MouseWheelEvent"], // 9
+            window["MutationEvent"], // 10
+            window["ProgressEvent"], // 11
+            window["TextEvent"], // 12
+            window["TouchEvent"], // 13
+            window["UIEvent"], // 14
+            window["WheelEvent"], // 15
+            window["ClipboardEvent"] // 16
+        ],
+        NativeEvents = {
+            "compositionstart": 1, // CompositionEvent
+            "compositionend": 1, // CompositionEvent
+            "compositionupdate": 1, // CompositionEvent
+
+            "beforecopy": 16, // ClipboardEvent
+            "beforecut": 16, // ClipboardEvent
+            "beforepaste": 16, // ClipboardEvent
+            "copy": 16, // ClipboardEvent
+            "cut": 16, // ClipboardEvent
+            "paste": 16, // ClipboardEvent
+
+            "drag": 2, // DragEvent
+            "dragend": 2, // DragEvent
+            "dragenter": 2, // DragEvent
+            "dragexit": 2, // DragEvent
+            "dragleave": 2, // DragEvent
+            "dragover": 2, // DragEvent
+            "dragstart": 2, // DragEvent
+            "drop": 2, // DragEvent
+
+            "abort": 3, // Event
+            "change": 3, // Event
+            "error": 3, // Event
+            "selectionchange": 3, // Event
+            "submit": 3, // Event
+            "reset": 3, // Event
+
+            "focus": 4, // FocusEvent
+            "blur": 4, // FocusEvent
+            "focusin": 4, // FocusEvent
+            "focusout": 4, // FocusEvent
+
+            "keydown": 5, // KeyboardEvent
+            "keypress": 5, // KeyboardEvent
+            "keyup": 5, // KeyboardEvent
+
+            "message": 6, // MessageEvent
+
+            "click": 7, // MouseEvent
+            "contextmenu": 7, // MouseEvent
+            "dblclick": 7, // MouseEvent
+            "mousedown": 7, // MouseEvent
+            "mouseup": 7, // MouseEvent
+            "mousemove": 7, // MouseEvent
+            "mouseover": 7, // MouseEvent
+            "mouseout": 7, // MouseEvent
+            "mouseenter": 7, // MouseEvent
+            "mouseleave": 7, // MouseEvent
+
+
+            "textInput": 12, // TextEvent
+
+            "touchstart": 13, // TouchEvent
+            "touchmove": 13, // TouchEvent
+            "touchend": 13, // TouchEvent
+
+            "load": 14, // UIEvent
+            "resize": 14, // UIEvent
+            "select": 14, // UIEvent
+            "scroll": 14, // UIEvent
+            "unload": 14, // UIEvent,
+
+            "wheel": 15 // WheelEvent
+        };
+
     //create a custom dom event
     var createEvent = (function() {
-        var EventCtors = [
-                window["CustomEvent"], // 0 default
-                window["CompositionEvent"], // 1
-                window["DragEvent"], // 2
-                window["Event"], // 3
-                window["FocusEvent"], // 4
-                window["KeyboardEvent"], // 5
-                window["MessageEvent"], // 6
-                window["MouseEvent"], // 7
-                window["MouseScrollEvent"], // 8
-                window["MouseWheelEvent"], // 9
-                window["MutationEvent"], // 10
-                window["ProgressEvent"], // 11
-                window["TextEvent"], // 12
-                window["TouchEvent"], // 13
-                window["UIEvent"], // 14
-                window["WheelEvent"], // 15
-                window["ClipboardEvent"] // 16
-            ],
-            NativeEvents = {
-                "compositionstart": 1, // CompositionEvent
-                "compositionend": 1, // CompositionEvent
-                "compositionupdate": 1, // CompositionEvent
-
-                "beforecopy": 16, // ClipboardEvent
-                "beforecut": 16, // ClipboardEvent
-                "beforepaste": 16, // ClipboardEvent
-                "copy": 16, // ClipboardEvent
-                "cut": 16, // ClipboardEvent
-                "paste": 16, // ClipboardEvent
-
-                "drag": 2, // DragEvent
-                "dragend": 2, // DragEvent
-                "dragenter": 2, // DragEvent
-                "dragexit": 2, // DragEvent
-                "dragleave": 2, // DragEvent
-                "dragover": 2, // DragEvent
-                "dragstart": 2, // DragEvent
-                "drop": 2, // DragEvent
-
-                "abort": 3, // Event
-                "change": 3, // Event
-                "error": 3, // Event
-                "selectionchange": 3, // Event
-                "submit": 3, // Event
-                "reset": 3, // Event
-
-                "focus": 4, // FocusEvent
-                "blur": 4, // FocusEvent
-                "focusin": 4, // FocusEvent
-                "focusout": 4, // FocusEvent
-
-                "keydown": 5, // KeyboardEvent
-                "keypress": 5, // KeyboardEvent
-                "keyup": 5, // KeyboardEvent
-
-                "message": 6, // MessageEvent
-
-                "click": 7, // MouseEvent
-                "contextmenu": 7, // MouseEvent
-                "dblclick": 7, // MouseEvent
-                "mousedown": 7, // MouseEvent
-                "mouseup": 7, // MouseEvent
-                "mousemove": 7, // MouseEvent
-                "mouseover": 7, // MouseEvent
-                "mouseout": 7, // MouseEvent
-                "mouseenter": 7, // MouseEvent
-                "mouseleave": 7, // MouseEvent
-
-
-                "textInput": 12, // TextEvent
-
-                "touchstart": 13, // TouchEvent
-                "touchmove": 13, // TouchEvent
-                "touchend": 13, // TouchEvent
-
-                "load": 14, // UIEvent
-                "resize": 14, // UIEvent
-                "select": 14, // UIEvent
-                "scroll": 14, // UIEvent
-                "unload": 14, // UIEvent,
-
-                "wheel": 15 // WheelEvent
-            };
 
         function getEventCtor(type) {
             var idx = NativeEvents[type];
             if (!idx) {
                 idx = 0;
             }
-            return EventCtors[idx];
+            return NativeEventCtors[idx];
         }
 
         return function(type, props) {
@@ -6903,6 +7813,8 @@ define('skylark-utils-dom/eventer',[
     }
 
     langx.mixin(eventer, {
+        NativeEvents : NativeEvents,
+        
         create: createEvent,
 
         keys: keyCodeLookup,
@@ -6927,14 +7839,440 @@ define('skylark-utils-dom/eventer',[
 
     });
 
-    return dom.eventer = eventer;
+    each(NativeEvents,function(name){
+        eventer[name] = function(elm,selector,data,callback) {
+            if (arguments.length>1) {
+                return this.on(elm,name,selector,data,callback);
+            } else {
+                if (name == "focus") {
+                    if (elm.focus) {
+                        elm.focus();
+                    }
+                } else if (name == "blur") {
+                    if (elm.blur) {
+                        elm.blur();
+                    }
+                } else if (name == "click") {
+                    if (elm.click) {
+                        elm.click();
+                    }
+                } else {
+                    this.trigger(elm,name);
+                }
+
+                return this;
+            }
+        };
+    });
+
+    return skylark.attach("domx.eventer",eventer);
 });
-define('skylark-utils-dom/geom',[
-    "./dom",
-    "./langx",
-    "./noder",
-    "./styler"
-], function(dom, langx, noder, styler) {
+define('skylark-domx-eventer/main',[
+    "skylark-langx/langx",
+    "./eventer",
+    "skylark-domx-velm",
+    "skylark-domx-query"        
+],function(langx,eventer,velm,$){
+
+    var delegateMethodNames = [
+        "off",
+        "on",
+        "one",
+        "trigger"
+    ];
+
+    langx.each(eventer.NativeEvents,function(name){
+        delegateMethodNames.push(name);
+    });
+
+    // from ./eventer
+    velm.delegate(delegateMethodNames, eventer);
+
+    langx.each(delegateMethodNames,function(i,name){
+        $.fn[name] = $.wraps.wrapper_every_act(eventer[name],eventer);
+    });
+
+
+    /*
+    $.fn.on = $.wraps.wrapper_every_act(eventer.on, eventer);
+
+    $.fn.off = $.wraps.wrapper_every_act(eventer.off, eventer);
+
+    $.fn.trigger = $.wraps.wrapper_every_act(eventer.trigger, eventer);
+
+    ('focusin focusout focus blur load resize scroll unload click dblclick ' +
+        'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
+        'change select keydown keypress keyup error transitionEnd').split(' ').forEach(function(event) {
+        $.fn[event] = $.wraps.wrapper_every_act(eventer[event],eventer);
+    });
+
+    $.fn.one = function(event, selector, data, callback) {
+        if (!langx.isString(selector) && !langx.isFunction(callback)) {
+            callback = data;
+            data = selector;
+            selector = null;
+        }
+
+        if (langx.isFunction(data)) {
+            callback = data;
+            data = null;
+        }
+
+        return this.on(event, selector, data, callback, 1)
+    }; 
+    */
+
+    $.ready = eventer.ready;
+
+    return eventer;
+});
+define('skylark-domx-eventer', ['skylark-domx-eventer/main'], function (main) { return main; });
+
+define('skylark-domx-styler/styler',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx"
+], function(skylark, langx) {
+    var every = Array.prototype.every,
+        forEach = Array.prototype.forEach,
+        camelCase = langx.camelCase,
+        dasherize = langx.dasherize;
+
+    function maybeAddPx(name, value) {
+        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value
+    }
+
+    var cssNumber = {
+            'column-count': 1,
+            'columns': 1,
+            'font-weight': 1,
+            'line-height': 1,
+            'opacity': 1,
+            'z-index': 1,
+            'zoom': 1
+        },
+        classReCache = {
+
+        };
+
+    function classRE(name) {
+        return name in classReCache ?
+            classReCache[name] : (classReCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
+    }
+
+    // access className property while respecting SVGAnimatedString
+    /*
+     * Adds the specified class(es) to each element in the set of matched elements.
+     * @param {HTMLElement} node
+     * @param {String} value
+     */
+    function className(node, value) {
+        var klass = node.className || '',
+            svg = klass && klass.baseVal !== undefined
+
+        if (value === undefined) return svg ? klass.baseVal : klass
+        svg ? (klass.baseVal = value) : (node.className = value)
+    }
+
+    function disabled(elm, value ) {
+        if (arguments.length < 2) {
+            return !!this.dom.disabled;
+        }
+
+        elm.disabled = value;
+
+        return this;
+    }
+
+    var elementDisplay = {};
+
+    function defaultDisplay(nodeName) {
+        var element, display
+        if (!elementDisplay[nodeName]) {
+            element = document.createElement(nodeName)
+            document.body.appendChild(element)
+            display = getStyles(element).getPropertyValue("display")
+            element.parentNode.removeChild(element)
+            display == "none" && (display = "block")
+            elementDisplay[nodeName] = display
+        }
+        return elementDisplay[nodeName]
+    }
+    /*
+     * Display the matched elements.
+     * @param {HTMLElement} elm
+     */
+    function show(elm) {
+        styler.css(elm, "display", "");
+        if (styler.css(elm, "display") == "none") {
+            styler.css(elm, "display", defaultDisplay(elm.nodeName));
+        }
+        return this;
+    }
+
+    function isInvisible(elm) {
+        return styler.css(elm, "display") == "none" || styler.css(elm, "opacity") == 0;
+    }
+
+    /*
+     * Hide the matched elements.
+     * @param {HTMLElement} elm
+     */
+    function hide(elm) {
+        styler.css(elm, "display", "none");
+        return this;
+    }
+
+    /*
+     * Adds the specified class(es) to each element in the set of matched elements.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
+    function addClass(elm, name) {
+        if (!name) return this
+        var cls = className(elm),
+            names;
+        if (langx.isString(name)) {
+            names = name.split(/\s+/g);
+        } else {
+            names = name;
+        }
+        names.forEach(function(klass) {
+            var re = classRE(klass);
+            if (!cls.match(re)) {
+                cls += (cls ? " " : "") + klass;
+            }
+        });
+
+        className(elm, cls);
+
+        return this;
+    }
+
+    function getStyles( elem ) {
+
+        // Support: IE <=11 only, Firefox <=30 (#15098, #14150)
+        // IE throws on elements created in popups
+        // FF meanwhile throws on frame elements through "defaultView.getComputedStyle"
+        var view = elem.ownerDocument.defaultView;
+
+        if ( !view || !view.opener ) {
+            view = window;
+        }
+
+        return view.getComputedStyle( elem);
+    }
+
+
+    /*
+     * Get the value of a computed style property for the first element in the set of matched elements or set one or more CSS properties for every matched element.
+     * @param {HTMLElement} elm
+     * @param {String} property
+     * @param {Any} value
+     */
+    function css(elm, property, value) {
+        if (arguments.length < 3) {
+            var computedStyle,
+                computedStyle = getStyles(elm)
+            if (langx.isString(property)) {
+                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(dasherize(property))
+            } else if (langx.isArrayLike(property)) {
+                var props = {}
+                forEach.call(property, function(prop) {
+                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(dasherize(prop)))
+                })
+                return props
+            }
+        }
+
+        var css = '';
+        if (typeof(property) == 'string') {
+            if (!value && value !== 0) {
+                elm.style.removeProperty(dasherize(property));
+            } else {
+                css = dasherize(property) + ":" + maybeAddPx(property, value)
+            }
+        } else {
+            for (key in property) {
+                if (property[key] === undefined) {
+                    continue;
+                }
+                if (!property[key] && property[key] !== 0) {
+                    elm.style.removeProperty(dasherize(key));
+                } else {
+                    css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';'
+                }
+            }
+        }
+
+        elm.style.cssText += ';' + css;
+        return this;
+    }
+
+    /*
+     * Determine whether any of the matched elements are assigned the given class.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
+    function hasClass(elm, name) {
+        var re = classRE(name);
+        return elm.className && elm.className.match(re);
+    }
+
+    /*
+     * Remove a single class, multiple classes, or all classes from each element in the set of matched elements.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
+    function removeClass(elm, name) {
+        if (name) {
+            var cls = className(elm),
+                names;
+
+            if (langx.isString(name)) {
+                names = name.split(/\s+/g);
+            } else {
+                names = name;
+            }
+
+            names.forEach(function(klass) {
+                var re = classRE(klass);
+                if (cls.match(re)) {
+                    cls = cls.replace(re, " ");
+                }
+            });
+
+            className(elm, cls.trim());
+        } else {
+            className(elm, "");
+        }
+
+        return this;
+    }
+
+    /*
+     * Add or remove one or more classes from the specified element.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     * @param {} when
+     */
+    function toggleClass(elm, name, when) {
+        var self = this;
+        name.split(/\s+/g).forEach(function(klass) {
+            if (when === undefined) {
+                when = !self.hasClass(elm, klass);
+            }
+            if (when) {
+                self.addClass(elm, klass);
+            } else {
+                self.removeClass(elm, klass)
+            }
+        });
+
+        return self;
+    }
+
+    var styler = function() {
+        return styler;
+    };
+
+    langx.mixin(styler, {
+        autocssfix: false,
+        cssHooks: {
+
+        },
+
+        addClass: addClass,
+        className: className,
+        css: css,
+        disabled : disabled,        
+        hasClass: hasClass,
+        hide: hide,
+        isInvisible: isInvisible,
+        removeClass: removeClass,
+        show: show,
+        toggleClass: toggleClass
+    });
+
+    return skylark.attach("domx.styler", styler);
+});
+define('skylark-domx-styler/main',[
+	"./styler",
+	"skylark-domx-velm",
+	"skylark-domx-query"	
+],function(styler,velm,$){
+	
+    // from ./styler
+    velm.delegate([
+        "addClass",
+        "className",
+        "css",
+        "hasClass",
+        "hide",
+        "isInvisible",
+        "removeClass",
+        "show",
+        "toggleClass"
+    ], styler);
+
+    // properties
+
+    var properties = [ 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border', 'borderLeft',
+    'borderTop', 'borderRight', 'borderBottom', 'borderColor', 'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight', 'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight', 'paddingBottom', 'color',
+    'background', 'backgroundColor', 'opacity', 'fontSize', 'fontWeight', 'textAlign', 'textDecoration', 'textTransform', 'cursor', 'zIndex' ];
+
+    properties.forEach( function ( property ) {
+
+        var method = property;
+
+        velm.VisualElement.prototype[method ] = function (value) {
+
+            this.css( property, value );
+
+            return this;
+
+        };
+
+    });
+
+
+    $.fn.style = $.wraps.wrapper_name_value(styler.css, styler);
+
+    $.fn.css = $.wraps.wrapper_name_value(styler.css, styler);
+
+    //hasClass(name)
+    $.fn.hasClass = $.wraps.wrapper_some_chk(styler.hasClass, styler);
+
+    //addClass(name)
+    $.fn.addClass = $.wraps.wrapper_every_act_firstArgFunc(styler.addClass, styler, styler.className);
+
+    //removeClass(name)
+    $.fn.removeClass = $.wraps.wrapper_every_act_firstArgFunc(styler.removeClass, styler, styler.className);
+
+    //toogleClass(name,when)
+    $.fn.toggleClass = $.wraps.wrapper_every_act_firstArgFunc(styler.toggleClass, styler, styler.className);
+
+    $.fn.replaceClass = function(newClass, oldClass) {
+        this.removeClass(oldClass);
+        this.addClass(newClass);
+        return this;
+    };
+
+    $.fn.replaceClass = function(newClass, oldClass) {
+        this.removeClass(oldClass);
+        this.addClass(newClass);
+        return this;
+    };
+        
+	return styler;
+});
+define('skylark-domx-styler', ['skylark-domx-styler/main'], function (main) { return main; });
+
+define('skylark-domx-geom/geom',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-noder",
+    "skylark-domx-styler"
+], function(skylark, langx, noder, styler) {
     var rootNodeRE = /^(?:body|html)$/i,
         px = langx.toPixel,
         offsetParent = noder.offsetParent,
@@ -7989,16 +9327,143 @@ define('skylark-utils-dom/geom',[
         geom.posit = posit;
     })();
 
-    return dom.geom = geom;
+    return skylark.attach("domx.geom", geom);
 });
-define('skylark-utils-dom/fx',[
-    "./dom",
-    "./langx",
-    "./browser",
+define('skylark-domx-geom/main',[
+    "skylark-langx/langx",
     "./geom",
-    "./styler",
-    "./eventer"
-], function(dom, langx, browser, geom, styler, eventer) {
+    "skylark-domx-velm",
+    "skylark-domx-query"        
+],function(langx,geom,velm,$){
+   // from ./geom
+    velm.delegate([
+        "borderExtents",
+        "boundingPosition",
+        "boundingRect",
+        "clientHeight",
+        "clientSize",
+        "clientWidth",
+        "contentRect",
+        "height",
+        "marginExtents",
+        "offsetParent",
+        "paddingExtents",
+        "pagePosition",
+        "pageRect",
+        "relativePosition",
+        "relativeRect",
+        "scrollIntoView",
+        "scrollLeft",
+        "scrollTop",
+        "size",
+        "width"
+    ], geom);
+
+    $.fn.offset = $.wraps.wrapper_value(geom.pagePosition, geom, geom.pagePosition);
+
+    $.fn.scrollTop = $.wraps.wrapper_value(geom.scrollTop, geom);
+
+    $.fn.scrollLeft = $.wraps.wrapper_value(geom.scrollLeft, geom);
+
+    $.fn.position =  function(options) {
+        if (!this.length) {
+            return this;
+        }
+
+        if (options) {
+            if (options.of && options.of.length) {
+                options = langx.clone(options);
+                options.of = options.of[0];
+            }
+            return this.each( function() {
+                geom.posit(this,options);
+            });
+        } else {
+            var elem = this[0];
+
+            return geom.relativePosition(elem);
+
+        }             
+    };
+
+    $.fn.offsetParent = $.wraps.wrapper_map(geom.offsetParent, geom);
+
+
+    $.fn.size = $.wraps.wrapper_value(geom.size, geom);
+
+    $.fn.width = $.wraps.wrapper_value(geom.width, geom, geom.width);
+
+    $.fn.height = $.wraps.wrapper_value(geom.height, geom, geom.height);
+
+    $.fn.clientSize = $.wraps.wrapper_value(geom.clientSize, geom.clientSize);
+    
+    ['width', 'height'].forEach(function(dimension) {
+        var offset, Dimension = dimension.replace(/./, function(m) {
+            return m[0].toUpperCase()
+        });
+
+        $.fn['outer' + Dimension] = function(margin, value) {
+            if (arguments.length) {
+                if (typeof margin !== 'boolean') {
+                    value = margin;
+                    margin = false;
+                }
+            } else {
+                margin = false;
+                value = undefined;
+            }
+
+            if (value === undefined) {
+                var el = this[0];
+                if (!el) {
+                    return undefined;
+                }
+                var cb = geom.size(el);
+                if (margin) {
+                    var me = geom.marginExtents(el);
+                    cb.width = cb.width + me.left + me.right;
+                    cb.height = cb.height + me.top + me.bottom;
+                }
+                return dimension === "width" ? cb.width : cb.height;
+            } else {
+                return this.each(function(idx, el) {
+                    var mb = {};
+                    var me = geom.marginExtents(el);
+                    if (dimension === "width") {
+                        mb.width = value;
+                        if (margin) {
+                            mb.width = mb.width - me.left - me.right
+                        }
+                    } else {
+                        mb.height = value;
+                        if (margin) {
+                            mb.height = mb.height - me.top - me.bottom;
+                        }
+                    }
+                    geom.size(el, mb);
+                })
+
+            }
+        };
+    })
+
+    $.fn.innerWidth = $.wraps.wrapper_value(geom.clientWidth, geom, geom.clientWidth);
+
+    $.fn.innerHeight = $.wraps.wrapper_value(geom.clientHeight, geom, geom.clientHeight);
+
+    return geom;
+});
+define('skylark-domx-geom', ['skylark-domx-geom/main'], function (main) { return main; });
+
+define('skylark-domx-fx/fx',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-noder",
+    "skylark-domx-geom",
+    "skylark-domx-styler",
+    "skylark-domx-eventer"
+], function(skylark, langx, browser, noder, geom, styler, eventer) {
     var animationName,
         animationDuration,
         animationTiming,
@@ -8497,13 +9962,93 @@ define('skylark-utils-dom/fx',[
         })
         var callback = function () { 
             if (!called) {
-                eventer.trigger(elm,'transitionEnd') 
+                eventer.trigger(elm,browser.support.transition.end) 
             }
         };
         setTimeout(callback, duration);
         
         return this;
     } 
+
+    /*   
+     *
+     * @param {Node} elm
+     * @param {Node} params
+     */
+    function overlay(elm, params) {
+        var overlayDiv = noder.createElement("div", params);
+        styler.css(overlayDiv, {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0x7FFFFFFF,
+            opacity: 0.7
+        });
+        elm.appendChild(overlayDiv);
+        return overlayDiv;
+
+    }
+    
+    /*   
+     * Replace an old node with the specified node.
+     * @param {HTMLElement} elm
+     * @param {Node} params
+     */
+    function throb(elm, params) {
+        params = params || {};
+        var self = this,
+            text = params.text,
+            style = params.style,
+            time = params.time,
+            callback = params.callback,
+            timer,
+
+            throbber = noder.createElement("div", {
+                "class": params.className || "throbber"
+            }),
+            _overlay = overlay(throbber, {
+                "class": 'overlay fade'
+            }),
+            throb = noder.createElement("div", {
+                "class": "throb"
+            }),
+            textNode = noder.createTextNode(text || ""),
+            remove = function() {
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+                if (throbber) {
+                    noder.remove(throbber);
+                    throbber = null;
+                }
+            },
+            update = function(params) {
+                if (params && params.text && throbber) {
+                    textNode.nodeValue = params.text;
+                }
+            };
+        if (params.style) {
+            styler.css(throbber,params.style);
+        }
+        throb.appendChild(textNode);
+        throbber.appendChild(throb);
+        elm.appendChild(throbber);
+        var end = function() {
+            remove();
+            if (callback) callback();
+        };
+        if (time) {
+            timer = setTimeout(end, time);
+        }
+
+        return {
+            remove: remove,
+            update: update
+        };
+    }
 
     function fx() {
         return fx;
@@ -8531,1263 +10076,68 @@ define('skylark-utils-dom/fx',[
         slideToggle,
         slideUp,
         show,
+        throb,
         toggle
     });
 
-    return dom.fx = fx;
+    return skylark.attach("domx.fx", fx);
 });
-define('skylark-utils-dom/query',[
-    "./dom",
-    "./langx",
-    "./noder",
-    "./datax",
-    "./eventer",
-    "./finder",
-    "./geom",
-    "./styler",
-    "./fx"
-], function(dom, langx, noder, datax, eventer, finder, geom, styler, fx) {
-    var some = Array.prototype.some,
-        push = Array.prototype.push,
-        every = Array.prototype.every,
-        concat = Array.prototype.concat,
-        slice = Array.prototype.slice,
-        map = Array.prototype.map,
-        filter = Array.prototype.filter,
-        forEach = Array.prototype.forEach,
-        indexOf = Array.prototype.indexOf,
-        sort = Array.prototype.sort,
-        isQ;
-
-    var rquickExpr = /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/;
-
-    var funcArg = langx.funcArg,
-        isArrayLike = langx.isArrayLike,
-        isString = langx.isString,
-        uniq = langx.uniq,
-        isFunction = langx.isFunction;
-
-    var type = langx.type,
-        isArray = langx.isArray,
-
-        isWindow = langx.isWindow,
-
-        isDocument = langx.isDocument,
-
-        isObject = langx.isObject,
-
-        isPlainObject = langx.isPlainObject,
-
-        compact = langx.compact,
-
-        flatten = langx.flatten,
-
-        camelCase = langx.camelCase,
-
-        dasherize = langx.dasherize,
-        children = finder.children;
-
-    function wrapper_map(func, context) {
-        return function() {
-            var self = this,
-                params = slice.call(arguments);
-            var result = langx.map(self, function(elem, idx) {
-                return func.apply(context, [elem].concat(params));
-            });
-            return query(uniq(result));
-        }
-    }
-
-    function wrapper_selector(func, context, last) {
-        return function(selector) {
-            var self = this,
-                params = slice.call(arguments);
-            var result = this.map(function(idx, elem) {
-                // if (elem.nodeType == 1) {
-                //if (elem.querySelector) {
-                    return func.apply(context, last ? [elem] : [elem, selector]);
-                //}
-            });
-            if (last && selector) {
-                return result.filter(selector);
-            } else {
-                return result;
-            }
-        }
-    }
-
-    function wrapper_selector_until(func, context, last) {
-        return function(util, selector) {
-            var self = this,
-                params = slice.call(arguments);
-            //if (selector === undefined) { //TODO : needs confirm?
-            //    selector = util;
-            //    util = undefined;
-            //}
-            var result = this.map(function(idx, elem) {
-                // if (elem.nodeType == 1) { // TODO
-                //if (elem.querySelector) {
-                    return func.apply(context, last ? [elem, util] : [elem, selector, util]);
-                //}
-            });
-            if (last && selector) {
-                return result.filter(selector);
-            } else {
-                return result;
-            }
-        }
-    }
-
-
-    function wrapper_every_act(func, context) {
-        return function() {
-            var self = this,
-                params = slice.call(arguments);
-            this.each(function(idx,node) {
-                func.apply(context, [this].concat(params));
-            });
-            return self;
-        }
-    }
-
-    function wrapper_every_act_firstArgFunc(func, context, oldValueFunc) {
-        return function(arg1) {
-            var self = this,
-                params = slice.call(arguments);
-            forEach.call(self, function(elem, idx) {
-                var newArg1 = funcArg(elem, arg1, idx, oldValueFunc(elem));
-                func.apply(context, [elem, arg1].concat(params.slice(1)));
-            });
-            return self;
-        }
-    }
-
-    function wrapper_some_chk(func, context) {
-        return function() {
-            var self = this,
-                params = slice.call(arguments);
-            return some.call(self, function(elem) {
-                return func.apply(context, [elem].concat(params));
-            });
-        }
-    }
-
-    function wrapper_name_value(func, context, oldValueFunc) {
-        return function(name, value) {
-            var self = this,
-                params = slice.call(arguments);
-
-            if (langx.isPlainObject(name) || langx.isDefined(value)) {
-                forEach.call(self, function(elem, idx) {
-                    var newValue;
-                    if (oldValueFunc) {
-                        newValue = funcArg(elem, value, idx, oldValueFunc(elem, name));
-                    } else {
-                        newValue = value
-                    }
-                    func.apply(context, [elem].concat(params));
-                });
-                return self;
-            } else {
-                if (self[0]) {
-                    return func.apply(context, [self[0], name]);
-                }
-            }
-
-        }
-    }
-
-    function wrapper_value(func, context, oldValueFunc) {
-        return function(value) {
-            var self = this;
-
-            if (langx.isDefined(value)) {
-                forEach.call(self, function(elem, idx) {
-                    var newValue;
-                    if (oldValueFunc) {
-                        newValue = funcArg(elem, value, idx, oldValueFunc(elem));
-                    } else {
-                        newValue = value
-                    }
-                    func.apply(context, [elem, newValue]);
-                });
-                return self;
-            } else {
-                if (self[0]) {
-                    return func.apply(context, [self[0]]);
-                }
-            }
-
-        }
-    }
-
-    var NodeList = langx.klass({
-        klassName: "SkNodeList",
-        init: function(selector, context) {
-            var self = this,
-                match, nodes, node, props;
-
-            if (selector) {
-                self.context = context = context || noder.doc();
-
-                if (isString(selector)) {
-                    // a html string or a css selector is expected
-                    self.selector = selector;
-
-                    if (selector.charAt(0) === "<" && selector.charAt(selector.length - 1) === ">" && selector.length >= 3) {
-                        match = [null, selector, null];
-                    } else {
-                        match = rquickExpr.exec(selector);
-                    }
-
-                    if (match) {
-                        if (match[1]) {
-                            // if selector is html
-                            nodes = noder.createFragment(selector);
-
-                            if (langx.isPlainObject(context)) {
-                                props = context;
-                            }
-
-                        } else {
-                            node = finder.byId(match[2], noder.ownerDoc(context));
-
-                            if (node) {
-                                // if selector is id
-                                nodes = [node];
-                            }
-
-                        }
-                    } else {
-                        // if selector is css selector
-                        if (langx.isString(context)) {
-                            context = finder.find(context);
-                        }
-
-                        nodes = finder.descendants(context, selector);
-                    }
-                } else {
-                    if (selector !== window && isArrayLike(selector)) {
-                        // a dom node array is expected
-                        nodes = selector;
-                    } else {
-                        // a dom node is expected
-                        nodes = [selector];
-                    }
-                    //self.add(selector, false);
-                }
-            }
-
-
-            if (nodes) {
-
-                push.apply(self, nodes);
-
-                if (props) {
-                    for ( var name  in props ) {
-                        // Properties of context are called as methods if possible
-                        if ( langx.isFunction( this[ name ] ) ) {
-                            this[ name ]( props[ name ] );
-                        } else {
-                            this.attr( name, props[ name ] );
-                        }
-                    }
-                }
-            }
-
-            return self;
-        }
-    });
-
-    var query = (function() {
-        isQ = function(object) {
-            return object instanceof NodeList;
-        }
-        init = function(selector, context) {
-            return new NodeList(selector, context);
-        }
-
-        var $ = function(selector, context) {
-            if (isFunction(selector)) {
-                eventer.ready(function() {
-                    selector($);
-                });
-            } else if (isQ(selector)) {
-                return selector;
-            } else {
-                if (context && isQ(context) && isString(selector)) {
-                    return context.find(selector);
-                }
-                return init(selector, context);
-            }
-        };
-
-        $.fn = NodeList.prototype;
-        langx.mixin($.fn, {
-            // `map` and `slice` in the jQuery API work differently
-            // from their array counterparts
-            length : 0,
-
-            map: function(fn) {
-                return $(uniq(langx.map(this, function(el, i) {
-                    return fn.call(el, i, el)
-                })));
-            },
-
-            slice: function() {
-                return $(slice.apply(this, arguments))
-            },
-
-            forEach: function() {
-                return forEach.apply(this,arguments);
-            },
-
-            get: function(idx) {
-                return idx === undefined ? slice.call(this) : this[idx >= 0 ? idx : idx + this.length]
-            },
-
-            indexOf: function() {
-                return indexOf.apply(this,arguments);
-            },
-
-            sort : function() {
-                return sort.apply(this,arguments);
-            },
-
-            toArray: function() {
-                return slice.call(this);
-            },
-
-            size: function() {
-                return this.length
-            },
-
-            remove: wrapper_every_act(noder.remove, noder),
-
-            each: function(callback) {
-                langx.each(this, callback);
-                return this;
-            },
-
-            filter: function(selector) {
-                if (isFunction(selector)) return this.not(this.not(selector))
-                return $(filter.call(this, function(element) {
-                    return finder.matches(element, selector)
-                }))
-            },
-
-            add: function(selector, context) {
-                return $(uniq(this.toArray().concat($(selector, context).toArray())));
-            },
-
-            is: function(selector) {
-                if (this.length > 0) {
-                    var self = this;
-                    if (langx.isString(selector)) {
-                        return some.call(self,function(elem) {
-                            return finder.matches(elem, selector);
-                        });
-                    } else if (langx.isArrayLike(selector)) {
-                       return some.call(self,function(elem) {
-                            return langx.inArray(elem, selector) > -1;
-                        });
-                    } else if (langx.isHtmlNode(selector)) {
-                       return some.call(self,function(elem) {
-                            return elem ==  selector;
-                        });
-                    }
-                }
-                return false;
-            },
-            
-            not: function(selector) {
-                var nodes = []
-                if (isFunction(selector) && selector.call !== undefined)
-                    this.each(function(idx,node) {
-                        if (!selector.call(this, idx,node)) nodes.push(this)
-                    })
-                else {
-                    var excludes = typeof selector == 'string' ? this.filter(selector) :
-                        (isArrayLike(selector) && isFunction(selector.item)) ? slice.call(selector) : $(selector)
-                    this.forEach(function(el) {
-                        if (excludes.indexOf(el) < 0) nodes.push(el)
-                    })
-                }
-                return $(nodes)
-            },
-
-            has: function(selector) {
-                return this.filter(function() {
-                    return isObject(selector) ?
-                        noder.contains(this, selector) :
-                        $(this).find(selector).size()
-                })
-            },
-
-            eq: function(idx) {
-                return idx === -1 ? this.slice(idx) : this.slice(idx, +idx + 1);
-            },
-
-            first: function() {
-                return this.eq(0);
-            },
-
-            last: function() {
-                return this.eq(-1);
-            },
-
-            find: wrapper_selector(finder.descendants, finder),
-
-            closest: wrapper_selector(finder.closest, finder),
-            /*
-                        closest: function(selector, context) {
-                            var node = this[0],
-                                collection = false
-                            if (typeof selector == 'object') collection = $(selector)
-                            while (node && !(collection ? collection.indexOf(node) >= 0 : finder.matches(node, selector)))
-                                node = node !== context && !isDocument(node) && node.parentNode
-                            return $(node)
-                        },
-            */
-
-
-            parents: wrapper_selector(finder.ancestors, finder),
-
-            parentsUntil: wrapper_selector_until(finder.ancestors, finder),
-
-
-            parent: wrapper_selector(finder.parent, finder),
-
-            children: wrapper_selector(finder.children, finder),
-
-            contents: wrapper_map(noder.contents, noder),
-
-            empty: wrapper_every_act(noder.empty, noder),
-
-            // `pluck` is borrowed from Prototype.js
-            pluck: function(property) {
-                return langx.map(this, function(el) {
-                    return el[property]
-                })
-            },
-
-            pushStack : function(elms) {
-                var ret = $(elms);
-                ret.prevObject = this;
-                return ret;
-            },
-            
-            replaceWith: function(newContent) {
-                return this.before(newContent).remove();
-            },
-
-            wrap: function(structure) {
-                var func = isFunction(structure)
-                if (this[0] && !func)
-                    var dom = $(structure).get(0),
-                        clone = dom.parentNode || this.length > 1
-
-                return this.each(function(index,node) {
-                    $(this).wrapAll(
-                        func ? structure.call(this, index,node) :
-                        clone ? dom.cloneNode(true) : dom
-                    )
-                })
-            },
-
-            wrapAll: function(wrappingElement) {
-                if (this[0]) {
-                    $(this[0]).before(wrappingElement = $(wrappingElement));
-                    var children;
-                    // drill down to the inmost element
-                    while ((children = wrappingElement.children()).length) {
-                        wrappingElement = children.first();
-                    }
-                    $(wrappingElement).append(this);
-                }
-                return this
-            },
-
-            wrapInner: function(wrappingElement) {
-                var func = isFunction(wrappingElement)
-                return this.each(function(index,node) {
-                    var self = $(this),
-                        contents = self.contents(),
-                        dom = func ? wrappingElement.call(this, index,node) : wrappingElement
-                    contents.length ? contents.wrapAll(dom) : self.append(dom)
-                })
-            },
-
-            unwrap: function(selector) {
-                if (this.parent().children().length === 0) {
-                    // remove dom without text
-                    this.parent(selector).not("body").each(function() {
-                        $(this).replaceWith(document.createTextNode(this.childNodes[0].textContent));
-                    });
-                } else {
-                    this.parent().each(function() {
-                        $(this).replaceWith($(this).children())
-                    });
-                }
-                return this
-            },
-
-            clone: function() {
-                return this.map(function() {
-                    return this.cloneNode(true)
-                })
-            },
-
-            hide: wrapper_every_act(fx.hide, fx),
-
-            toggle: function(setting) {
-                return this.each(function() {
-                    var el = $(this);
-                    (setting === undefined ? el.css("display") == "none" : setting) ? el.show(): el.hide()
-                })
-            },
-
-            prev: function(selector) {
-                return $(this.pluck('previousElementSibling')).filter(selector || '*')
-            },
-
-            prevAll: wrapper_selector(finder.previousSiblings, finder),
-
-            next: function(selector) {
-                return $(this.pluck('nextElementSibling')).filter(selector || '*')
-            },
-
-            nextAll: wrapper_selector(finder.nextSiblings, finder),
-
-            siblings: wrapper_selector(finder.siblings, finder),
-
-            html: wrapper_value(noder.html, noder, noder.html),
-
-            text: wrapper_value(datax.text, datax, datax.text),
-
-            attr: wrapper_name_value(datax.attr, datax, datax.attr),
-
-            removeAttr: wrapper_every_act(datax.removeAttr, datax),
-
-            prop: wrapper_name_value(datax.prop, datax, datax.prop),
-
-            removeProp: wrapper_every_act(datax.removeProp, datax),
-
-            data: wrapper_name_value(datax.data, datax, datax.data),
-
-            removeData: wrapper_every_act(datax.removeData, datax),
-
-            val: wrapper_value(datax.val, datax, datax.val),
-
-            offset: wrapper_value(geom.pagePosition, geom, geom.pagePosition),
-
-            style: wrapper_name_value(styler.css, styler),
-
-            css: wrapper_name_value(styler.css, styler),
-
-            index: function(elem) {
-                if (elem) {
-                    return this.indexOf($(elem)[0]);
-                } else {
-                    return this.parent().children().indexOf(this[0]);
-                }
-            },
-
-            //hasClass(name)
-            hasClass: wrapper_some_chk(styler.hasClass, styler),
-
-            //addClass(name)
-            addClass: wrapper_every_act_firstArgFunc(styler.addClass, styler, styler.className),
-
-            //removeClass(name)
-            removeClass: wrapper_every_act_firstArgFunc(styler.removeClass, styler, styler.className),
-
-            //toogleClass(name,when)
-            toggleClass: wrapper_every_act_firstArgFunc(styler.toggleClass, styler, styler.className),
-
-            scrollTop: wrapper_value(geom.scrollTop, geom),
-
-            scrollLeft: wrapper_value(geom.scrollLeft, geom),
-
-            position: function(options) {
-                if (!this.length) return
-
-                if (options) {
-                    if (options.of && options.of.length) {
-                        options = langx.clone(options);
-                        options.of = options.of[0];
-                    }
-                    return this.each( function() {
-                        geom.posit(this,options);
-                    });
-                } else {
-                    var elem = this[0];
-
-                    return geom.relativePosition(elem);
-
-                }             
-            },
-
-            offsetParent: wrapper_map(geom.offsetParent, geom)
-        });
-
-        // for now
-        $.fn.detach = $.fn.remove;
-
-        $.fn.hover = function(fnOver, fnOut) {
-            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
-        };
-
-        $.fn.size = wrapper_value(geom.size, geom);
-
-        $.fn.width = wrapper_value(geom.width, geom, geom.width);
-
-        $.fn.height = wrapper_value(geom.height, geom, geom.height);
-
-        $.fn.clientSize = wrapper_value(geom.clientSize, geom.clientSize);
-
-        ['width', 'height'].forEach(function(dimension) {
-            var offset, Dimension = dimension.replace(/./, function(m) {
-                return m[0].toUpperCase()
-            });
-
-            $.fn['outer' + Dimension] = function(margin, value) {
-                if (arguments.length) {
-                    if (typeof margin !== 'boolean') {
-                        value = margin;
-                        margin = false;
-                    }
-                } else {
-                    margin = false;
-                    value = undefined;
-                }
-
-                if (value === undefined) {
-                    var el = this[0];
-                    if (!el) {
-                        return undefined;
-                    }
-                    var cb = geom.size(el);
-                    if (margin) {
-                        var me = geom.marginExtents(el);
-                        cb.width = cb.width + me.left + me.right;
-                        cb.height = cb.height + me.top + me.bottom;
-                    }
-                    return dimension === "width" ? cb.width : cb.height;
-                } else {
-                    return this.each(function(idx, el) {
-                        var mb = {};
-                        var me = geom.marginExtents(el);
-                        if (dimension === "width") {
-                            mb.width = value;
-                            if (margin) {
-                                mb.width = mb.width - me.left - me.right
-                            }
-                        } else {
-                            mb.height = value;
-                            if (margin) {
-                                mb.height = mb.height - me.top - me.bottom;
-                            }
-                        }
-                        geom.size(el, mb);
-                    })
-
-                }
-            };
-        })
-
-        $.fn.innerWidth = wrapper_value(geom.clientWidth, geom, geom.clientWidth);
-
-        $.fn.innerHeight = wrapper_value(geom.clientHeight, geom, geom.clientHeight);
-
-        var traverseNode = noder.traverse;
-
-        function wrapper_node_operation(func, context, oldValueFunc) {
-            return function(html) {
-                var argType, nodes = langx.map(arguments, function(arg) {
-                    argType = type(arg)
-                    return argType == "object" || argType == "array" || arg == null ?
-                        arg : noder.createFragment(arg)
-                });
-                if (nodes.length < 1) {
-                    return this
-                }
-                this.each(function(idx) {
-                    func.apply(context, [this, nodes, idx > 0]);
-                });
-                return this;
-            }
-        }
-
-
-        $.fn.after = wrapper_node_operation(noder.after, noder);
-
-        $.fn.prepend = wrapper_node_operation(noder.prepend, noder);
-
-        $.fn.before = wrapper_node_operation(noder.before, noder);
-
-        $.fn.append = wrapper_node_operation(noder.append, noder);
-
-
-        langx.each( {
-            appendTo: "append",
-            prependTo: "prepend",
-            insertBefore: "before",
-            insertAfter: "after",
-            replaceAll: "replaceWith"
-        }, function( name, original ) {
-            $.fn[ name ] = function( selector ) {
-                var elems,
-                    ret = [],
-                    insert = $( selector ),
-                    last = insert.length - 1,
-                    i = 0;
-
-                for ( ; i <= last; i++ ) {
-                    elems = i === last ? this : this.clone( true );
-                    $( insert[ i ] )[ original ]( elems );
-
-                    // Support: Android <=4.0 only, PhantomJS 1 only
-                    // .get() because push.apply(_, arraylike) throws on ancient WebKit
-                    push.apply( ret, elems.get() );
-                }
-
-                return this.pushStack( ret );
-            };
-        } );
-
-/*
-        $.fn.insertAfter = function(html) {
-            $(html).after(this);
-            return this;
-        };
-
-        $.fn.insertBefore = function(html) {
-            $(html).before(this);
-            return this;
-        };
-
-        $.fn.appendTo = function(html) {
-            $(html).append(this);
-            return this;
-        };
-
-        $.fn.prependTo = function(html) {
-            $(html).prepend(this);
-            return this;
-        };
-
-        $.fn.replaceAll = function(selector) {
-            $(selector).replaceWith(this);
-            return this;
-        };
-*/
-        return $;
-    })();
-
-    (function($) {
-        $.fn.on = wrapper_every_act(eventer.on, eventer);
-
-        $.fn.off = wrapper_every_act(eventer.off, eventer);
-
-        $.fn.trigger = wrapper_every_act(eventer.trigger, eventer);
-
-        ('focusin focusout focus blur load resize scroll unload click dblclick ' +
-            'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-            'change select keydown keypress keyup error transitionEnd').split(' ').forEach(function(event) {
-            $.fn[event] = function(data, callback) {
-                return (0 in arguments) ?
-                    this.on(event, data, callback) :
-                    this.trigger(event)
-            }
-        });
-
-        $.fn.one = function(event, selector, data, callback) {
-            if (!langx.isString(selector) && !langx.isFunction(callback)) {
-                callback = data;
-                data = selector;
-                selector = null;
-            }
-
-            if (langx.isFunction(data)) {
-                callback = data;
-                data = null;
-            }
-
-            return this.on(event, selector, data, callback, 1)
-        };
-
-        $.fn.animate = wrapper_every_act(fx.animate, fx);
-        $.fn.emulateTransitionEnd = wrapper_every_act(fx.emulateTransitionEnd, fx);
-
-        $.fn.show = wrapper_every_act(fx.show, fx);
-        $.fn.hide = wrapper_every_act(fx.hide, fx);
-        $.fn.toogle = wrapper_every_act(fx.toogle, fx);
-        $.fn.fadeTo = wrapper_every_act(fx.fadeTo, fx);
-        $.fn.fadeIn = wrapper_every_act(fx.fadeIn, fx);
-        $.fn.fadeOut = wrapper_every_act(fx.fadeOut, fx);
-        $.fn.fadeToggle = wrapper_every_act(fx.fadeToggle, fx);
-
-        $.fn.slideDown = wrapper_every_act(fx.slideDown, fx);
-        $.fn.slideToggle = wrapper_every_act(fx.slideToggle, fx);
-        $.fn.slideUp = wrapper_every_act(fx.slideUp, fx);
-
-        $.fn.scrollParent = function( includeHidden ) {
-            var position = this.css( "position" ),
-                excludeStaticParent = position === "absolute",
-                overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
-                scrollParent = this.parents().filter( function() {
-                    var parent = $( this );
-                    if ( excludeStaticParent && parent.css( "position" ) === "static" ) {
-                        return false;
-                    }
-                    return overflowRegex.test( parent.css( "overflow" ) + parent.css( "overflow-y" ) +
-                        parent.css( "overflow-x" ) );
-                } ).eq( 0 );
-
-            return position === "fixed" || !scrollParent.length ?
-                $( this[ 0 ].ownerDocument || document ) :
-                scrollParent;
-        };
-    })(query);
-
-
-    (function($) {
-        $.fn.end = function() {
-            return this.prevObject || $()
-        }
-
-        $.fn.andSelf = function() {
-            return this.add(this.prevObject || $())
-        }
-
-        $.fn.addBack = function(selector) {
-            if (this.prevObject) {
-                if (selector) {
-                    return this.add(this.prevObject.filter(selector));
-                } else {
-                    return this.add(this.prevObject);
-                }
-            } else {
-                return this;
-            }
-        }
-
-        'filter,add,not,eq,first,last,find,closest,parents,parent,children,siblings,prev,prevAll,next,nextAll'.split(',').forEach(function(property) {
-            var fn = $.fn[property]
-            $.fn[property] = function() {
-                var ret = fn.apply(this, arguments)
-                ret.prevObject = this
-                return ret
-            }
-        })
-    })(query);
-
-
-    (function($) {
-        $.fn.query = $.fn.find;
-
-        $.fn.place = function(refNode, position) {
-            // summary:
-            //      places elements of this node list relative to the first element matched
-            //      by queryOrNode. Returns the original NodeList. See: `dojo/dom-construct.place`
-            // queryOrNode:
-            //      may be a string representing any valid CSS3 selector or a DOM node.
-            //      In the selector case, only the first matching element will be used
-            //      for relative positioning.
-            // position:
-            //      can be one of:
-            //
-            //      -   "last" (default)
-            //      -   "first"
-            //      -   "before"
-            //      -   "after"
-            //      -   "only"
-            //      -   "replace"
-            //
-            //      or an offset in the childNodes
-            if (langx.isString(refNode)) {
-                refNode = finder.descendant(refNode);
-            } else if (isQ(refNode)) {
-                refNode = refNode[0];
-            }
-            return this.each(function(i, node) {
-                switch (position) {
-                    case "before":
-                        noder.before(refNode, node);
-                        break;
-                    case "after":
-                        noder.after(refNode, node);
-                        break;
-                    case "replace":
-                        noder.replace(refNode, node);
-                        break;
-                    case "only":
-                        noder.empty(refNode);
-                        noder.append(refNode, node);
-                        break;
-                    case "first":
-                        noder.prepend(refNode, node);
-                        break;
-                        // else fallthrough...
-                    default: // aka: last
-                        noder.append(refNode, node);
-                }
-            });
-        };
-
-        $.fn.addContent = function(content, position) {
-            if (content.template) {
-                content = langx.substitute(content.template, content);
-            }
-            return this.append(content);
-        };
-
-        $.fn.replaceClass = function(newClass, oldClass) {
-            this.removeClass(oldClass);
-            this.addClass(newClass);
-            return this;
-        };
-
-        $.fn.replaceClass = function(newClass, oldClass) {
-            this.removeClass(oldClass);
-            this.addClass(newClass);
-            return this;
-        };
-
-        $.fn.disableSelection = ( function() {
-            var eventType = "onselectstart" in document.createElement( "div" ) ?
-                "selectstart" :
-                "mousedown";
-
-            return function() {
-                return this.on( eventType + ".ui-disableSelection", function( event ) {
-                    event.preventDefault();
-                } );
-            };
-        } )();
-
-        $.fn.enableSelection = function() {
-            return this.off( ".ui-disableSelection" );
-        };
-       
-
-    })(query);
-
-    query.fn.plugin = function(name,options) {
-        var args = slice.call( arguments, 1 ),
-            self = this,
-            returnValue = this;
-
-        this.each(function(){
-            returnValue = plugins.instantiate.apply(self,[this,name].concat(args));
-        });
-        return returnValue;
-    };
-
-    return dom.query = query;
-
-});
-define('skylark-utils-dom/elmx',[
-    "./dom",
-    "./langx",
-    "./datax",
-    "./eventer",
-    "./finder",
-    "./fx",
-    "./geom",
-    "./noder",
-    "./styler",
-    "./query"
-], function(dom, langx, datax, eventer, finder, fx, geom, noder, styler,$) {
-    var map = Array.prototype.map,
-        slice = Array.prototype.slice;
-    /*
-     * VisualElement is a skylark class type wrapping a visule dom node,
-     * provides a number of prototype methods and supports chain calls.
-     */
-    var VisualElement = langx.klass({
-        klassName: "VisualElement",
-
-        "_construct": function(node) {
-            if (langx.isString(node)) {
-                if (node.charAt(0) === "<") {
-                    //html
-                    node = noder.createFragment(node)[0];
-                } else {
-                    // id
-                    node = document.getElementById(node);
-                }
-            }
-            this._elm = node;
-        }
-    });
-
-    VisualElement.prototype.$ = VisualElement.prototype.query = function(selector) {
-        return $(selector,this._elm);
-    };
-
-    VisualElement.prototype.elm = function() {
-        return this._elm;
-    };
-
-    /*
-     * the VisualElement object wrapping document.body
-     */
-    var root = new VisualElement(document.body),
-        elmx = function(node) {
-            if (node) {
-                return new VisualElement(node);
-            } else {
-                return root;
-            }
-        };
-    /*
-     * Extend VisualElement prototype with wrapping the specified methods.
-     * @param {ArrayLike} fn
-     * @param {Object} context
-     */
-    function _delegator(fn, context) {
-        return function() {
-            var self = this,
-                elem = self._elm,
-                ret = fn.apply(context, [elem].concat(slice.call(arguments)));
-
-            if (ret) {
-                if (ret === context) {
-                    return self;
-                } else {
-                    if (ret instanceof HTMLElement) {
-                        ret = new VisualElement(ret);
-                    } else if (langx.isArrayLike(ret)) {
-                        ret = map.call(ret, function(el) {
-                            if (el instanceof HTMLElement) {
-                                return new VisualElement(el);
-                            } else {
-                                return el;
-                            }
-                        })
-                    }
-                }
-            }
-            return ret;
-        };
-    }
-
-    langx.mixin(elmx, {
-        batch: function(nodes, action, args) {
-            nodes.forEach(function(node) {
-                var elm = (node instanceof VisualElement) ? node : elmx(node);
-                elm[action].apply(elm, args);
-            });
-
-            return this;
-        },
-
-        root: new VisualElement(document.body),
-
-        VisualElement: VisualElement,
-
-        partial: function(name, fn) {
-            var props = {};
-
-            props[name] = fn;
-
-            VisualElement.partial(props);
-        },
-
-        delegate: function(names, context) {
-            var props = {};
-
-            names.forEach(function(name) {
-                props[name] = _delegator(context[name], context);
-            });
-
-            VisualElement.partial(props);
-        }
-    });
-
-    // from ./datax
-    elmx.delegate([
-        "attr",
-        "data",
-        "prop",
-        "removeAttr",
-        "removeData",
-        "text",
-        "val"
-    ], datax);
-
-    // from ./eventer
-    elmx.delegate([
-        "off",
-        "on",
-        "one",
-        "shortcuts",
-        "trigger"
-    ], eventer);
-
-    // from ./finder
-    elmx.delegate([
-        "ancestor",
-        "ancestors",
-        "children",
-        "descendant",
-        "find",
-        "findAll",
-        "firstChild",
-        "lastChild",
-        "matches",
-        "nextSibling",
-        "nextSiblings",
-        "parent",
-        "previousSibling",
-        "previousSiblings",
-        "siblings"
-    ], finder);
-
-    /*
-     * find a dom element matched by the specified selector.
-     * @param {String} selector
-     */
-    elmx.find = function(selector) {
-        if (selector === "body") {
-            return this.root;
-        } else {
-            return this.root.descendant(selector);
-        }
-    };
-
+define('skylark-domx-fx/main',[
+	"./fx",
+	"skylark-domx-velm",
+	"skylark-domx-query"	
+],function(fx,velm,$){
     // from ./fx
-    elmx.delegate([
+    velm.delegate([
         "animate",
+        "emulateTransitionEnd",
         "fadeIn",
         "fadeOut",
         "fadeTo",
         "fadeToggle",
         "hide",
         "scrollToTop",
+        "slideDown",
+        "slideToggle",
+        "slideUp",
         "show",
         "toggle"
     ], fx);
 
+    $.fn.hide =  $.wraps.wrapper_every_act(fx.hide, fx);
 
-    // from ./geom
-    elmx.delegate([
-        "borderExtents",
-        "boundingPosition",
-        "boundingRect",
-        "clientHeight",
-        "clientSize",
-        "clientWidth",
-        "contentRect",
-        "height",
-        "marginExtents",
-        "offsetParent",
-        "paddingExtents",
-        "pagePosition",
-        "pageRect",
-        "relativePosition",
-        "relativeRect",
-        "scrollIntoView",
-        "scrollLeft",
-        "scrollTop",
-        "size",
-        "width"
-    ], geom);
+    $.fn.animate = $.wraps.wrapper_every_act(fx.animate, fx);
+    $.fn.emulateTransitionEnd = $.wraps.wrapper_every_act(fx.emulateTransitionEnd, fx);
 
-    // from ./noder
-    elmx.delegate([
-        "after",
-        "append",
-        "before",
-        "clone",
-        "contains",
-        "contents",
-        "empty",
-        "html",
-        "isChildOf",
-        "isDocument",
-        "isInDocument",
-        "isWindow",
-        "ownerDoc",
-        "prepend",
-        "remove",
-        "removeChild",
-        "replace",
-        "reverse",
-        "throb",
-        "traverse",
-        "wrapper",
-        "wrapperInner",
-        "unwrap"
-    ], noder);
+    $.fn.show = $.wraps.wrapper_every_act(fx.show, fx);
+    $.fn.hide = $.wraps.wrapper_every_act(fx.hide, fx);
+    $.fn.toogle = $.wraps.wrapper_every_act(fx.toogle, fx);
+    $.fn.fadeTo = $.wraps.wrapper_every_act(fx.fadeTo, fx);
+    $.fn.fadeIn = $.wraps.wrapper_every_act(fx.fadeIn, fx);
+    $.fn.fadeOut = $.wraps.wrapper_every_act(fx.fadeOut, fx);
+    $.fn.fadeToggle = $.wraps.wrapper_every_act(fx.fadeToggle, fx);
 
-    // from ./styler
-    elmx.delegate([
-        "addClass",
-        "className",
-        "css",
-        "hasClass",
-        "hide",
-        "isInvisible",
-        "removeClass",
-        "show",
-        "toggleClass"
-    ], styler);
+    $.fn.slideDown = $.wraps.wrapper_every_act(fx.slideDown, fx);
+    $.fn.slideToggle = $.wraps.wrapper_every_act(fx.slideToggle, fx);
+    $.fn.slideUp = $.wraps.wrapper_every_act(fx.slideUp, fx);
 
-    // properties
-
-    var properties = [ 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border', 'borderLeft',
-    'borderTop', 'borderRight', 'borderBottom', 'borderColor', 'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight', 'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight', 'paddingBottom', 'color',
-    'background', 'backgroundColor', 'opacity', 'fontSize', 'fontWeight', 'textAlign', 'textDecoration', 'textTransform', 'cursor', 'zIndex' ];
-
-    properties.forEach( function ( property ) {
-
-        var method = property;
-
-        VisualElement.prototype[method ] = function (value) {
-
-            this.css( property, value );
-
-            return this;
-
-        };
-
-    });
-
-    // events
-    var events = [ 'keyUp', 'keyDown', 'mouseOver', 'mouseOut', 'click', 'dblClick', 'change' ];
-
-    events.forEach( function ( event ) {
-
-        var method = event;
-
-        VisualElement.prototype[method ] = function ( callback ) {
-
-            this.on( event.toLowerCase(), callback);
-
-            return this;
-        };
-
-    });
-
-
-    return dom.elmx = elmx;
+	return fx;
 });
-define('skylark-utils-dom/plugins',[
-    "./dom",
-    "./langx",
-    "./noder",
-    "./datax",
-    "./eventer",
-    "./finder",
-    "./geom",
-    "./styler",
-    "./fx",
-    "./query",
-    "./elmx"
-], function(dom, langx, noder, datax, eventer, finder, geom, styler, fx, $, elmx) {
+define('skylark-domx-fx', ['skylark-domx-fx/main'], function (main) { return main; });
+
+define('skylark-domx-plugins/plugins',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-noder",
+    "skylark-domx-data",
+    "skylark-domx-eventer",
+    "skylark-domx-finder",
+    "skylark-domx-geom",
+    "skylark-domx-styler",
+    "skylark-domx-fx",
+    "skylark-domx-query",
+    "skylark-domx-velm"
+], function(skylark, langx, noder, datax, eventer, finder, geom, styler, fx, $, elmx) {
     "use strict";
 
     var slice = Array.prototype.slice,
@@ -9834,6 +10184,7 @@ define('skylark-utils-dom/plugins',[
         return pluginInstance;
     }
 
+
     function shortcutter(pluginName,extfn) {
        /*
         * Create or get or destory a plugin instance assocated with the element,
@@ -9844,10 +10195,13 @@ define('skylark-utils-dom/plugins',[
             if ( options === "instance" ) {
               return plugin || null;
             }
+
             if (!plugin) {
                 plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
-            }
-
+                if (typeof options != "string") {
+                  return this;
+                }
+            } 
             if (options) {
                 var args = slice.call(arguments,1); //2
                 if (extfn) {
@@ -9905,7 +10259,7 @@ define('skylark-utils-dom/plugins',[
                   this.each(function () {
                     var args2 = slice.call(args);
                     args2.unshift(this);
-                    var  ret  = shortcut.apply(null,args2);
+                    var  ret  = shortcut.apply(undefined,args2);
                     if (ret !== undefined) {
                         returnValue = ret;
                         return false;
@@ -9954,15 +10308,15 @@ define('skylark-utils-dom/plugins',[
             for (var i=0;i<ctors.length;i++) {
               ctor = ctors[i];
               if (ctor.prototype.hasOwnProperty("options")) {
-                langx.mixin(defaults,ctor.prototype.options);
+                langx.mixin(defaults,ctor.prototype.options,true);
               }
               if (ctor.hasOwnProperty("options")) {
-                langx.mixin(defaults,ctor.options);
+                langx.mixin(defaults,ctor.options,true);
               }
             }
           }
           Object.defineProperty(this,"options",{
-            value :langx.mixin({},defaults,options)
+            value :langx.mixin({},defaults,options,true)
           });
 
           //return this.options = langx.mixin({},defaults,options);
@@ -10049,6 +10403,13 @@ define('skylark-utils-dom/plugins',[
             return this;
         },
 
+        getUID : function (prefix) {
+            prefix = prefix || "plugin";
+            do prefix += ~~(Math.random() * 1000000)
+            while (document.getElementById(prefix))
+            return prefix;
+        },
+
         elm : function() {
             return this._elm;
         }
@@ -10083,5611 +10444,3545 @@ define('skylark-utils-dom/plugins',[
         shortcuts
     });
 
-    return plugins;
+    return  skylark.attach("domx.plugins",plugins);
 });
-define('skylark-bootstrap4/bs4',[
-  "skylark-utils-dom/skylark",
-],function(skylark){
+define('skylark-domx-plugins/main',[
+	"./plugins"
+],function(plugins){
+	return plugins;
+});
+define('skylark-domx-plugins', ['skylark-domx-plugins/main'], function (main) { return main; });
+
+define('skylark-bootstrap3/bs3',[
+  "skylark-langx/skylark",
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query"
+],function(skylark,langx,browser,eventer,noder,geom,$){
 	var ui = skylark.ui = skylark.ui || {}, 
-		bs4 = ui.bs4 = {};
+		bs3 = ui.bs3 = {};
 
-	return bs4;
+/*---------------------------------------------------------------------------------*/
+	/*
+	 * Fuel UX utilities.js
+	 * https://github.com/ExactTarget/fuelux
+	 *
+	 * Copyright (c) 2014 ExactTarget
+	 * Licensed under the BSD New license.
+	 */
+	var CONST = {
+		BACKSPACE_KEYCODE: 8,
+		COMMA_KEYCODE: 188, // `,` & `<`
+		DELETE_KEYCODE: 46,
+		DOWN_ARROW_KEYCODE: 40,
+		ENTER_KEYCODE: 13,
+		TAB_KEYCODE: 9,
+		UP_ARROW_KEYCODE: 38
+	};
+
+	var isShiftHeld = function isShiftHeld (e) { return e.shiftKey === true; };
+
+	var isKey = function isKey (keyCode) {
+		return function compareKeycodes (e) {
+			return e.keyCode === keyCode;
+		};
+	};
+
+	var isBackspaceKey = isKey(CONST.BACKSPACE_KEYCODE);
+	var isDeleteKey = isKey(CONST.DELETE_KEYCODE);
+	var isTabKey = isKey(CONST.TAB_KEYCODE);
+	var isUpArrow = isKey(CONST.UP_ARROW_KEYCODE);
+	var isDownArrow = isKey(CONST.DOWN_ARROW_KEYCODE);
+
+	var ENCODED_REGEX = /&[^\s]*;/;
+	/*
+	 * to prevent double encoding decodes content in loop until content is encoding free
+	 */
+	var cleanInput = function cleanInput (questionableMarkup) {
+		// check for encoding and decode
+		while (ENCODED_REGEX.test(questionableMarkup)) {
+			questionableMarkup = $('<i>').html(questionableMarkup).text();
+		}
+
+		// string completely decoded now encode it
+		return $('<i>').text(questionableMarkup).html();
+	};
+
+
+
+
+	langx.mixin(bs3, {
+		CONST: CONST,
+		cleanInput: cleanInput,
+		isBackspaceKey: isBackspaceKey,
+		isDeleteKey: isDeleteKey,
+		isShiftHeld: isShiftHeld,
+		isTabKey: isTabKey,
+		isUpArrow: isUpArrow,
+		isDownArrow: isDownArrow
+	});
+
+	return bs3;
 });
 
-define('skylark-bootstrap4/util',[
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/eventer'
-], function ($, eventer) {
-    'use strict';
-
-    const TRANSITION_END = 'transitionend';
-    const MAX_UID = 1000000;
-    const MILLISECONDS_MULTIPLIER = 1000;
-
-    function toType(obj) {
-        return {}.toString.call(obj).match(/\s([a-z]+)/i)[1].toLowerCase();
-    }
-
-    /*
-    function getSpecialTransitionEndEvent() {
-        return {
-            bindType: TRANSITION_END,
-            delegateType: TRANSITION_END,
-            handle(event) {
-                if ($(event.target).is(this)) {
-                    return event.handleObj.handler.apply(this, arguments);
-                }
-                return undefined;
-            }
-        };
-    }
-
-    function transitionEndEmulator(duration) {
-        let called = false;
-        $(this).one(Util.TRANSITION_END, () => {
-            called = true;
-        });
-        setTimeout(() => {
-            if (!called) {
-                Util.triggerTransitionEnd(this);
-            }
-        }, duration);
-        return this;
-    }
-
-    function setTransitionEndSupport() {
-        $.fn.emulateTransitionEnd = transitionEndEmulator;
-        $.event.special[Util.TRANSITION_END] = getSpecialTransitionEndEvent();
-    }
-    */
-    const Util = {
-        TRANSITION_END: 'bsTransitionEnd',
-
-        getUID(prefix) {
-            do {
-                prefix += ~~(Math.random() * MAX_UID);
-            } while (document.getElementById(prefix));
-            return prefix;
-        },
-
-        getSelectorFromElement(element) {
-            let selector = element.getAttribute('data-target');
-            if (!selector || selector === '#') {
-                const hrefAttr = element.getAttribute('href');
-                selector = hrefAttr && hrefAttr !== '#' ? hrefAttr.trim() : '';
-            }
-            return selector && document.querySelector(selector) ? selector : null;
-        },
-
-        getTransitionDurationFromElement(element) {
-            if (!element) {
-                return 0;
-            }
-            let transitionDuration = $(element).css('transition-duration');
-            let transitionDelay = $(element).css('transition-delay');
-            const floatTransitionDuration = parseFloat(transitionDuration);
-            const floatTransitionDelay = parseFloat(transitionDelay);
-            if (!floatTransitionDuration && !floatTransitionDelay) {
-                return 0;
-            }
-            transitionDuration = transitionDuration.split(',')[0];
-            transitionDelay = transitionDelay.split(',')[0];
-            return (parseFloat(transitionDuration) + parseFloat(transitionDelay)) * MILLISECONDS_MULTIPLIER;
-        },
-
-        reflow(element) {
-            return element.offsetHeight;
-        },
-
-        triggerTransitionEnd(element) {
-            $(element).trigger(TRANSITION_END);
-        },
-
-        supportsTransitionEnd() {
-            return Boolean(TRANSITION_END);
-        },
-
-        isElement(obj) {
-            return (obj[0] || obj).nodeType;
-        },
-
-        typeCheckConfig(componentName, config, configTypes) {
-            for (const property in configTypes) {
-                if (Object.prototype.hasOwnProperty.call(configTypes, property)) {
-                    const expectedTypes = configTypes[property];
-                    const value = config[property];
-                    const valueType = value && Util.isElement(value) ? 'element' : toType(value);
-                    if (!new RegExp(expectedTypes).test(valueType)) {
-                        throw new Error(`${ componentName.toUpperCase() }: ` + `Option "${ property }" provided type "${ valueType }" ` + `but expected type "${ expectedTypes }".`);
-                    }
-                }
-            }
-        },
-
-        findShadowRoot(element) {
-            if (!document.documentElement.attachShadow) {
-                return null;
-            }
-            if (typeof element.getRootNode === 'function') {
-                const root = element.getRootNode();
-                return root instanceof ShadowRoot ? root : null;
-            }
-            if (element instanceof ShadowRoot) {
-                return element;
-            }
-            if (!element.parentNode) {
-                return null;
-            }
-            return Util.findShadowRoot(element.parentNode);
-        }
-    };
-
-    //setTransitionEndSupport();
-    eventer.special.bsTransitionEnd = eventer.special.transitionEnd;
-
-    return Util;
-});
-define('skylark-bootstrap4/alert',[
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function ($, plugins,bs4,Util) {
-
-    'use strict';
-    const NAME = 'alert';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.alert';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const Selector = { DISMISS: '[data-dismiss="alert"]' };
-    const Event = {
-        CLOSE: `close${ EVENT_KEY }`,
-        CLOSED: `closed${ EVENT_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        ALERT: 'alert',
-        FADE: 'fade',
-        SHOW: 'show'
-    };
-    class Alert {
-        constructor(element) {
-            this._element = element;
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        close(element) {
-            let rootElement = this._element;
-            if (element) {
-                rootElement = this._getRootElement(element);
-            }
-            const customEvent = this._triggerCloseEvent(rootElement);
-            if (customEvent.isDefaultPrevented()) {
-                return;
-            }
-            this._removeElement(rootElement);
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            this._element = null;
-        }
-        _getRootElement(element) {
-            const selector = Util.getSelectorFromElement(element);
-            let parent = false;
-            if (selector) {
-                parent = document.querySelector(selector);
-            }
-            if (!parent) {
-                parent = $(element).closest(`.${ ClassName.ALERT }`)[0];
-            }
-            return parent;
-        }
-        _triggerCloseEvent(element) {
-            const closeEvent = $.Event(Event.CLOSE);
-            $(element).trigger(closeEvent);
-            return closeEvent;
-        }
-        _removeElement(element) {
-            $(element).removeClass(ClassName.SHOW);
-            if (!$(element).hasClass(ClassName.FADE)) {
-                this._destroyElement(element);
-                return;
-            }
-            const transitionDuration = Util.getTransitionDurationFromElement(element);
-            $(element).one(Util.TRANSITION_END, event => this._destroyElement(element, event)).emulateTransitionEnd(transitionDuration);
-        }
-        _destroyElement(element) {
-            $(element).detach().trigger(Event.CLOSED).remove();
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                const $element = $(this);
-                let data = $element.data(DATA_KEY);
-                if (!data) {
-                    data = new Alert(this);
-                    $element.data(DATA_KEY, data);
-                }
-                if (config === 'close') {
-                    data[config](this);
-                }
-            });
-        }
-        static _handleDismiss(alertInstance) {
-            return function (event) {
-                if (event) {
-                    event.preventDefault();
-                }
-                alertInstance.close(this);
-            };
-        }
-    }
-
-    $(document).on(Event.CLICK_DATA_API, Selector.DISMISS, Alert._handleDismiss(new Alert()));
-    $.fn[NAME] = Alert._jqueryInterface;
-    $.fn[NAME].Constructor = Alert;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Alert._jqueryInterface;
-    };
-
-    return bs4.Alert = Alert;
-});
-define('skylark-bootstrap4/button',[
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4"
-], function ($, plugins,bs4) {
-    'use strict';
-    const NAME = 'button';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.button';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const ClassName = {
-        ACTIVE: 'active',
-        BUTTON: 'btn',
-        FOCUS: 'focus'
-    };
-    const Selector = {
-        DATA_TOGGLE_CARROT: '[data-toggle^="button"]',
-        DATA_TOGGLE: '[data-toggle="buttons"]',
-        INPUT: 'input:not([type="hidden"])',
-        ACTIVE: '.active',
-        BUTTON: '.btn'
-    };
-    const Event = {
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`,
-        FOCUS_BLUR_DATA_API: `focus${ EVENT_KEY }${ DATA_API_KEY } ` + `blur${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    class Button {
-        constructor(element) {
-            this._element = element;
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        toggle() {
-            let triggerChangeEvent = true;
-            let addAriaPressed = true;
-            const rootElement = $(this._element).closest(Selector.DATA_TOGGLE)[0];
-            if (rootElement) {
-                const input = this._element.querySelector(Selector.INPUT);
-                if (input) {
-                    if (input.type === 'radio') {
-                        if (input.checked && this._element.classList.contains(ClassName.ACTIVE)) {
-                            triggerChangeEvent = false;
-                        } else {
-                            const activeElement = rootElement.querySelector(Selector.ACTIVE);
-                            if (activeElement) {
-                                $(activeElement).removeClass(ClassName.ACTIVE);
-                            }
-                        }
-                    }
-                    if (triggerChangeEvent) {
-                        if (input.hasAttribute('disabled') || rootElement.hasAttribute('disabled') || input.classList.contains('disabled') || rootElement.classList.contains('disabled')) {
-                            return;
-                        }
-                        input.checked = !this._element.classList.contains(ClassName.ACTIVE);
-                        $(input).trigger('change');
-                    }
-                    input.focus();
-                    addAriaPressed = false;
-                }
-            }
-            if (addAriaPressed) {
-                this._element.setAttribute('aria-pressed', !this._element.classList.contains(ClassName.ACTIVE));
-            }
-            if (triggerChangeEvent) {
-                $(this._element).toggleClass(ClassName.ACTIVE);
-            }
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            this._element = null;
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                if (!data) {
-                    data = new Button(this);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (config === 'toggle') {
-                    data[config]();
-                }
-            });
-        }
-    }
-    $(document).on(Event.CLICK_DATA_API, Selector.DATA_TOGGLE_CARROT, event => {
-        event.preventDefault();
-        let button = event.target;
-        if (!$(button).hasClass(ClassName.BUTTON)) {
-            button = $(button).closest(Selector.BUTTON);
-        }
-        Button._jqueryInterface.call($(button), 'toggle');
-    }).on(Event.FOCUS_BLUR_DATA_API, Selector.DATA_TOGGLE_CARROT, event => {
-        const button = $(event.target).closest(Selector.BUTTON)[0];
-        $(button).toggleClass(ClassName.FOCUS, /^focus(in)?$/.test(event.type));
-    });
-
-    $.fn[NAME] = Button._jqueryInterface;
-    $.fn[NAME].Constructor = Button;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Button._jqueryInterface;
-    };
+define('skylark-bootstrap3/affix',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
 
 
-    return bs4.Button = Button;
-});
-define('skylark-bootstrap4/carousel',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function (langx,$, plugins,bs4,Util) {
+/* ========================================================================
+ * Bootstrap: affix.js v3.3.7
+ * http://getbootstrap.com/javascript/#affix
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
 
-    'use strict';
-    const NAME = 'carousel';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.carousel';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const ARROW_LEFT_KEYCODE = 37;
-    const ARROW_RIGHT_KEYCODE = 39;
-    const TOUCHEVENT_COMPAT_WAIT = 500;
-    const SWIPE_THRESHOLD = 40;
-    const Default = {
-        interval: 5000,
-        keyboard: true,
-        slide: false,
-        pause: 'hover',
-        wrap: true,
-        touch: true
-    };
-    const DefaultType = {
-        interval: '(number|boolean)',
-        keyboard: 'boolean',
-        slide: '(boolean|string)',
-        pause: '(string|boolean)',
-        wrap: 'boolean',
-        touch: 'boolean'
-    };
-    const Direction = {
-        NEXT: 'next',
-        PREV: 'prev',
-        LEFT: 'left',
-        RIGHT: 'right'
-    };
-    const Event = {
-        SLIDE: `slide${ EVENT_KEY }`,
-        SLID: `slid${ EVENT_KEY }`,
-        KEYDOWN: `keydown${ EVENT_KEY }`,
-        MOUSEENTER: `mouseenter${ EVENT_KEY }`,
-        MOUSELEAVE: `mouseleave${ EVENT_KEY }`,
-        TOUCHSTART: `touchstart${ EVENT_KEY }`,
-        TOUCHMOVE: `touchmove${ EVENT_KEY }`,
-        TOUCHEND: `touchend${ EVENT_KEY }`,
-        POINTERDOWN: `pointerdown${ EVENT_KEY }`,
-        POINTERUP: `pointerup${ EVENT_KEY }`,
-        DRAG_START: `dragstart${ EVENT_KEY }`,
-        LOAD_DATA_API: `load${ EVENT_KEY }${ DATA_API_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        CAROUSEL: 'carousel',
-        ACTIVE: 'active',
-        SLIDE: 'slide',
-        RIGHT: 'carousel-item-right',
-        LEFT: 'carousel-item-left',
-        NEXT: 'carousel-item-next',
-        PREV: 'carousel-item-prev',
-        ITEM: 'carousel-item',
-        POINTER_EVENT: 'pointer-event'
-    };
-    const Selector = {
-        ACTIVE: '.active',
-        ACTIVE_ITEM: '.active.carousel-item',
-        ITEM: '.carousel-item',
-        ITEM_IMG: '.carousel-item img',
-        NEXT_PREV: '.carousel-item-next, .carousel-item-prev',
-        INDICATORS: '.carousel-indicators',
-        DATA_SLIDE: '[data-slide], [data-slide-to]',
-        DATA_RIDE: '[data-ride="carousel"]'
-    };
-    const PointerType = {
-        TOUCH: 'touch',
-        PEN: 'pen'
-    };
-    class Carousel {
-        constructor(element, config) {
-            this._items = null;
-            this._interval = null;
-            this._activeElement = null;
-            this._isPaused = false;
-            this._isSliding = false;
-            this.touchTimeout = null;
-            this.touchStartX = 0;
-            this.touchDeltaX = 0;
-            this._config = this._getConfig(config);
-            this._element = element;
-            this._indicatorsElement = this._element.querySelector(Selector.INDICATORS);
-            this._touchSupported = 'ontouchstart' in document.documentElement || navigator.maxTouchPoints > 0;
-            this._pointerEvent = Boolean(window.PointerEvent || window.MSPointerEvent);
-            this._addEventListeners();
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        next() {
-            if (!this._isSliding) {
-                this._slide(Direction.NEXT);
-            }
-        }
-        nextWhenVisible() {
-            if (!document.hidden && ($(this._element).is(':visible') && $(this._element).css('visibility') !== 'hidden')) {
-                this.next();
-            }
-        }
-        prev() {
-            if (!this._isSliding) {
-                this._slide(Direction.PREV);
-            }
-        }
-        pause(event) {
-            if (!event) {
-                this._isPaused = true;
-            }
-            if (this._element.querySelector(Selector.NEXT_PREV)) {
-                Util.triggerTransitionEnd(this._element);
-                this.cycle(true);
-            }
-            clearInterval(this._interval);
-            this._interval = null;
-        }
-        cycle(event) {
-            if (!event) {
-                this._isPaused = false;
-            }
-            if (this._interval) {
-                clearInterval(this._interval);
-                this._interval = null;
-            }
-            if (this._config.interval && !this._isPaused) {
-                this._interval = setInterval((document.visibilityState ? this.nextWhenVisible : this.next).bind(this), this._config.interval);
-            }
-        }
-        to(index) {
-            this._activeElement = this._element.querySelector(Selector.ACTIVE_ITEM);
-            const activeIndex = this._getItemIndex(this._activeElement);
-            if (index > this._items.length - 1 || index < 0) {
-                return;
-            }
-            if (this._isSliding) {
-                $(this._element).one(Event.SLID, () => this.to(index));
-                return;
-            }
-            if (activeIndex === index) {
-                this.pause();
-                this.cycle();
-                return;
-            }
-            const direction = index > activeIndex ? Direction.NEXT : Direction.PREV;
-            this._slide(direction, this._items[index]);
-        }
-        dispose() {
-            $(this._element).off(EVENT_KEY);
-            $.removeData(this._element, DATA_KEY);
-            this._items = null;
-            this._config = null;
-            this._element = null;
-            this._interval = null;
-            this._isPaused = null;
-            this._isSliding = null;
-            this._activeElement = null;
-            this._indicatorsElement = null;
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...Default,
-            //    ...config
-            //};
-            config = langx.mixin({},Default,config);
-            Util.typeCheckConfig(NAME, config, DefaultType);
-            return config;
-        }
-        _handleSwipe() {
-            const absDeltax = Math.abs(this.touchDeltaX);
-            if (absDeltax <= SWIPE_THRESHOLD) {
-                return;
-            }
-            const direction = absDeltax / this.touchDeltaX;
-            if (direction > 0) {
-                this.prev();
-            }
-            if (direction < 0) {
-                this.next();
-            }
-        }
-        _addEventListeners() {
-            if (this._config.keyboard) {
-                $(this._element).on(Event.KEYDOWN, event => this._keydown(event));
-            }
-            if (this._config.pause === 'hover') {
-                $(this._element).on(Event.MOUSEENTER, event => this.pause(event)).on(Event.MOUSELEAVE, event => this.cycle(event));
-            }
-            this._addTouchEventListeners();
-        }
-        _addTouchEventListeners() {
-            if (!this._touchSupported) {
-                return;
-            }
-            const start = event => {
-                if (this._pointerEvent && PointerType[event.originalEvent.pointerType.toUpperCase()]) {
-                    this.touchStartX = event.originalEvent.clientX;
-                } else if (!this._pointerEvent) {
-                    this.touchStartX = event.originalEvent.touches[0].clientX;
-                }
-            };
-            const move = event => {
-                if (event.originalEvent.touches && event.originalEvent.touches.length > 1) {
-                    this.touchDeltaX = 0;
-                } else {
-                    this.touchDeltaX = event.originalEvent.touches[0].clientX - this.touchStartX;
-                }
-            };
-            const end = event => {
-                if (this._pointerEvent && PointerType[event.originalEvent.pointerType.toUpperCase()]) {
-                    this.touchDeltaX = event.originalEvent.clientX - this.touchStartX;
-                }
-                this._handleSwipe();
-                if (this._config.pause === 'hover') {
-                    this.pause();
-                    if (this.touchTimeout) {
-                        clearTimeout(this.touchTimeout);
-                    }
-                    this.touchTimeout = setTimeout(event => this.cycle(event), TOUCHEVENT_COMPAT_WAIT + this._config.interval);
-                }
-            };
-            $(this._element.querySelectorAll(Selector.ITEM_IMG)).on(Event.DRAG_START, e => e.preventDefault());
-            if (this._pointerEvent) {
-                $(this._element).on(Event.POINTERDOWN, event => start(event));
-                $(this._element).on(Event.POINTERUP, event => end(event));
-                this._element.classList.add(ClassName.POINTER_EVENT);
-            } else {
-                $(this._element).on(Event.TOUCHSTART, event => start(event));
-                $(this._element).on(Event.TOUCHMOVE, event => move(event));
-                $(this._element).on(Event.TOUCHEND, event => end(event));
-            }
-        }
-        _keydown(event) {
-            if (/input|textarea/i.test(event.target.tagName)) {
-                return;
-            }
-            switch (event.which) {
-            case ARROW_LEFT_KEYCODE:
-                event.preventDefault();
-                this.prev();
-                break;
-            case ARROW_RIGHT_KEYCODE:
-                event.preventDefault();
-                this.next();
-                break;
-            default:
-            }
-        }
-        _getItemIndex(element) {
-            this._items = element && element.parentNode ? [].slice.call(element.parentNode.querySelectorAll(Selector.ITEM)) : [];
-            return this._items.indexOf(element);
-        }
-        _getItemByDirection(direction, activeElement) {
-            const isNextDirection = direction === Direction.NEXT;
-            const isPrevDirection = direction === Direction.PREV;
-            const activeIndex = this._getItemIndex(activeElement);
-            const lastItemIndex = this._items.length - 1;
-            const isGoingToWrap = isPrevDirection && activeIndex === 0 || isNextDirection && activeIndex === lastItemIndex;
-            if (isGoingToWrap && !this._config.wrap) {
-                return activeElement;
-            }
-            const delta = direction === Direction.PREV ? -1 : 1;
-            const itemIndex = (activeIndex + delta) % this._items.length;
-            return itemIndex === -1 ? this._items[this._items.length - 1] : this._items[itemIndex];
-        }
-        _triggerSlideEvent(relatedTarget, eventDirectionName) {
-            const targetIndex = this._getItemIndex(relatedTarget);
-            const fromIndex = this._getItemIndex(this._element.querySelector(Selector.ACTIVE_ITEM));
-            const slideEvent = $.Event(Event.SLIDE, {
-                relatedTarget,
-                direction: eventDirectionName,
-                from: fromIndex,
-                to: targetIndex
-            });
-            $(this._element).trigger(slideEvent);
-            return slideEvent;
-        }
-        _setActiveIndicatorElement(element) {
-            if (this._indicatorsElement) {
-                const indicators = [].slice.call(this._indicatorsElement.querySelectorAll(Selector.ACTIVE));
-                $(indicators).removeClass(ClassName.ACTIVE);
-                const nextIndicator = this._indicatorsElement.children[this._getItemIndex(element)];
-                if (nextIndicator) {
-                    $(nextIndicator).addClass(ClassName.ACTIVE);
-                }
-            }
-        }
-        _slide(direction, element) {
-            const activeElement = this._element.querySelector(Selector.ACTIVE_ITEM);
-            const activeElementIndex = this._getItemIndex(activeElement);
-            const nextElement = element || activeElement && this._getItemByDirection(direction, activeElement);
-            const nextElementIndex = this._getItemIndex(nextElement);
-            const isCycling = Boolean(this._interval);
-            let directionalClassName;
-            let orderClassName;
-            let eventDirectionName;
-            if (direction === Direction.NEXT) {
-                directionalClassName = ClassName.LEFT;
-                orderClassName = ClassName.NEXT;
-                eventDirectionName = Direction.LEFT;
-            } else {
-                directionalClassName = ClassName.RIGHT;
-                orderClassName = ClassName.PREV;
-                eventDirectionName = Direction.RIGHT;
-            }
-            if (nextElement && $(nextElement).hasClass(ClassName.ACTIVE)) {
-                this._isSliding = false;
-                return;
-            }
-            const slideEvent = this._triggerSlideEvent(nextElement, eventDirectionName);
-            if (slideEvent.isDefaultPrevented()) {
-                return;
-            }
-            if (!activeElement || !nextElement) {
-                return;
-            }
-            this._isSliding = true;
-            if (isCycling) {
-                this.pause();
-            }
-            this._setActiveIndicatorElement(nextElement);
-            const slidEvent = $.Event(Event.SLID, {
-                relatedTarget: nextElement,
-                direction: eventDirectionName,
-                from: activeElementIndex,
-                to: nextElementIndex
-            });
-            if ($(this._element).hasClass(ClassName.SLIDE)) {
-                $(nextElement).addClass(orderClassName);
-                Util.reflow(nextElement);
-                $(activeElement).addClass(directionalClassName);
-                $(nextElement).addClass(directionalClassName);
-                const nextElementInterval = parseInt(nextElement.getAttribute('data-interval'), 10);
-                if (nextElementInterval) {
-                    this._config.defaultInterval = this._config.defaultInterval || this._config.interval;
-                    this._config.interval = nextElementInterval;
-                } else {
-                    this._config.interval = this._config.defaultInterval || this._config.interval;
-                }
-                const transitionDuration = Util.getTransitionDurationFromElement(activeElement);
-                $(activeElement).one(Util.TRANSITION_END, () => {
-                    $(nextElement).removeClass(`${ directionalClassName } ${ orderClassName }`).addClass(ClassName.ACTIVE);
-                    $(activeElement).removeClass(`${ ClassName.ACTIVE } ${ orderClassName } ${ directionalClassName }`);
-                    this._isSliding = false;
-                    setTimeout(() => $(this._element).trigger(slidEvent), 0);
-                }).emulateTransitionEnd(transitionDuration);
-            } else {
-                $(activeElement).removeClass(ClassName.ACTIVE);
-                $(nextElement).addClass(ClassName.ACTIVE);
-                this._isSliding = false;
-                $(this._element).trigger(slidEvent);
-            }
-            if (isCycling) {
-                this.cycle();
-            }
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                //let _config = {
-                //    ...Default,
-                //    ...$(this).data()
-                //};
-                let _config = langx.mixin({},Default,$(this).data());
-                if (typeof config === 'object') {
-                    //_config = {
-                    //    ..._config,
-                    //    ...config
-                    //};
-                    langx.mixin(_config,config);
-                }
-                const action = typeof config === 'string' ? config : _config.slide;
-                if (!data) {
-                    data = new Carousel(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'number') {
-                    data.to(config);
-                } else if (typeof action === 'string') {
-                    if (typeof data[action] === 'undefined') {
-                        throw new TypeError(`No method named "${ action }"`);
-                    }
-                    data[action]();
-                } else if (_config.interval) {
-                    data.pause();
-                    data.cycle();
-                }
-            });
-        }
-        static _dataApiClickHandler(event) {
-            const selector = Util.getSelectorFromElement(this);
-            if (!selector) {
-                return;
-            }
-            const target = $(selector)[0];
-            if (!target || !$(target).hasClass(ClassName.CAROUSEL)) {
-                return;
-            }
-            //const config = {
-            //    ...$(target).data(),
-            //    ...$(this).data()
-            //};
-            const config = langx.mixin({},$(target).data(),$(this).data());
-            const slideIndex = this.getAttribute('data-slide-to');
-            if (slideIndex) {
-                config.interval = false;
-            }
-            Carousel._jqueryInterface.call($(target), config);
-            if (slideIndex) {
-                $(target).data(DATA_KEY).to(slideIndex);
-            }
-            event.preventDefault();
-        }
-    }
-    $(document).on(Event.CLICK_DATA_API, Selector.DATA_SLIDE, Carousel._dataApiClickHandler);
-    $(window).on(Event.LOAD_DATA_API, () => {
-        const carousels = [].slice.call(document.querySelectorAll(Selector.DATA_RIDE));
-        for (let i = 0, len = carousels.length; i < len; i++) {
-            const $carousel = $(carousels[i]);
-            Carousel._jqueryInterface.call($carousel, $carousel.data());
-        }
-    });
-    $.fn[NAME] = Carousel._jqueryInterface;
-    $.fn[NAME].Constructor = Carousel;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Carousel._jqueryInterface;
-    };
-    return Carousel;
-});
-define('skylark-bootstrap4/collapse',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function (langx,$, plugins,bs4,Util) {
-
-    'use strict';
-    const NAME = 'collapse';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.collapse';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const Default = {
-        toggle: true,
-        parent: ''
-    };
-    const DefaultType = {
-        toggle: 'boolean',
-        parent: '(string|element)'
-    };
-    const Event = {
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        SHOW: 'show',
-        COLLAPSE: 'collapse',
-        COLLAPSING: 'collapsing',
-        COLLAPSED: 'collapsed'
-    };
-    const Dimension = {
-        WIDTH: 'width',
-        HEIGHT: 'height'
-    };
-    const Selector = {
-        ACTIVES: '.show, .collapsing',
-        DATA_TOGGLE: '[data-toggle="collapse"]'
-    };
-    class Collapse {
-        constructor(element, config) {
-            this._isTransitioning = false;
-            this._element = element;
-            this._config = this._getConfig(config);
-            this._triggerArray = [].slice.call(document.querySelectorAll(`[data-toggle="collapse"][href="#${ element.id }"],` + `[data-toggle="collapse"][data-target="#${ element.id }"]`));
-            const toggleList = [].slice.call(document.querySelectorAll(Selector.DATA_TOGGLE));
-            for (let i = 0, len = toggleList.length; i < len; i++) {
-                const elem = toggleList[i];
-                const selector = Util.getSelectorFromElement(elem);
-                const filterElement = [].slice.call(document.querySelectorAll(selector)).filter(foundElem => foundElem === element);
-                if (selector !== null && filterElement.length > 0) {
-                    this._selector = selector;
-                    this._triggerArray.push(elem);
-                }
-            }
-            this._parent = this._config.parent ? this._getParent() : null;
-            if (!this._config.parent) {
-                this._addAriaAndCollapsedClass(this._element, this._triggerArray);
-            }
-            if (this._config.toggle) {
-                this.toggle();
-            }
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        toggle() {
-            if ($(this._element).hasClass(ClassName.SHOW)) {
-                this.hide();
-            } else {
-                this.show();
-            }
-        }
-        show() {
-            if (this._isTransitioning || $(this._element).hasClass(ClassName.SHOW)) {
-                return;
-            }
-            let actives;
-            let activesData;
-            if (this._parent) {
-                actives = [].slice.call(this._parent.querySelectorAll(Selector.ACTIVES)).filter(elem => {
-                    if (typeof this._config.parent === 'string') {
-                        return elem.getAttribute('data-parent') === this._config.parent;
-                    }
-                    return elem.classList.contains(ClassName.COLLAPSE);
-                });
-                if (actives.length === 0) {
-                    actives = null;
-                }
-            }
-            if (actives) {
-                activesData = $(actives).not(this._selector).data(DATA_KEY);
-                if (activesData && activesData._isTransitioning) {
-                    return;
-                }
-            }
-            const startEvent = $.Event(Event.SHOW);
-            $(this._element).trigger(startEvent);
-            if (startEvent.isDefaultPrevented()) {
-                return;
-            }
-            if (actives) {
-                Collapse._jqueryInterface.call($(actives).not(this._selector), 'hide');
-                if (!activesData) {
-                    $(actives).data(DATA_KEY, null);
-                }
-            }
-            const dimension = this._getDimension();
-            $(this._element).removeClass(ClassName.COLLAPSE).addClass(ClassName.COLLAPSING);
-            this._element.style[dimension] = 0;
-            if (this._triggerArray.length) {
-                $(this._triggerArray).removeClass(ClassName.COLLAPSED).attr('aria-expanded', true);
-            }
-            this.setTransitioning(true);
-            const complete = () => {
-                $(this._element).removeClass(ClassName.COLLAPSING).addClass(ClassName.COLLAPSE).addClass(ClassName.SHOW);
-                this._element.style[dimension] = '';
-                this.setTransitioning(false);
-                $(this._element).trigger(Event.SHOWN);
-            };
-            const capitalizedDimension = dimension[0].toUpperCase() + dimension.slice(1);
-            const scrollSize = `scroll${ capitalizedDimension }`;
-            const transitionDuration = Util.getTransitionDurationFromElement(this._element);
-            $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-            this._element.style[dimension] = `${ this._element[scrollSize] }px`;
-        }
-        hide() {
-            if (this._isTransitioning || !$(this._element).hasClass(ClassName.SHOW)) {
-                return;
-            }
-            const startEvent = $.Event(Event.HIDE);
-            $(this._element).trigger(startEvent);
-            if (startEvent.isDefaultPrevented()) {
-                return;
-            }
-            const dimension = this._getDimension();
-            this._element.style[dimension] = `${ this._element.getBoundingClientRect()[dimension] }px`;
-            Util.reflow(this._element);
-            $(this._element).addClass(ClassName.COLLAPSING).removeClass(ClassName.COLLAPSE).removeClass(ClassName.SHOW);
-            const triggerArrayLength = this._triggerArray.length;
-            if (triggerArrayLength > 0) {
-                for (let i = 0; i < triggerArrayLength; i++) {
-                    const trigger = this._triggerArray[i];
-                    const selector = Util.getSelectorFromElement(trigger);
-                    if (selector !== null) {
-                        const $elem = $([].slice.call(document.querySelectorAll(selector)));
-                        if (!$elem.hasClass(ClassName.SHOW)) {
-                            $(trigger).addClass(ClassName.COLLAPSED).attr('aria-expanded', false);
-                        }
-                    }
-                }
-            }
-            this.setTransitioning(true);
-            const complete = () => {
-                this.setTransitioning(false);
-                $(this._element).removeClass(ClassName.COLLAPSING).addClass(ClassName.COLLAPSE).trigger(Event.HIDDEN);
-            };
-            this._element.style[dimension] = '';
-            const transitionDuration = Util.getTransitionDurationFromElement(this._element);
-            $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-        }
-        setTransitioning(isTransitioning) {
-            this._isTransitioning = isTransitioning;
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            this._config = null;
-            this._parent = null;
-            this._element = null;
-            this._triggerArray = null;
-            this._isTransitioning = null;
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...Default,
-            //    ...config
-            //};
-            config = langx.mixin({},Default,config);
-            config.toggle = Boolean(config.toggle);
-            Util.typeCheckConfig(NAME, config, DefaultType);
-            return config;
-        }
-        _getDimension() {
-            const hasWidth = $(this._element).hasClass(Dimension.WIDTH);
-            return hasWidth ? Dimension.WIDTH : Dimension.HEIGHT;
-        }
-        _getParent() {
-            let parent;
-            if (Util.isElement(this._config.parent)) {
-                parent = this._config.parent;
-                if (typeof this._config.parent.skylark-utils-dom/query !== 'undefined') {
-                    parent = this._config.parent[0];
-                }
-            } else {
-                parent = document.querySelector(this._config.parent);
-            }
-            const selector = `[data-toggle="collapse"][data-parent="${ this._config.parent }"]`;
-            const children = [].slice.call(parent.querySelectorAll(selector));
-            $(children).each((i, element) => {
-                this._addAriaAndCollapsedClass(Collapse._getTargetFromElement(element), [element]);
-            });
-            return parent;
-        }
-        _addAriaAndCollapsedClass(element, triggerArray) {
-            const isOpen = $(element).hasClass(ClassName.SHOW);
-            if (triggerArray.length) {
-                $(triggerArray).toggleClass(ClassName.COLLAPSED, !isOpen).attr('aria-expanded', isOpen);
-            }
-        }
-        static _getTargetFromElement(element) {
-            const selector = Util.getSelectorFromElement(element);
-            return selector ? document.querySelector(selector) : null;
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                const $this = $(this);
-                let data = $this.data(DATA_KEY);
-                //const _config = {
-                //    ...Default,
-                //    ...$this.data(),
-                //    ...typeof config === 'object' && config ? config : {}
-                //};
-                const _config = langx.mixin({},Default,$this.data(),typeof config === 'object' && config ? config : {});
-
-                if (!data && _config.toggle && /show|hide/.test(config)) {
-                    _config.toggle = false;
-                }
-                if (!data) {
-                    data = new Collapse(this, _config);
-                    $this.data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
-        }
-    }
-    $(document).on(Event.CLICK_DATA_API, Selector.DATA_TOGGLE, function (event) {
-        if (event.currentTarget.tagName === 'A') {
-            event.preventDefault();
-        }
-        const $trigger = $(this);
-        const selector = Util.getSelectorFromElement(this);
-        const selectors = [].slice.call(document.querySelectorAll(selector));
-        $(selectors).each(function () {
-            const $target = $(this);
-            const data = $target.data(DATA_KEY);
-            const config = data ? 'toggle' : $trigger.data();
-            Collapse._jqueryInterface.call($target, config);
-        });
-    });
-    $.fn[NAME] = Collapse._jqueryInterface;
-    $.fn[NAME].Constructor = Collapse;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Collapse._jqueryInterface;
-    };
-    return Collapse;
-});
-define('skylark-ui-popper/Popper',[
-  "skylark-langx/skylark"
-], function(skylark) {
   'use strict';
 
-  var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
-  var longerTimeoutBrowsers = ['Edge', 'Trident', 'Firefox'];
-  var timeoutDuration = 0;
-  for (var i = 0; i < longerTimeoutBrowsers.length; i += 1) {
-    if (isBrowser && navigator.userAgent.indexOf(longerTimeoutBrowsers[i]) >= 0) {
-      timeoutDuration = 1;
-      break;
-    }
+  // AFFIX CLASS DEFINITION
+  // ======================
+
+  var Affix = bs3.Affix = plugins.Plugin.inherit({
+        klassName: "Affix",
+
+        pluginName : "bs3.affix",
+
+        _construct : function(element,options) {
+          this.options = langx.mixin({}, Affix.DEFAULTS, options)
+
+          this.$target = $(this.options.target)
+            .on('scroll.bs.affix.data-api', langx.proxy(this.checkPosition, this))
+            .on('click.bs.affix.data-api',  langx.proxy(this.checkPositionWithEventLoop, this))
+
+          this.$element     = $(element)
+          this.affixed      = null;
+          this.unpin        = null;
+          this.pinnedOffset = null;
+
+          this.checkPosition();
+        },
+
+        getState : function (scrollHeight, height, offsetTop, offsetBottom) {
+          var scrollTop    = this.$target.scrollTop()
+          var position     = this.$element.offset()
+          var targetHeight = this.$target.height()
+
+          if (offsetTop != null && this.affixed == 'top') return scrollTop < offsetTop ? 'top' : false
+
+          if (this.affixed == 'bottom') {
+            if (offsetTop != null) return (scrollTop + this.unpin <= position.top) ? false : 'bottom'
+            return (scrollTop + targetHeight <= scrollHeight - offsetBottom) ? false : 'bottom'
+          }
+
+          var initializing   = this.affixed == null
+          var colliderTop    = initializing ? scrollTop : position.top
+          var colliderHeight = initializing ? targetHeight : height
+
+          if (offsetTop != null && scrollTop <= offsetTop) return 'top'
+          if (offsetBottom != null && (colliderTop + colliderHeight >= scrollHeight - offsetBottom)) return 'bottom'
+
+          return false
+        },
+
+        getPinnedOffset : function () {
+          if (this.pinnedOffset) return this.pinnedOffset
+          this.$element.removeClass(Affix.RESET).addClass('affix')
+          var scrollTop = this.$target.scrollTop()
+          var position  = this.$element.offset()
+          return (this.pinnedOffset = position.top - scrollTop)
+        },
+
+        checkPositionWithEventLoop : function () {
+          setTimeout(langx.proxy(this.checkPosition, this), 1)
+        },
+
+        checkPosition : function () {
+          if (!this.$element.is(':visible')) return
+
+          var height       = this.$element.height()
+          var offset       = this.options.offset
+          var offsetTop    = offset.top
+          var offsetBottom = offset.bottom
+          var scrollHeight = Math.max($(document).height(), $(document.body).height())
+
+          if (typeof offset != 'object')         offsetBottom = offsetTop = offset
+          if (typeof offsetTop == 'function')    offsetTop    = offset.top(this.$element)
+          if (typeof offsetBottom == 'function') offsetBottom = offset.bottom(this.$element)
+
+          var affix = this.getState(scrollHeight, height, offsetTop, offsetBottom)
+
+          if (this.affixed != affix) {
+            if (this.unpin != null) this.$element.css('top', '')
+
+            var affixType = 'affix' + (affix ? '-' + affix : '')
+            var e         = eventer.create(affixType + '.bs.affix')
+
+            this.$element.trigger(e)
+
+            if (e.isDefaultPrevented()) return
+
+            this.affixed = affix
+            this.unpin = affix == 'bottom' ? this.getPinnedOffset() : null
+
+            this.$element
+              .removeClass(Affix.RESET)
+              .addClass(affixType)
+              .trigger(affixType.replace('affix', 'affixed') + '.bs.affix')
+          }
+
+          if (affix == 'bottom') {
+            this.$element.offset({
+              top: scrollHeight - height - offsetBottom
+            })
+          }
+        }
+  });
+
+
+  Affix.VERSION  = '3.3.7'
+
+  Affix.RESET    = 'affix affix-top affix-bottom'
+
+  Affix.DEFAULTS = {
+    offset: 0,
+    target: window
   }
 
-  function microtaskDebounce(fn) {
-    var called = false;
-    return function () {
-      if (called) {
-        return;
-      }
-      called = true;
-      window.Promise.resolve().then(function () {
-        called = false;
-        fn();
-      });
-    };
+
+  /*
+  // AFFIX PLUGIN DEFINITION
+  // =======================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.affix')
+      var options = typeof option == 'object' && option
+
+      if (!data) $this.data('bs.affix', (data = new Affix(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
   }
 
-  function taskDebounce(fn) {
-    var scheduled = false;
-    return function () {
-      if (!scheduled) {
-        scheduled = true;
-        setTimeout(function () {
-          scheduled = false;
-          fn();
-        }, timeoutDuration);
-      }
-    };
+  var old = $.fn.affix
+
+  $.fn.affix             = Plugin;
+  $.fn.affix.Constructor = Affix;
+
+
+  // AFFIX NO CONFLICT
+  // =================
+
+  $.fn.affix.noConflict = function () {
+    $.fn.affix = old
+    return this
   }
 
-  var supportsMicroTasks = isBrowser && window.Promise;
 
-  /**
-  * Create a debounced version of a method, that's asynchronously deferred
-  * but called in the minimum time possible.
-  *
-  * @method
-  * @memberof Popper.Utils
-  * @argument {Function} fn
-  * @returns {Function}
+  return $.fn.affix;
   */
-  var debounce = supportsMicroTasks ? microtaskDebounce : taskDebounce;
 
-  /**
-   * Check if the given variable is a function
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Any} functionToCheck - variable to check
-   * @returns {Boolean} answer to: is a function?
-   */
-  function isFunction(functionToCheck) {
-    var getType = {};
-    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
-  }
+  plugins.register(Affix,"affix");
 
-  /**
-   * Get CSS computed property of the given element
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Eement} element
-   * @argument {String} property
-   */
-  function getStyleComputedProperty(element, property) {
-    if (element.nodeType !== 1) {
-      return [];
-    }
-    // NOTE: 1 DOM access here
-    var window = element.ownerDocument.defaultView;
-    var css = window.getComputedStyle(element, null);
-    return property ? css[property] : css;
-  }
+  return Affix;
+});
 
-  /**
-   * Returns the parentNode or the host of the element
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @returns {Element} parent
-   */
-  function getParentNode(element) {
-    if (element.nodeName === 'HTML') {
-      return element;
-    }
-    return element.parentNode || element.host;
-  }
+define('skylark-bootstrap3/alert',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
 
-  /**
-   * Returns the scrolling parent of the given element
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @returns {Element} scroll parent
-   */
-  function getScrollParent(element) {
-    // Return body, `getScroll` will take care to get the correct `scrollTop` from it
-    if (!element) {
-      return document.body;
-    }
+/* ========================================================================
+ * Bootstrap: alert.js v3.3.7
+ * http://getbootstrap.com/javascript/#alerts
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
 
-    switch (element.nodeName) {
-      case 'HTML':
-      case 'BODY':
-        return element.ownerDocument.body;
-      case '#document':
-        return element.body;
-    }
+  'use strict';
 
-    // Firefox want us to check `-x` and `-y` variations as well
+  // ALERT CLASS DEFINITION
+  // ======================
 
-    var _getStyleComputedProp = getStyleComputedProperty(element),
-        overflow = _getStyleComputedProp.overflow,
-        overflowX = _getStyleComputedProp.overflowX,
-        overflowY = _getStyleComputedProp.overflowY;
+  var dismiss = '[data-dismiss="alert"]';
 
-    if (/(auto|scroll|overlay)/.test(overflow + overflowY + overflowX)) {
-      return element;
-    }
+  var Alert = bs3.Alert = plugins.Plugin.inherit({
+    klassName: "Alert",
 
-    return getScrollParent(getParentNode(element));
-  }
+    pluginName : "bs3.alert",
 
-  var isIE11 = isBrowser && !!(window.MSInputMethodContext && document.documentMode);
-  var isIE10 = isBrowser && /MSIE 10/.test(navigator.userAgent);
+    _construct : function(el,options) {
+      $(el).on('click', dismiss, this.close)
+    },
 
-  /**
-   * Determines if the browser is Internet Explorer
-   * @method
-   * @memberof Popper.Utils
-   * @param {Number} version to check
-   * @returns {Boolean} isIE
-   */
-  function isIE(version) {
-    if (version === 11) {
-      return isIE11;
-    }
-    if (version === 10) {
-      return isIE10;
-    }
-    return isIE11 || isIE10;
-  }
+    close : function (e) {
+      var $this    = $(this);
+      var selector = $this.attr('data-target');
 
-  /**
-   * Returns the offset parent of the given element
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @returns {Element} offset parent
-   */
-  function getOffsetParent(element) {
-    if (!element) {
-      return document.documentElement;
-    }
-
-    var noOffsetParent = isIE(10) ? document.body : null;
-
-    // NOTE: 1 DOM access here
-    var offsetParent = element.offsetParent || null;
-    // Skip hidden elements which don't have an offsetParent
-    while (offsetParent === noOffsetParent && element.nextElementSibling) {
-      offsetParent = (element = element.nextElementSibling).offsetParent;
-    }
-
-    var nodeName = offsetParent && offsetParent.nodeName;
-
-    if (!nodeName || nodeName === 'BODY' || nodeName === 'HTML') {
-      return element ? element.ownerDocument.documentElement : document.documentElement;
-    }
-
-    // .offsetParent will return the closest TH, TD or TABLE in case
-    // no offsetParent is present, I hate this job...
-    if (['TH', 'TD', 'TABLE'].indexOf(offsetParent.nodeName) !== -1 && getStyleComputedProperty(offsetParent, 'position') === 'static') {
-      return getOffsetParent(offsetParent);
-    }
-
-    return offsetParent;
-  }
-
-  function isOffsetContainer(element) {
-    var nodeName = element.nodeName;
-
-    if (nodeName === 'BODY') {
-      return false;
-    }
-    return nodeName === 'HTML' || getOffsetParent(element.firstElementChild) === element;
-  }
-
-  /**
-   * Finds the root node (document, shadowDOM root) of the given element
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} node
-   * @returns {Element} root node
-   */
-  function getRoot(node) {
-    if (node.parentNode !== null) {
-      return getRoot(node.parentNode);
-    }
-
-    return node;
-  }
-
-  /**
-   * Finds the offset parent common to the two provided nodes
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element1
-   * @argument {Element} element2
-   * @returns {Element} common offset parent
-   */
-  function findCommonOffsetParent(element1, element2) {
-    // This check is needed to avoid errors in case one of the elements isn't defined for any reason
-    if (!element1 || !element1.nodeType || !element2 || !element2.nodeType) {
-      return document.documentElement;
-    }
-
-    // Here we make sure to give as "start" the element that comes first in the DOM
-    var order = element1.compareDocumentPosition(element2) & Node.DOCUMENT_POSITION_FOLLOWING;
-    var start = order ? element1 : element2;
-    var end = order ? element2 : element1;
-
-    // Get common ancestor container
-    var range = document.createRange();
-    range.setStart(start, 0);
-    range.setEnd(end, 0);
-    var commonAncestorContainer = range.commonAncestorContainer;
-
-    // Both nodes are inside #document
-
-    if (element1 !== commonAncestorContainer && element2 !== commonAncestorContainer || start.contains(end)) {
-      if (isOffsetContainer(commonAncestorContainer)) {
-        return commonAncestorContainer;
+      if (!selector) {
+        selector = $this.attr('href')
+        selector = selector && selector.replace(/.*(?=#[^\s]*$)/, ''); // strip for ie7
       }
 
-      return getOffsetParent(commonAncestorContainer);
+      var $parent = $(selector === '#' ? [] : selector);
+
+      if (e) e.preventDefault()
+
+      if (!$parent.length) {
+        $parent = $this.closest('.alert');
+      }
+
+      $parent.trigger(e = eventer.create('close.bs.alert'));
+
+      if (e.isDefaultPrevented()) {
+        return
+      }
+        
+      $parent.removeClass('in');
+
+      function removeElement() {
+        // detach from parent, fire event then clean up data
+        $parent.detach().trigger('closed.bs.alert').remove()
+      }
+
+      if (browser.support.transition) {
+        if ($parent.hasClass('fade') ) {
+          $parent.one('transitionEnd', removeElement)
+          .emulateTransitionEnd(Alert.TRANSITION_DURATION);
+        } else {
+          removeElement();
+        }
+
+      } 
     }
+  });
 
-    // one of the nodes is inside shadowDOM, find which one
-    var element1root = getRoot(element1);
-    if (element1root.host) {
-      return findCommonOffsetParent(element1root.host, element2);
-    } else {
-      return findCommonOffsetParent(element1, getRoot(element2).host);
-    }
-  }
 
-  /**
-   * Gets the scroll value of the given element in the given side (top and left)
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @argument {String} side `top` or `left`
-   * @returns {number} amount of scrolled pixels
-   */
-  function getScroll(element) {
-    var side = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'top';
+  Alert.VERSION = '3.3.7';
 
-    var upperSide = side === 'top' ? 'scrollTop' : 'scrollLeft';
-    var nodeName = element.nodeName;
+  Alert.TRANSITION_DURATION = 150;
 
-    if (nodeName === 'BODY' || nodeName === 'HTML') {
-      var html = element.ownerDocument.documentElement;
-      var scrollingElement = element.ownerDocument.scrollingElement || html;
-      return scrollingElement[upperSide];
-    }
-
-    return element[upperSide];
-  }
 
   /*
-   * Sum or subtract the element scroll values (left and top) from a given rect object
-   * @method
-   * @memberof Popper.Utils
-   * @param {Object} rect - Rect object you want to change
-   * @param {HTMLElement} element - The element from the function reads the scroll values
-   * @param {Boolean} subtract - set to true if you want to subtract the scroll values
-   * @return {Object} rect - The modifier rect object
-   */
-  function includeScroll(rect, element) {
-    var subtract = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+  // ALERT PLUGIN DEFINITION
+  // =======================
 
-    var scrollTop = getScroll(element, 'top');
-    var scrollLeft = getScroll(element, 'left');
-    var modifier = subtract ? -1 : 1;
-    rect.top += scrollTop * modifier;
-    rect.bottom += scrollTop * modifier;
-    rect.left += scrollLeft * modifier;
-    rect.right += scrollLeft * modifier;
-    return rect;
-  }
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var wgt  = $this.data('bs.alert')
 
-  /*
-   * Helper to detect borders of a given element
-   * @method
-   * @memberof Popper.Utils
-   * @param {CSSStyleDeclaration} styles
-   * Result of `getStyleComputedProperty` on the given element
-   * @param {String} axis - `x` or `y`
-   * @return {number} borders - The borders size of the given axis
-   */
-
-  function getBordersSize(styles, axis) {
-    var sideA = axis === 'x' ? 'Left' : 'Top';
-    var sideB = sideA === 'Left' ? 'Right' : 'Bottom';
-
-    return parseFloat(styles['border' + sideA + 'Width'], 10) + parseFloat(styles['border' + sideB + 'Width'], 10);
-  }
-
-  function getSize(axis, body, html, computedStyle) {
-    return Math.max(body['offset' + axis], body['scroll' + axis], html['client' + axis], html['offset' + axis], html['scroll' + axis], isIE(10) ? parseInt(html['offset' + axis]) + parseInt(computedStyle['margin' + (axis === 'Height' ? 'Top' : 'Left')]) + parseInt(computedStyle['margin' + (axis === 'Height' ? 'Bottom' : 'Right')]) : 0);
-  }
-
-  function getWindowSizes(document) {
-    var body = document.body;
-    var html = document.documentElement;
-    var computedStyle = isIE(10) && getComputedStyle(html);
-
-    return {
-      height: getSize('Height', body, html, computedStyle),
-      width: getSize('Width', body, html, computedStyle)
-    };
-  }
-
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
-
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
+      if (!wgt) {
+        $this.data('bs.alert', (wgt = new Alert(this)));
       }
-    }
-
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-
-
-
-
-
-  var defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  };
-
-  var _extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
+      if (typeof option == 'string') {
+        wgt[option].call($this);
       }
-    }
-
-    return target;
-  };
-
-  /**
-   * Given element offsets, generate an output similar to getBoundingClientRect
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Object} offsets
-   * @returns {Object} ClientRect like output
-   */
-  function getClientRect(offsets) {
-    return _extends({}, offsets, {
-      right: offsets.left + offsets.width,
-      bottom: offsets.top + offsets.height
-    });
+    })
   }
 
-  /**
-   * Get bounding client rect of given element
-   * @method
-   * @memberof Popper.Utils
-   * @param {HTMLElement} element
-   * @return {Object} client rect
-   */
-  function getBoundingClientRect(element) {
-    var rect = {};
+  var old = $.fn.alert;
 
-    // IE10 10 FIX: Please, don't ask, the element isn't
-    // considered in DOM in some circumstances...
-    // This isn't reproducible in IE10 compatibility mode of IE11
-    try {
-      if (isIE(10)) {
-        rect = element.getBoundingClientRect();
-        var scrollTop = getScroll(element, 'top');
-        var scrollLeft = getScroll(element, 'left');
-        rect.top += scrollTop;
-        rect.left += scrollLeft;
-        rect.bottom += scrollTop;
-        rect.right += scrollLeft;
-      } else {
-        rect = element.getBoundingClientRect();
-      }
-    } catch (e) {}
+  $.fn.alert             = Plugin;
+  $.fn.alert.Constructor = Alert;
 
-    var result = {
-      left: rect.left,
-      top: rect.top,
-      width: rect.right - rect.left,
-      height: rect.bottom - rect.top
-    };
 
-    // subtract scrollbar size from sizes
-    var sizes = element.nodeName === 'HTML' ? getWindowSizes(element.ownerDocument) : {};
-    var width = sizes.width || element.clientWidth || result.right - result.left;
-    var height = sizes.height || element.clientHeight || result.bottom - result.top;
+  // ALERT NO CONFLICT
+  // =================
 
-    var horizScrollbar = element.offsetWidth - width;
-    var vertScrollbar = element.offsetHeight - height;
-
-    // if an hypothetical scrollbar is detected, we must be sure it's not a `border`
-    // we make this check conditional for performance reasons
-    if (horizScrollbar || vertScrollbar) {
-      var styles = getStyleComputedProperty(element);
-      horizScrollbar -= getBordersSize(styles, 'x');
-      vertScrollbar -= getBordersSize(styles, 'y');
-
-      result.width -= horizScrollbar;
-      result.height -= vertScrollbar;
-    }
-
-    return getClientRect(result);
-  }
-
-  function getOffsetRectRelativeToArbitraryNode(children, parent) {
-    var fixedPosition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
-    var isIE10 = isIE(10);
-    var isHTML = parent.nodeName === 'HTML';
-    var childrenRect = getBoundingClientRect(children);
-    var parentRect = getBoundingClientRect(parent);
-    var scrollParent = getScrollParent(children);
-
-    var styles = getStyleComputedProperty(parent);
-    var borderTopWidth = parseFloat(styles.borderTopWidth, 10);
-    var borderLeftWidth = parseFloat(styles.borderLeftWidth, 10);
-
-    // In cases where the parent is fixed, we must ignore negative scroll in offset calc
-    if (fixedPosition && isHTML) {
-      parentRect.top = Math.max(parentRect.top, 0);
-      parentRect.left = Math.max(parentRect.left, 0);
-    }
-    var offsets = getClientRect({
-      top: childrenRect.top - parentRect.top - borderTopWidth,
-      left: childrenRect.left - parentRect.left - borderLeftWidth,
-      width: childrenRect.width,
-      height: childrenRect.height
-    });
-    offsets.marginTop = 0;
-    offsets.marginLeft = 0;
-
-    // Subtract margins of documentElement in case it's being used as parent
-    // we do this only on HTML because it's the only element that behaves
-    // differently when margins are applied to it. The margins are included in
-    // the box of the documentElement, in the other cases not.
-    if (!isIE10 && isHTML) {
-      var marginTop = parseFloat(styles.marginTop, 10);
-      var marginLeft = parseFloat(styles.marginLeft, 10);
-
-      offsets.top -= borderTopWidth - marginTop;
-      offsets.bottom -= borderTopWidth - marginTop;
-      offsets.left -= borderLeftWidth - marginLeft;
-      offsets.right -= borderLeftWidth - marginLeft;
-
-      // Attach marginTop and marginLeft because in some circumstances we may need them
-      offsets.marginTop = marginTop;
-      offsets.marginLeft = marginLeft;
-    }
-
-    if (isIE10 && !fixedPosition ? parent.contains(scrollParent) : parent === scrollParent && scrollParent.nodeName !== 'BODY') {
-      offsets = includeScroll(offsets, parent);
-    }
-
-    return offsets;
-  }
-
-  function getViewportOffsetRectRelativeToArtbitraryNode(element) {
-    var excludeScroll = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    var html = element.ownerDocument.documentElement;
-    var relativeOffset = getOffsetRectRelativeToArbitraryNode(element, html);
-    var width = Math.max(html.clientWidth, window.innerWidth || 0);
-    var height = Math.max(html.clientHeight, window.innerHeight || 0);
-
-    var scrollTop = !excludeScroll ? getScroll(html) : 0;
-    var scrollLeft = !excludeScroll ? getScroll(html, 'left') : 0;
-
-    var offset = {
-      top: scrollTop - relativeOffset.top + relativeOffset.marginTop,
-      left: scrollLeft - relativeOffset.left + relativeOffset.marginLeft,
-      width: width,
-      height: height
-    };
-
-    return getClientRect(offset);
-  }
-
-  /**
-   * Check if the given element is fixed or is inside a fixed parent
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @argument {Element} customContainer
-   * @returns {Boolean} answer to "isFixed?"
-   */
-  function isFixed(element) {
-    var nodeName = element.nodeName;
-    if (nodeName === 'BODY' || nodeName === 'HTML') {
-      return false;
-    }
-    if (getStyleComputedProperty(element, 'position') === 'fixed') {
-      return true;
-    }
-    return isFixed(getParentNode(element));
-  }
-
-  /**
-   * Finds the first parent of an element that has a transformed property defined
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @returns {Element} first transformed parent or documentElement
-   */
-
-  function getFixedPositionOffsetParent(element) {
-    // This check is needed to avoid errors in case one of the elements isn't defined for any reason
-    if (!element || !element.parentElement || isIE()) {
-      return document.documentElement;
-    }
-    var el = element.parentElement;
-    while (el && getStyleComputedProperty(el, 'transform') === 'none') {
-      el = el.parentElement;
-    }
-    return el || document.documentElement;
-  }
-
-  /**
-   * Computed the boundaries limits and return them
-   * @method
-   * @memberof Popper.Utils
-   * @param {HTMLElement} popper
-   * @param {HTMLElement} reference
-   * @param {number} padding
-   * @param {HTMLElement} boundariesElement - Element used to define the boundaries
-   * @param {Boolean} fixedPosition - Is in fixed position mode
-   * @returns {Object} Coordinates of the boundaries
-   */
-  function getBoundaries(popper, reference, padding, boundariesElement) {
-    var fixedPosition = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
-
-    // NOTE: 1 DOM access here
-
-    var boundaries = { top: 0, left: 0 };
-    var offsetParent = fixedPosition ? getFixedPositionOffsetParent(popper) : findCommonOffsetParent(popper, reference);
-
-    // Handle viewport case
-    if (boundariesElement === 'viewport') {
-      boundaries = getViewportOffsetRectRelativeToArtbitraryNode(offsetParent, fixedPosition);
-    } else {
-      // Handle other cases based on DOM element used as boundaries
-      var boundariesNode = void 0;
-      if (boundariesElement === 'scrollParent') {
-        boundariesNode = getScrollParent(getParentNode(reference));
-        if (boundariesNode.nodeName === 'BODY') {
-          boundariesNode = popper.ownerDocument.documentElement;
-        }
-      } else if (boundariesElement === 'window') {
-        boundariesNode = popper.ownerDocument.documentElement;
-      } else {
-        boundariesNode = boundariesElement;
-      }
-
-      var offsets = getOffsetRectRelativeToArbitraryNode(boundariesNode, offsetParent, fixedPosition);
-
-      // In case of HTML, we need a different computation
-      if (boundariesNode.nodeName === 'HTML' && !isFixed(offsetParent)) {
-        var _getWindowSizes = getWindowSizes(popper.ownerDocument),
-            height = _getWindowSizes.height,
-            width = _getWindowSizes.width;
-
-        boundaries.top += offsets.top - offsets.marginTop;
-        boundaries.bottom = height + offsets.top;
-        boundaries.left += offsets.left - offsets.marginLeft;
-        boundaries.right = width + offsets.left;
-      } else {
-        // for all the other DOM elements, this one is good
-        boundaries = offsets;
-      }
-    }
-
-    // Add paddings
-    padding = padding || 0;
-    var isPaddingNumber = typeof padding === 'number';
-    boundaries.left += isPaddingNumber ? padding : padding.left || 0;
-    boundaries.top += isPaddingNumber ? padding : padding.top || 0;
-    boundaries.right -= isPaddingNumber ? padding : padding.right || 0;
-    boundaries.bottom -= isPaddingNumber ? padding : padding.bottom || 0;
-
-    return boundaries;
-  }
-
-  function getArea(_ref) {
-    var width = _ref.width,
-        height = _ref.height;
-
-    return width * height;
-  }
-
-  /**
-   * Utility used to transform the `auto` placement to the placement with more
-   * available space.
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function computeAutoPlacement(placement, refRect, popper, reference, boundariesElement) {
-    var padding = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 0;
-
-    if (placement.indexOf('auto') === -1) {
-      return placement;
-    }
-
-    var boundaries = getBoundaries(popper, reference, padding, boundariesElement);
-
-    var rects = {
-      top: {
-        width: boundaries.width,
-        height: refRect.top - boundaries.top
-      },
-      right: {
-        width: boundaries.right - refRect.right,
-        height: boundaries.height
-      },
-      bottom: {
-        width: boundaries.width,
-        height: boundaries.bottom - refRect.bottom
-      },
-      left: {
-        width: refRect.left - boundaries.left,
-        height: boundaries.height
-      }
-    };
-
-    var sortedAreas = Object.keys(rects).map(function (key) {
-      return _extends({
-        key: key
-      }, rects[key], {
-        area: getArea(rects[key])
-      });
-    }).sort(function (a, b) {
-      return b.area - a.area;
-    });
-
-    var filteredAreas = sortedAreas.filter(function (_ref2) {
-      var width = _ref2.width,
-          height = _ref2.height;
-      return width >= popper.clientWidth && height >= popper.clientHeight;
-    });
-
-    var computedPlacement = filteredAreas.length > 0 ? filteredAreas[0].key : sortedAreas[0].key;
-
-    var variation = placement.split('-')[1];
-
-    return computedPlacement + (variation ? '-' + variation : '');
-  }
-
-  /**
-   * Get offsets to the reference element
-   * @method
-   * @memberof Popper.Utils
-   * @param {Object} state
-   * @param {Element} popper - the popper element
-   * @param {Element} reference - the reference element (the popper will be relative to this)
-   * @param {Element} fixedPosition - is in fixed position mode
-   * @returns {Object} An object containing the offsets which will be applied to the popper
-   */
-  function getReferenceOffsets(state, popper, reference) {
-    var fixedPosition = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
-    var commonOffsetParent = fixedPosition ? getFixedPositionOffsetParent(popper) : findCommonOffsetParent(popper, reference);
-    return getOffsetRectRelativeToArbitraryNode(reference, commonOffsetParent, fixedPosition);
-  }
-
-  /**
-   * Get the outer sizes of the given element (offset size + margins)
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element
-   * @returns {Object} object containing width and height properties
-   */
-  function getOuterSizes(element) {
-    var window = element.ownerDocument.defaultView;
-    var styles = window.getComputedStyle(element);
-    var x = parseFloat(styles.marginTop || 0) + parseFloat(styles.marginBottom || 0);
-    var y = parseFloat(styles.marginLeft || 0) + parseFloat(styles.marginRight || 0);
-    var result = {
-      width: element.offsetWidth + y,
-      height: element.offsetHeight + x
-    };
-    return result;
-  }
-
-  /**
-   * Get the opposite placement of the given one
-   * @method
-   * @memberof Popper.Utils
-   * @argument {String} placement
-   * @returns {String} flipped placement
-   */
-  function getOppositePlacement(placement) {
-    var hash = { left: 'right', right: 'left', bottom: 'top', top: 'bottom' };
-    return placement.replace(/left|right|bottom|top/g, function (matched) {
-      return hash[matched];
-    });
-  }
-
-  /**
-   * Get offsets to the popper
-   * @method
-   * @memberof Popper.Utils
-   * @param {Object} position - CSS position the Popper will get applied
-   * @param {HTMLElement} popper - the popper element
-   * @param {Object} referenceOffsets - the reference offsets (the popper will be relative to this)
-   * @param {String} placement - one of the valid placement options
-   * @returns {Object} popperOffsets - An object containing the offsets which will be applied to the popper
-   */
-  function getPopperOffsets(popper, referenceOffsets, placement) {
-    placement = placement.split('-')[0];
-
-    // Get popper node sizes
-    var popperRect = getOuterSizes(popper);
-
-    // Add position, width and height to our offsets object
-    var popperOffsets = {
-      width: popperRect.width,
-      height: popperRect.height
-    };
-
-    // depending by the popper placement we have to compute its offsets slightly differently
-    var isHoriz = ['right', 'left'].indexOf(placement) !== -1;
-    var mainSide = isHoriz ? 'top' : 'left';
-    var secondarySide = isHoriz ? 'left' : 'top';
-    var measurement = isHoriz ? 'height' : 'width';
-    var secondaryMeasurement = !isHoriz ? 'height' : 'width';
-
-    popperOffsets[mainSide] = referenceOffsets[mainSide] + referenceOffsets[measurement] / 2 - popperRect[measurement] / 2;
-    if (placement === secondarySide) {
-      popperOffsets[secondarySide] = referenceOffsets[secondarySide] - popperRect[secondaryMeasurement];
-    } else {
-      popperOffsets[secondarySide] = referenceOffsets[getOppositePlacement(secondarySide)];
-    }
-
-    return popperOffsets;
-  }
-
-  /**
-   * Mimics the `find` method of Array
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Array} arr
-   * @argument prop
-   * @argument value
-   * @returns index or -1
-   */
-  function find(arr, check) {
-    // use native find if supported
-    if (Array.prototype.find) {
-      return arr.find(check);
-    }
-
-    // use `filter` to obtain the same behavior of `find`
-    return arr.filter(check)[0];
-  }
-
-  /**
-   * Return the index of the matching object
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Array} arr
-   * @argument prop
-   * @argument value
-   * @returns index or -1
-   */
-  function findIndex(arr, prop, value) {
-    // use native findIndex if supported
-    if (Array.prototype.findIndex) {
-      return arr.findIndex(function (cur) {
-        return cur[prop] === value;
-      });
-    }
-
-    // use `find` + `indexOf` if `findIndex` isn't supported
-    var match = find(arr, function (obj) {
-      return obj[prop] === value;
-    });
-    return arr.indexOf(match);
-  }
-
-  /**
-   * Loop trough the list of modifiers and run them in order,
-   * each of them will then edit the data object.
-   * @method
-   * @memberof Popper.Utils
-   * @param {dataObject} data
-   * @param {Array} modifiers
-   * @param {String} ends - Optional modifier name used as stopper
-   * @returns {dataObject}
-   */
-  function runModifiers(modifiers, data, ends) {
-    var modifiersToRun = ends === undefined ? modifiers : modifiers.slice(0, findIndex(modifiers, 'name', ends));
-
-    modifiersToRun.forEach(function (modifier) {
-      if (modifier['function']) {
-        // eslint-disable-line dot-notation
-        console.warn('`modifier.function` is deprecated, use `modifier.fn`!');
-      }
-      var fn = modifier['function'] || modifier.fn; // eslint-disable-line dot-notation
-      if (modifier.enabled && isFunction(fn)) {
-        // Add properties to offsets to make them a complete clientRect object
-        // we do this before each modifier to make sure the previous one doesn't
-        // mess with these values
-        data.offsets.popper = getClientRect(data.offsets.popper);
-        data.offsets.reference = getClientRect(data.offsets.reference);
-
-        data = fn(data, modifier);
-      }
-    });
-
-    return data;
-  }
-
-  /**
-   * Updates the position of the popper, computing the new offsets and applying
-   * the new style.<br />
-   * Prefer `scheduleUpdate` over `update` because of performance reasons.
-   * @method
-   * @memberof Popper
-   */
-  function update() {
-    // if popper is destroyed, don't perform any further update
-    if (this.state.isDestroyed) {
-      return;
-    }
-
-    var data = {
-      instance: this,
-      styles: {},
-      arrowStyles: {},
-      attributes: {},
-      flipped: false,
-      offsets: {}
-    };
-
-    // compute reference element offsets
-    data.offsets.reference = getReferenceOffsets(this.state, this.popper, this.reference, this.options.positionFixed);
-
-    // compute auto placement, store placement inside the data object,
-    // modifiers will be able to edit `placement` if needed
-    // and refer to originalPlacement to know the original value
-    data.placement = computeAutoPlacement(this.options.placement, data.offsets.reference, this.popper, this.reference, this.options.modifiers.flip.boundariesElement, this.options.modifiers.flip.padding);
-
-    // store the computed placement inside `originalPlacement`
-    data.originalPlacement = data.placement;
-
-    data.positionFixed = this.options.positionFixed;
-
-    // compute the popper offsets
-    data.offsets.popper = getPopperOffsets(this.popper, data.offsets.reference, data.placement);
-
-    data.offsets.popper.position = this.options.positionFixed ? 'fixed' : 'absolute';
-
-    // run the modifiers
-    data = runModifiers(this.modifiers, data);
-
-    // the first `update` will call `onCreate` callback
-    // the other ones will call `onUpdate` callback
-    if (!this.state.isCreated) {
-      this.state.isCreated = true;
-      this.options.onCreate(data);
-    } else {
-      this.options.onUpdate(data);
-    }
-  }
-
-  /**
-   * Helper used to know if the given modifier is enabled.
-   * @method
-   * @memberof Popper.Utils
-   * @returns {Boolean}
-   */
-  function isModifierEnabled(modifiers, modifierName) {
-    return modifiers.some(function (_ref) {
-      var name = _ref.name,
-          enabled = _ref.enabled;
-      return enabled && name === modifierName;
-    });
-  }
-
-  /**
-   * Get the prefixed supported property name
-   * @method
-   * @memberof Popper.Utils
-   * @argument {String} property (camelCase)
-   * @returns {String} prefixed property (camelCase or PascalCase, depending on the vendor prefix)
-   */
-  function getSupportedPropertyName(property) {
-    var prefixes = [false, 'ms', 'Webkit', 'Moz', 'O'];
-    var upperProp = property.charAt(0).toUpperCase() + property.slice(1);
-
-    for (var i = 0; i < prefixes.length; i++) {
-      var prefix = prefixes[i];
-      var toCheck = prefix ? '' + prefix + upperProp : property;
-      if (typeof document.body.style[toCheck] !== 'undefined') {
-        return toCheck;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Destroys the popper.
-   * @method
-   * @memberof Popper
-   */
-  function destroy() {
-    this.state.isDestroyed = true;
-
-    // touch DOM only if `applyStyle` modifier is enabled
-    if (isModifierEnabled(this.modifiers, 'applyStyle')) {
-      this.popper.removeAttribute('x-placement');
-      this.popper.style.position = '';
-      this.popper.style.top = '';
-      this.popper.style.left = '';
-      this.popper.style.right = '';
-      this.popper.style.bottom = '';
-      this.popper.style.willChange = '';
-      this.popper.style[getSupportedPropertyName('transform')] = '';
-    }
-
-    this.disableEventListeners();
-
-    // remove the popper if user explicity asked for the deletion on destroy
-    // do not use `remove` because IE11 doesn't support it
-    if (this.options.removeOnDestroy) {
-      this.popper.parentNode.removeChild(this.popper);
-    }
+  $.fn.alert.noConflict = function () {
+    $.fn.alert = old;
     return this;
   }
 
-  /**
-   * Get the window associated with the element
-   * @argument {Element} element
-   * @returns {Window}
-   */
-  function getWindow(element) {
-    var ownerDocument = element.ownerDocument;
-    return ownerDocument ? ownerDocument.defaultView : window;
-  }
+  return $.fn.alert;
+  */
 
-  function attachToScrollParents(scrollParent, event, callback, scrollParents) {
-    var isBody = scrollParent.nodeName === 'BODY';
-    var target = isBody ? scrollParent.ownerDocument.defaultView : scrollParent;
-    target.addEventListener(event, callback, { passive: true });
+  plugins.register(Alert,"alert");
 
-    if (!isBody) {
-      attachToScrollParents(getScrollParent(target.parentNode), event, callback, scrollParents);
-    }
-    scrollParents.push(target);
-  }
+  return Alert;
 
-  /**
-   * Setup needed event listeners used to update the popper position
-   * @method
-   * @memberof Popper.Utils
-   * @private
-   */
-  function setupEventListeners(reference, options, state, updateBound) {
-    // Resize event listener on window
-    state.updateBound = updateBound;
-    getWindow(reference).addEventListener('resize', state.updateBound, { passive: true });
+});
 
-    // Scroll event listener on scroll parents
-    var scrollElement = getScrollParent(reference);
-    attachToScrollParents(scrollElement, 'scroll', state.updateBound, state.scrollParents);
-    state.scrollElement = scrollElement;
-    state.eventsEnabled = true;
+define('skylark-bootstrap3/button',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
 
-    return state;
-  }
+/* ========================================================================
+ * Bootstrap: button.js v3.3.7
+ * http://getbootstrap.com/javascript/#buttons
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
 
-  /**
-   * It will add resize/scroll events and start recalculating
-   * position of the popper element when they are triggered.
-   * @method
-   * @memberof Popper
-   */
-  function enableEventListeners() {
-    if (!this.state.eventsEnabled) {
-      this.state = setupEventListeners(this.reference, this.options, this.state, this.scheduleUpdate);
-    }
-  }
+  'use strict';
 
-  /**
-   * Remove event listeners used to update the popper position
-   * @method
-   * @memberof Popper.Utils
-   * @private
-   */
-  function removeEventListeners(reference, state) {
-    // Remove resize event listener on window
-    getWindow(reference).removeEventListener('resize', state.updateBound);
+  // BUTTON PUBLIC CLASS DEFINITION
+  // ==============================
 
-    // Remove scroll event listener on scroll parents
-    state.scrollParents.forEach(function (target) {
-      target.removeEventListener('scroll', state.updateBound);
-    });
+  var Button = bs3.Button = plugins.Plugin.inherit({
+    klassName: "Button",
 
-    // Reset state
-    state.updateBound = null;
-    state.scrollParents = [];
-    state.scrollElement = null;
-    state.eventsEnabled = false;
-    return state;
-  }
+    pluginName : "bs3.button",
 
-  /**
-   * It will remove resize/scroll events and won't recalculate popper position
-   * when they are triggered. It also won't trigger `onUpdate` callback anymore,
-   * unless you call `update` method manually.
-   * @method
-   * @memberof Popper
-   */
-  function disableEventListeners() {
-    if (this.state.eventsEnabled) {
-      cancelAnimationFrame(this.scheduleUpdate);
-      this.state = removeEventListeners(this.reference, this.state);
-    }
-  }
+    _construct : function(element,options) {
+      var $el = this.$element  = $(element)
+      this.options   = langx.mixin({}, Button.DEFAULTS, options)
+      this.isLoading = false
 
-  /**
-   * Tells if a given input is a number
-   * @method
-   * @memberof Popper.Utils
-   * @param {*} input to check
-   * @return {Boolean}
-   */
-  function isNumeric(n) {
-    return n !== '' && !isNaN(parseFloat(n)) && isFinite(n);
-  }
+      if ($el.closest('[data-toggle^="button"]')) {
+        $el.on("click.bs.button.data-api",langx.proxy(function(e){
+          this.toggle()
 
-  /**
-   * Set the style to the given popper
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element - Element to apply the style to
-   * @argument {Object} styles
-   * Object with a list of properties and values which will be applied to the element
-   */
-  function setStyles(element, styles) {
-    Object.keys(styles).forEach(function (prop) {
-      var unit = '';
-      // add unit if the value is numeric and is one of the following
-      if (['width', 'height', 'top', 'right', 'bottom', 'left'].indexOf(prop) !== -1 && isNumeric(styles[prop])) {
-        unit = 'px';
+          if (!($(e.target).is('input[type="radio"], input[type="checkbox"]'))) {
+            // Prevent double click on radios, and the double selections (so cancellation) on checkboxes
+            e.preventDefault()
+            // The target component still receive the focus
+            var $btn = this.$element; 
+            if ($btn.is('input,button')) {
+              $btn.trigger('focus');
+            } else {
+              $btn.find('input:visible,button:visible').first().trigger('focus');
+            }
+          }
+        },this));
       }
-      element.style[prop] = styles[prop] + unit;
-    });
-  }
+    },
 
-  /**
-   * Set the attributes to the given popper
-   * @method
-   * @memberof Popper.Utils
-   * @argument {Element} element - Element to apply the attributes to
-   * @argument {Object} styles
-   * Object with a list of properties and values which will be applied to the element
-   */
-  function setAttributes(element, attributes) {
-    Object.keys(attributes).forEach(function (prop) {
-      var value = attributes[prop];
-      if (value !== false) {
-        element.setAttribute(prop, attributes[prop]);
+    setState : function (state) {
+      var d    = 'disabled'
+      var $el  = this.$element
+      var val  = $el.is('input') ? 'val' : 'html'
+      var data = $el.data()
+
+      state += 'Text'
+
+      if (data.resetText == null) $el.data('resetText', $el[val]())
+
+      // push to event loop to allow forms to submit
+      setTimeout(langx.proxy(function () {
+        $el[val](data[state] == null ? this.options[state] : data[state])
+
+        if (state == 'loadingText') {
+          this.isLoading = true
+          $el.addClass(d).attr(d, d).prop(d, true)
+        } else if (this.isLoading) {
+          this.isLoading = false
+          $el.removeClass(d).removeAttr(d).prop(d, false)
+        }
+      }, this), 0)
+    },
+
+    toggle : function () {
+      var changed = true
+      var $parent = this.$element.closest('[data-toggle="buttons"]')
+
+      if ($parent.length) {
+        var $input = this.$element.find('input')
+        if ($input.prop('type') == 'radio') {
+          if ($input.prop('checked')) changed = false
+          $parent.find('.active').removeClass('active')
+          this.$element.addClass('active')
+        } else if ($input.prop('type') == 'checkbox') {
+          if (($input.prop('checked')) !== this.$element.hasClass('active')) changed = false
+          this.$element.toggleClass('active')
+        }
+        $input.prop('checked', this.$element.hasClass('active'))
+        if (changed) $input.trigger('change')
       } else {
-        element.removeAttribute(prop);
+        this.$element.attr('aria-pressed', !this.$element.hasClass('active'))
+        this.$element.toggleClass('active')
+      }
+    }
+
+  });  
+
+  Button.VERSION  = '3.3.7'
+
+  Button.DEFAULTS = {
+    loadingText: 'loading...'
+  }
+
+
+
+  // BUTTON PLUGIN DEFINITION
+  // ========================
+  /*
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var wgt    = $this.data('bs.button')
+      var options = typeof option == 'object' && option
+
+      if (!wgt) {
+        $this.data('bs.button', (wgt = new Button(this, options)));
+      }
+
+      if (option == 'toggle') {
+        wgt.toggle();
+      } else if (option) {
+        wgt.setState(option);
       }
     });
   }
 
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Object} data.styles - List of style properties - values to apply to popper element
-   * @argument {Object} data.attributes - List of attribute properties - values to apply to popper element
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The same data object
-   */
-  function applyStyle(data) {
-    // any property present in `data.styles` will be applied to the popper,
-    // in this way we can make the 3rd party modifiers add custom styles to it
-    // Be aware, modifiers could override the properties defined in the previous
-    // lines of this modifier!
-    setStyles(data.instance.popper, data.styles);
+  var old = $.fn.button;
 
-    // any property present in `data.attributes` will be applied to the popper,
-    // they will be set as HTML attributes of the element
-    setAttributes(data.instance.popper, data.attributes);
+  $.fn.button             = Plugin;
+  $.fn.button.Constructor = Button;
 
-    // if arrowElement is defined and arrowStyles has some properties
-    if (data.arrowElement && Object.keys(data.arrowStyles).length) {
-      setStyles(data.arrowElement, data.arrowStyles);
+
+  // BUTTON NO CONFLICT
+  // ==================
+
+  $.fn.button.noConflict = function () {
+    $.fn.button = old;
+    return this;
+  }
+
+
+  return $.fn.button;
+  */
+
+  plugins.register(Button,"button",function(options){
+      //this -> plugin instance
+      if (options == 'toggle') {
+        this.toggle();
+      } else if (options) {
+        this.setState(options);
+      }    
+  });
+
+  return Button;
+});
+
+define('skylark-bootstrap3/transition',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,bs3){
+
+/* ========================================================================
+ * Bootstrap: transition.js v3.3.7
+ * http://getbootstrap.com/javascript/#transitions
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  eventer.special.bsTransitionEnd = eventer.special.transitionEnd;
+});
+
+define('skylark-bootstrap3/carousel',[
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-eventer",
+    "skylark-domx-noder",
+    "skylark-domx-geom",
+    "skylark-domx-query",
+    "skylark-domx-plugins",
+    "./bs3",
+    "./transition"
+], function(langx, browser, eventer, noder, geom, $, plugins, bs3) {
+
+    /* ========================================================================
+     * Bootstrap: carousel.js v3.3.7
+     * http://getbootstrap.com/javascript/#carousel
+     * ========================================================================
+     * Copyright 2011-2016 Twitter, Inc.
+     * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+     * ======================================================================== */
+
+    'use strict';
+
+    // CAROUSEL CLASS DEFINITION
+    // =========================
+
+    var Carousel = bs3.Carousel = plugins.Plugin.inherit({
+        klassName: "Carousel",
+
+        pluginName: "bs3.carousel",
+
+        options : {
+            interval: 5000,
+            pause: 'hover',
+            wrap: true,
+            keyboard: true,
+
+            selectors :{
+                controls : {
+                 // The class for the "toggle" control:
+                  toggle: '.toggle',
+                  // The class for the "prev" control:
+                  prev: '.prev',
+                  // The class for the "next" control:
+                  next: '.next',
+                  // The class for the "close" control:
+                  close: '.close',
+                  // The class for the "play-pause" toggle control:
+                  playPause: '.play-pause'
+                },
+                indicators : {
+                    container : ".carousel-indicators"  
+                },
+                slides : {
+                    container : "",
+                    item : ".item" 
+                }
+            }
+
+
+        },
+
+        _construct: function(element, options) {
+            options = langx.mixin({}, $(element).data(), options);
+            //this.options = options
+            this.overrided(element,options);
+
+            this.$element = $(element)
+            this.$indicators = this.$element.find(this.options.selectors.indicators.container); //'.carousel-indicators'
+            this.paused = null
+            this.sliding = null
+            this.interval = null
+            this.$active = null
+            this.$items = null
+
+            var self = this;
+            if (!this.options.embeded) {
+                this.options.keyboard && this.$element.on('keydown.bs.carousel', langx.proxy(this.keydown, this))
+
+                this.options.pause == 'hover' && !('ontouchstart' in document.documentElement) && this.$element
+                    .on('mouseenter.bs3.carousel', langx.proxy(this.pause, this))
+                    .on('mouseleave.bs3.carousel', langx.proxy(this.cycle, this));
+
+                this.$element.on("click.bs3.carousel.data-api", "[data-slide],[data-slide-to]", function(e) {
+                    var $this = $(this),
+                        slide = $this.attr('data-slide'),
+                        slideIndex = $this.attr('data-slide-to');
+
+                    if (slide == "prev") {
+                        self.prev();
+                    } else if (slide == "next") {
+                        self.next();
+                    } else  if (slideIndex) {
+                        self.to(slideIndex);
+                    }
+                    e.preventDefault();
+                });
+            }
+        },
+
+        keydown : function(e) {
+            if (/input|textarea/i.test(e.target.tagName)) return
+            switch (e.which) {
+                case 37:
+                    this.prev();
+                    break
+                case 39:
+                    this.next();
+                    break
+                default:
+                    return
+            }
+
+            e.preventDefault()
+        },
+
+        cycle : function(e) {
+            e || (this.paused = false)
+
+            this.interval && clearInterval(this.interval)
+
+            this.options.interval &&
+                !this.paused &&
+                (this.interval = setInterval(langx.proxy(this.next, this), this.options.interval))
+
+            return this
+        },
+
+        getItemIndex : function(item) {
+            this.$items = item.parent().children(this.options.selectors.slides.item);//'.item' 
+            return this.$items.index(item || this.$active)
+        },
+
+        getItemForDirection : function(direction, active) {
+            var activeIndex = this.getItemIndex(active)
+            var willWrap = (direction == 'prev' && activeIndex === 0) ||
+                (direction == 'next' && activeIndex == (this.$items.length - 1))
+            if (willWrap && !this.options.wrap) return active
+            var delta = direction == 'prev' ? -1 : 1
+            var itemIndex = (activeIndex + delta) % this.$items.length
+            return this.$items.eq(itemIndex)
+        },
+
+        to : function(pos) {
+            var that = this
+            var activeIndex = this.getItemIndex(this.$active = this.$element.find(this.options.selectors.slides.item+".active"));//'.item.active'
+
+            if (pos > (this.$items.length - 1) || pos < 0) return
+
+            if (this.sliding) return this.$element.one('slid.bs.carousel', function() { that.to(pos) }) // yes, "slid"
+            if (activeIndex == pos) return this.pause().cycle()
+
+            return this.slide(pos > activeIndex ? 'next' : 'prev', this.$items.eq(pos))
+        },
+
+        pause : function(e) {
+            e || (this.paused = true)
+
+            if (this.$element.find(this.options.selectors.controls.next + ","+ this.options.selectors.controls.prev).length && browser.support.transition) { //.next,.prev
+                this.$element.trigger(browser.support.transition.end)
+                this.cycle(true)
+            }
+
+            this.interval = clearInterval(this.interval)
+
+            return this
+        },
+
+        next : function() {
+            if (this.sliding) return
+            return this.slide('next')
+        },
+
+        prev : function() {
+            if (this.sliding) return
+            return this.slide('prev')
+        },
+
+        slide : function(type, next) {
+            var $active = this.$element.find(this.options.selectors.slides.item+".active");//'.item.active'
+            var $next = next || this.getItemForDirection(type, $active)
+            var isCycling = this.interval
+            var direction = type == 'next' ? 'left' : 'right'
+            var that = this
+
+            if ($next.hasClass('active')) return (this.sliding = false)
+
+            var relatedTarget = $next[0]
+            var slideEvent = eventer.create('slide.bs.carousel', {
+                relatedTarget: relatedTarget,
+                direction: direction
+            })
+            this.$element.trigger(slideEvent)
+            if (slideEvent.isDefaultPrevented()) return
+
+            this.sliding = true
+
+            isCycling && this.pause()
+
+            if (this.$indicators.length) {
+                this.$indicators.find('.active').removeClass('active')
+                var $nextIndicator = $(this.$indicators.children()[this.getItemIndex($next)])
+                $nextIndicator && $nextIndicator.addClass('active')
+            }
+
+            var slidEvent = eventer.create('slid.bs.carousel', { relatedTarget: relatedTarget, direction: direction }) // yes, "slid"
+            if (browser.support.transition && this.$element.hasClass('slide')) {
+                $next.addClass(type)
+                $next[0].offsetWidth // force reflow
+                $active.addClass(direction)
+                $next.addClass(direction)
+                $active
+                    .one('transitionEnd', function() {
+                        $next.removeClass([type, direction].join(' ')).addClass('active')
+                        $active.removeClass(['active', direction].join(' '))
+                        that.sliding = false
+                        setTimeout(function() {
+                            that.$element.trigger(slidEvent)
+                        }, 0)
+                    })
+                    .emulateTransitionEnd()
+            } else {
+                $active.removeClass('active')
+                $next.addClass('active')
+                this.sliding = false
+                this.$element.trigger(slidEvent)
+            }
+
+            isCycling && this.cycle()
+
+            return this
+        },
+
+    });
+
+    // var Carousel = function (element, options) {
+    // }
+
+    Carousel.VERSION = '3.3.7'
+
+    Carousel.TRANSITION_DURATION = 600
+
+
+
+
+    // CAROUSEL PLUGIN DEFINITION
+    // ==========================
+    /*
+    function Plugin(option) {
+        return this.each(function() {
+            var $this = $(this)
+            var wgt = $this.data('bs.carousel')
+            var options = langx.mixin({}, Carousel.DEFAULTS, $this.data(), typeof option == 'object' && option)
+            var action = typeof option == 'string' ? option : options.slide
+
+            if (!wgt) {
+                $this.data('bs.carousel', (wgt = new Carousel(this, options)));
+            }
+            if (typeof option == 'number') {
+                wgt.to(option);
+            } else if (action) {
+                wgt[action]()
+            } else if (options.interval) {
+                wgt.pause().cycle();
+            }
+        })
     }
+    */
+    plugins.register(Carousel,"carousel",function(options){
+        //this -> plugin instance
+        var action = typeof options == 'string' ? options : options.slide
+        if (typeof options == 'number') {
+            this.to(options);
+        } else if (action) {
+            this[action]()
+        } else if (options.interval) {
+            this.pause().cycle();
+        }        
+    });
 
-    return data;
-  }
+    return Carousel;
 
-  /**
-   * Set the x-placement attribute before everything else because it could be used
-   * to add margins to the popper margins needs to be calculated to get the
-   * correct popper offsets.
-   * @method
-   * @memberof Popper.modifiers
-   * @param {HTMLElement} reference - The reference element used to position the popper
-   * @param {HTMLElement} popper - The HTML element used as popper
-   * @param {Object} options - Popper.js options
-   */
-  function applyStyleOnLoad(reference, popper, options, modifierOptions, state) {
-    // compute reference element offsets
-    var referenceOffsets = getReferenceOffsets(state, popper, reference, options.positionFixed);
-
-    // compute auto placement, store placement inside the data object,
-    // modifiers will be able to edit `placement` if needed
-    // and refer to originalPlacement to know the original value
-    var placement = computeAutoPlacement(options.placement, referenceOffsets, popper, reference, options.modifiers.flip.boundariesElement, options.modifiers.flip.padding);
-
-    popper.setAttribute('x-placement', placement);
-
-    // Apply `position` to popper before anything else because
-    // without the position applied we can't guarantee correct computations
-    setStyles(popper, { position: options.positionFixed ? 'fixed' : 'absolute' });
-
-    return options;
-  }
-
-  /**
-   * @function
-   * @memberof Popper.Utils
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Boolean} shouldRound - If the offsets should be rounded at all
-   * @returns {Object} The popper's position offsets rounded
-   *
-   * The tale of pixel-perfect positioning. It's still not 100% perfect, but as
-   * good as it can be within reason.
-   * Discussion here: https://github.com/FezVrasta/popper.js/pull/715
-   *
-   * Low DPI screens cause a popper to be blurry if not using full pixels (Safari
-   * as well on High DPI screens).
-   *
-   * Firefox prefers no rounding for positioning and does not have blurriness on
-   * high DPI screens.
-   *
-   * Only horizontal placement and left/right values need to be considered.
-   */
-  function getRoundedOffsets(data, shouldRound) {
-    var _data$offsets = data.offsets,
-        popper = _data$offsets.popper,
-        reference = _data$offsets.reference;
+});
+define('skylark-bootstrap3/collapse',[
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-eventer",
+    "skylark-domx-noder",
+    "skylark-domx-geom",
+    "skylark-domx-query",
+    "skylark-domx-plugins",
+    "./bs3",
+    "./transition"
+], function(langx, browser, eventer, noder, geom, $, plugins, bs3) {
 
 
-    var isVertical = ['left', 'right'].indexOf(data.placement) !== -1;
-    var isVariation = data.placement.indexOf('-') !== -1;
-    var sameWidthOddness = reference.width % 2 === popper.width % 2;
-    var bothOddWidth = reference.width % 2 === 1 && popper.width % 2 === 1;
-    var noRound = function noRound(v) {
-      return v;
-    };
+/* ========================================================================
+ * Bootstrap: collapse.js v3.3.7
+ * http://getbootstrap.com/javascript/#collapse
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
 
-    var horizontalToInteger = !shouldRound ? noRound : isVertical || isVariation || sameWidthOddness ? Math.round : Math.floor;
-    var verticalToInteger = !shouldRound ? noRound : Math.round;
+/* jshint latedef: false */
 
-    return {
-      left: horizontalToInteger(bothOddWidth && !isVariation && shouldRound ? popper.left - 1 : popper.left),
-      top: verticalToInteger(popper.top),
-      bottom: verticalToInteger(popper.bottom),
-      right: horizontalToInteger(popper.right)
-    };
-  }
+  'use strict';
 
-  var isFirefox = isBrowser && /Firefox/i.test(navigator.userAgent);
+  // COLLAPSE PUBLIC CLASS DEFINITION
+  // ================================
 
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function computeStyle(data, options) {
-    var x = options.x,
-        y = options.y;
-    var popper = data.offsets.popper;
+  var Collapse = bs3.Collapse = plugins.Plugin.inherit({
+    klassName: "Collapse",
 
-    // Remove this legacy support in Popper.js v2
+    pluginName : "bs3.collapse",
 
-    var legacyGpuAccelerationOption = find(data.instance.modifiers, function (modifier) {
-      return modifier.name === 'applyStyle';
-    }).gpuAcceleration;
-    if (legacyGpuAccelerationOption !== undefined) {
-      console.warn('WARNING: `gpuAcceleration` option moved to `computeStyle` modifier and will not be supported in future versions of Popper.js!');
-    }
-    var gpuAcceleration = legacyGpuAccelerationOption !== undefined ? legacyGpuAccelerationOption : options.gpuAcceleration;
+    _construct : function(element,options) {
+      options = langx.mixin({}, Collapse.DEFAULTS, $(element).data(), options)
+      this.overrided(element,options);
 
-    var offsetParent = getOffsetParent(data.instance.popper);
-    var offsetParentRect = getBoundingClientRect(offsetParent);
+      this.$element      = $(element)
+      this.$trigger      = $('[data-toggle="collapse"][href="#' + element.id + '"],' +
+                             '[data-toggle="collapse"][data-target="#' + element.id + '"]')
+      this.transitioning = null
 
-    // Styles
-    var styles = {
-      position: popper.position
-    };
-
-    var offsets = getRoundedOffsets(data, window.devicePixelRatio < 2 || !isFirefox);
-
-    var sideA = x === 'bottom' ? 'top' : 'bottom';
-    var sideB = y === 'right' ? 'left' : 'right';
-
-    // if gpuAcceleration is set to `true` and transform is supported,
-    //  we use `translate3d` to apply the position to the popper we
-    // automatically use the supported prefixed version if needed
-    var prefixedProperty = getSupportedPropertyName('transform');
-
-    // now, let's make a step back and look at this code closely (wtf?)
-    // If the content of the popper grows once it's been positioned, it
-    // may happen that the popper gets misplaced because of the new content
-    // overflowing its reference element
-    // To avoid this problem, we provide two options (x and y), which allow
-    // the consumer to define the offset origin.
-    // If we position a popper on top of a reference element, we can set
-    // `x` to `top` to make the popper grow towards its top instead of
-    // its bottom.
-    var left = void 0,
-        top = void 0;
-    if (sideA === 'bottom') {
-      // when offsetParent is <html> the positioning is relative to the bottom of the screen (excluding the scrollbar)
-      // and not the bottom of the html element
-      if (offsetParent.nodeName === 'HTML') {
-        top = -offsetParent.clientHeight + offsets.bottom;
+      if (this.options.parent) {
+        this.$parent = this.getParent()
       } else {
-        top = -offsetParentRect.height + offsets.bottom;
-      }
-    } else {
-      top = offsets.top;
-    }
-    if (sideB === 'right') {
-      if (offsetParent.nodeName === 'HTML') {
-        left = -offsetParent.clientWidth + offsets.right;
-      } else {
-        left = -offsetParentRect.width + offsets.right;
-      }
-    } else {
-      left = offsets.left;
-    }
-    if (gpuAcceleration && prefixedProperty) {
-      styles[prefixedProperty] = 'translate3d(' + left + 'px, ' + top + 'px, 0)';
-      styles[sideA] = 0;
-      styles[sideB] = 0;
-      styles.willChange = 'transform';
-    } else {
-      // othwerise, we use the standard `top`, `left`, `bottom` and `right` properties
-      var invertTop = sideA === 'bottom' ? -1 : 1;
-      var invertLeft = sideB === 'right' ? -1 : 1;
-      styles[sideA] = top * invertTop;
-      styles[sideB] = left * invertLeft;
-      styles.willChange = sideA + ', ' + sideB;
-    }
-
-    // Attributes
-    var attributes = {
-      'x-placement': data.placement
-    };
-
-    // Update `data` attributes, styles and arrowStyles
-    data.attributes = _extends({}, attributes, data.attributes);
-    data.styles = _extends({}, styles, data.styles);
-    data.arrowStyles = _extends({}, data.offsets.arrow, data.arrowStyles);
-
-    return data;
-  }
-
-  /**
-   * Helper used to know if the given modifier depends from another one.<br />
-   * It checks if the needed modifier is listed and enabled.
-   * @method
-   * @memberof Popper.Utils
-   * @param {Array} modifiers - list of modifiers
-   * @param {String} requestingName - name of requesting modifier
-   * @param {String} requestedName - name of requested modifier
-   * @returns {Boolean}
-   */
-  function isModifierRequired(modifiers, requestingName, requestedName) {
-    var requesting = find(modifiers, function (_ref) {
-      var name = _ref.name;
-      return name === requestingName;
-    });
-
-    var isRequired = !!requesting && modifiers.some(function (modifier) {
-      return modifier.name === requestedName && modifier.enabled && modifier.order < requesting.order;
-    });
-
-    if (!isRequired) {
-      var _requesting = '`' + requestingName + '`';
-      var requested = '`' + requestedName + '`';
-      console.warn(requested + ' modifier is required by ' + _requesting + ' modifier in order to work, be sure to include it before ' + _requesting + '!');
-    }
-    return isRequired;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function arrow(data, options) {
-    var _data$offsets$arrow;
-
-    // arrow depends on keepTogether in order to work
-    if (!isModifierRequired(data.instance.modifiers, 'arrow', 'keepTogether')) {
-      return data;
-    }
-
-    var arrowElement = options.element;
-
-    // if arrowElement is a string, suppose it's a CSS selector
-    if (typeof arrowElement === 'string') {
-      arrowElement = data.instance.popper.querySelector(arrowElement);
-
-      // if arrowElement is not found, don't run the modifier
-      if (!arrowElement) {
-        return data;
-      }
-    } else {
-      // if the arrowElement isn't a query selector we must check that the
-      // provided DOM node is child of its popper node
-      if (!data.instance.popper.contains(arrowElement)) {
-        console.warn('WARNING: `arrow.element` must be child of its popper element!');
-        return data;
-      }
-    }
-
-    var placement = data.placement.split('-')[0];
-    var _data$offsets = data.offsets,
-        popper = _data$offsets.popper,
-        reference = _data$offsets.reference;
-
-    var isVertical = ['left', 'right'].indexOf(placement) !== -1;
-
-    var len = isVertical ? 'height' : 'width';
-    var sideCapitalized = isVertical ? 'Top' : 'Left';
-    var side = sideCapitalized.toLowerCase();
-    var altSide = isVertical ? 'left' : 'top';
-    var opSide = isVertical ? 'bottom' : 'right';
-    var arrowElementSize = getOuterSizes(arrowElement)[len];
-
-    //
-    // extends keepTogether behavior making sure the popper and its
-    // reference have enough pixels in conjunction
-    //
-
-    // top/left side
-    if (reference[opSide] - arrowElementSize < popper[side]) {
-      data.offsets.popper[side] -= popper[side] - (reference[opSide] - arrowElementSize);
-    }
-    // bottom/right side
-    if (reference[side] + arrowElementSize > popper[opSide]) {
-      data.offsets.popper[side] += reference[side] + arrowElementSize - popper[opSide];
-    }
-    data.offsets.popper = getClientRect(data.offsets.popper);
-
-    // compute center of the popper
-    var center = reference[side] + reference[len] / 2 - arrowElementSize / 2;
-
-    // Compute the sideValue using the updated popper offsets
-    // take popper margin in account because we don't have this info available
-    var css = getStyleComputedProperty(data.instance.popper);
-    var popperMarginSide = parseFloat(css['margin' + sideCapitalized], 10);
-    var popperBorderSide = parseFloat(css['border' + sideCapitalized + 'Width'], 10);
-    var sideValue = center - data.offsets.popper[side] - popperMarginSide - popperBorderSide;
-
-    // prevent arrowElement from being placed not contiguously to its popper
-    sideValue = Math.max(Math.min(popper[len] - arrowElementSize, sideValue), 0);
-
-    data.arrowElement = arrowElement;
-    data.offsets.arrow = (_data$offsets$arrow = {}, defineProperty(_data$offsets$arrow, side, Math.round(sideValue)), defineProperty(_data$offsets$arrow, altSide, ''), _data$offsets$arrow);
-
-    return data;
-  }
-
-  /**
-   * Get the opposite placement variation of the given one
-   * @method
-   * @memberof Popper.Utils
-   * @argument {String} placement variation
-   * @returns {String} flipped placement variation
-   */
-  function getOppositeVariation(variation) {
-    if (variation === 'end') {
-      return 'start';
-    } else if (variation === 'start') {
-      return 'end';
-    }
-    return variation;
-  }
-
-  /**
-   * List of accepted placements to use as values of the `placement` option.<br />
-   * Valid placements are:
-   * - `auto`
-   * - `top`
-   * - `right`
-   * - `bottom`
-   * - `left`
-   *
-   * Each placement can have a variation from this list:
-   * - `-start`
-   * - `-end`
-   *
-   * Variations are interpreted easily if you think of them as the left to right
-   * written languages. Horizontally (`top` and `bottom`), `start` is left and `end`
-   * is right.<br />
-   * Vertically (`left` and `right`), `start` is top and `end` is bottom.
-   *
-   * Some valid examples are:
-   * - `top-end` (on top of reference, right aligned)
-   * - `right-start` (on right of reference, top aligned)
-   * - `bottom` (on bottom, centered)
-   * - `auto-end` (on the side with more space available, alignment depends by placement)
-   *
-   * @static
-   * @type {Array}
-   * @enum {String}
-   * @readonly
-   * @method placements
-   * @memberof Popper
-   */
-  var placements = ['auto-start', 'auto', 'auto-end', 'top-start', 'top', 'top-end', 'right-start', 'right', 'right-end', 'bottom-end', 'bottom', 'bottom-start', 'left-end', 'left', 'left-start'];
-
-  // Get rid of `auto` `auto-start` and `auto-end`
-  var validPlacements = placements.slice(3);
-
-  /**
-   * Given an initial placement, returns all the subsequent placements
-   * clockwise (or counter-clockwise).
-   *
-   * @method
-   * @memberof Popper.Utils
-   * @argument {String} placement - A valid placement (it accepts variations)
-   * @argument {Boolean} counter - Set to true to walk the placements counterclockwise
-   * @returns {Array} placements including their variations
-   */
-  function clockwise(placement) {
-    var counter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    var index = validPlacements.indexOf(placement);
-    var arr = validPlacements.slice(index + 1).concat(validPlacements.slice(0, index));
-    return counter ? arr.reverse() : arr;
-  }
-
-  var BEHAVIORS = {
-    FLIP: 'flip',
-    CLOCKWISE: 'clockwise',
-    COUNTERCLOCKWISE: 'counterclockwise'
-  };
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function flip(data, options) {
-    // if `inner` modifier is enabled, we can't use the `flip` modifier
-    if (isModifierEnabled(data.instance.modifiers, 'inner')) {
-      return data;
-    }
-
-    if (data.flipped && data.placement === data.originalPlacement) {
-      // seems like flip is trying to loop, probably there's not enough space on any of the flippable sides
-      return data;
-    }
-
-    var boundaries = getBoundaries(data.instance.popper, data.instance.reference, options.padding, options.boundariesElement, data.positionFixed);
-
-    var placement = data.placement.split('-')[0];
-    var placementOpposite = getOppositePlacement(placement);
-    var variation = data.placement.split('-')[1] || '';
-
-    var flipOrder = [];
-
-    switch (options.behavior) {
-      case BEHAVIORS.FLIP:
-        flipOrder = [placement, placementOpposite];
-        break;
-      case BEHAVIORS.CLOCKWISE:
-        flipOrder = clockwise(placement);
-        break;
-      case BEHAVIORS.COUNTERCLOCKWISE:
-        flipOrder = clockwise(placement, true);
-        break;
-      default:
-        flipOrder = options.behavior;
-    }
-
-    flipOrder.forEach(function (step, index) {
-      if (placement !== step || flipOrder.length === index + 1) {
-        return data;
+        this.addAriaAndCollapsedClass(this.$element, this.$trigger)
       }
 
-      placement = data.placement.split('-')[0];
-      placementOpposite = getOppositePlacement(placement);
+      if (this.options.toggle) {
+        this.toggle();
+      }
+    },
 
-      var popperOffsets = data.offsets.popper;
-      var refOffsets = data.offsets.reference;
+    dimension : function () {
+      var hasWidth = this.$element.hasClass('width')
+      return hasWidth ? 'width' : 'height'
+    },
 
-      // using floor because the reference offsets may contain decimals we are not going to consider here
-      var floor = Math.floor;
-      var overlapsRef = placement === 'left' && floor(popperOffsets.right) > floor(refOffsets.left) || placement === 'right' && floor(popperOffsets.left) < floor(refOffsets.right) || placement === 'top' && floor(popperOffsets.bottom) > floor(refOffsets.top) || placement === 'bottom' && floor(popperOffsets.top) < floor(refOffsets.bottom);
+    show : function () {
+      if (this.transitioning || this.$element.hasClass('in')) return
 
-      var overflowsLeft = floor(popperOffsets.left) < floor(boundaries.left);
-      var overflowsRight = floor(popperOffsets.right) > floor(boundaries.right);
-      var overflowsTop = floor(popperOffsets.top) < floor(boundaries.top);
-      var overflowsBottom = floor(popperOffsets.bottom) > floor(boundaries.bottom);
+      var activesData
+      var actives = this.$parent && this.$parent.children('.panel').children('.in, .collapsing')
 
-      var overflowsBoundaries = placement === 'left' && overflowsLeft || placement === 'right' && overflowsRight || placement === 'top' && overflowsTop || placement === 'bottom' && overflowsBottom;
+      if (actives && actives.length) {
+        activesData = actives.data('bs.collapse')
+        if (activesData && activesData.transitioning) return
+      }
 
-      // flip the variation if required
-      var isVertical = ['top', 'bottom'].indexOf(placement) !== -1;
-      var flippedVariation = !!options.flipVariations && (isVertical && variation === 'start' && overflowsLeft || isVertical && variation === 'end' && overflowsRight || !isVertical && variation === 'start' && overflowsTop || !isVertical && variation === 'end' && overflowsBottom);
+      var startEvent = eventer.create('show.bs.collapse')
+      this.$element.trigger(startEvent)
+      if (startEvent.isDefaultPrevented()) return
 
-      if (overlapsRef || overflowsBoundaries || flippedVariation) {
-        // this boolean to detect any flip loop
-        data.flipped = true;
+      if (actives && actives.length) {
+        //Plugin.call(actives, 'hide')
+        actives.collapse("hide");
+        activesData || actives.data('bs.collapse', null)
+      }
 
-        if (overlapsRef || overflowsBoundaries) {
-          placement = flipOrder[index + 1];
+      var dimension = this.dimension()
+
+      this.$element
+        .removeClass('collapse')
+        .addClass('collapsing')[dimension](0)
+        .attr('aria-expanded', true)
+
+      this.$trigger
+        .removeClass('collapsed')
+        .attr('aria-expanded', true)
+
+      this.transitioning = 1
+
+      var complete = function () {
+        this.$element
+          .removeClass('collapsing')
+          .addClass('collapse in')[dimension]('')
+        this.transitioning = 0
+        this.$element
+          .trigger('shown.bs.collapse')
+      }
+
+      if (!browser.support.transition) return complete.call(this)
+
+      var scrollSize = langx.camelCase(['scroll', dimension].join('-'))
+
+      this.$element
+        .one('transitionEnd', langx.proxy(complete, this))
+        .emulateTransitionEnd(Collapse.TRANSITION_DURATION)[dimension](this.$element[0][scrollSize])
+    },
+
+    hide : function () {
+      if (this.transitioning || !this.$element.hasClass('in')) return
+
+      var startEvent = eventer.create('hide.bs.collapse')
+      this.$element.trigger(startEvent)
+      if (startEvent.isDefaultPrevented()) return
+
+      var dimension = this.dimension()
+
+      this.$element[dimension](this.$element[dimension]())[0].offsetHeight
+
+      this.$element
+        .addClass('collapsing')
+        .removeClass('collapse in')
+        .attr('aria-expanded', false)
+
+      this.$trigger
+        .addClass('collapsed')
+        .attr('aria-expanded', false)
+
+      this.transitioning = 1
+
+      var complete = function () {
+        this.transitioning = 0
+        this.$element
+          .removeClass('collapsing')
+          .addClass('collapse')
+          .trigger('hidden.bs.collapse')
+      }
+
+      if (!browser.support.transition) return complete.call(this)
+
+      this.$element
+        [dimension](0)
+        .one('transitionEnd', langx.proxy(complete, this))
+        .emulateTransitionEnd(Collapse.TRANSITION_DURATION)
+    },
+
+    toggle : function () {
+      this[this.$element.hasClass('in') ? 'hide' : 'show']()
+    },
+
+    getParent : function () {
+      return $(this.options.parent)
+        .find('[data-toggle="collapse"][data-parent="' + this.options.parent + '"]')
+        .each(langx.proxy(function (i, element) {
+          var $element = $(element)
+          this.addAriaAndCollapsedClass(getTargetFromTrigger($element), $element)
+        }, this))
+        .end()
+    },
+
+    addAriaAndCollapsedClass : function ($element, $trigger) {
+      var isOpen = $element.hasClass('in')
+
+      $element.attr('aria-expanded', isOpen)
+      $trigger
+        .toggleClass('collapsed', !isOpen)
+        .attr('aria-expanded', isOpen)
+    }
+
+  });
+
+  Collapse.VERSION  = '3.3.7'
+
+  Collapse.TRANSITION_DURATION = 350
+
+  Collapse.DEFAULTS = {
+    toggle: true
+  }
+
+
+  function getTargetFromTrigger($trigger) {
+    var href
+    var target = $trigger.attr('data-target')
+      || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
+
+    return $(target)
+  }
+
+
+  // COLLAPSE PLUGIN DEFINITION
+  // ==========================
+
+  /*
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.collapse')
+      var options = langx.mixin({}, Collapse.DEFAULTS, $this.data(), typeof option == 'object' && option)
+
+      if (!data && options.toggle && /show|hide/.test(option)) options.toggle = false
+      if (!data) $this.data('bs.collapse', (data = new Collapse(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.collapse
+
+  $.fn.collapse             = Plugin;
+  $.fn.collapse.Constructor = Collapse;
+
+  // COLLAPSE NO CONFLICT
+  // ====================
+
+  $.fn.collapse.noConflict = function () {
+    $.fn.collapse = old
+    return this
+  }
+  */
+
+  plugins.register(Collapse,"collapse");
+
+  return Collapse;
+
+});
+
+define('skylark-bootstrap3/dropdown',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+/* ========================================================================
+ * Bootstrap: dropdown.js v3.3.7
+ * http://getbootstrap.com/javascript/#dropdowns
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+  'use strict';
+
+  // DROPDOWN CLASS DEFINITION
+  // =========================
+
+  var backdrop = '.dropdown-backdrop';
+  var toggle   = '[data-toggle="dropdown"]';
+
+  var Dropdown = bs3.Dropdown = plugins.Plugin.inherit({
+    klassName: "Dropdown",
+
+    pluginName : "bs3.dropdown",
+
+    _construct : function(element,options) {
+      var $el = this.$element = $(element);
+      $el.on('click.bs.dropdown', this.toggle);
+      $el.on('keydown.bs.dropdown', '[data-toggle="dropdown"],.dropdown-menu',this.keydown);
+    },
+
+    toggle : function (e) {
+      var $this = $(this)
+
+      if ($this.is('.disabled, :disabled')) return
+
+      var $parent  = getParent($this)
+      var isActive = $parent.hasClass('open')
+
+      clearMenus()
+
+      if (!isActive) {
+        if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
+          // if mobile we use a backdrop because click events don't delegate
+          $(document.createElement('div'))
+            .addClass('dropdown-backdrop')
+            .insertAfter($(this))
+            .on('click', clearMenus)
         }
 
-        if (flippedVariation) {
-          variation = getOppositeVariation(variation);
-        }
+        var relatedTarget = { relatedTarget: this }
+        $parent.trigger(e = eventer.create('show.bs.dropdown', relatedTarget))
 
-        data.placement = placement + (variation ? '-' + variation : '');
+        if (e.isDefaultPrevented()) return
 
-        // this object contains `position`, we want to preserve it along with
-        // any additional property we may add in the future
-        data.offsets.popper = _extends({}, data.offsets.popper, getPopperOffsets(data.instance.popper, data.offsets.reference, data.placement));
+        $this
+          .trigger('focus')
+          .attr('aria-expanded', 'true')
 
-        data = runModifiers(data.instance.modifiers, data, 'flip');
-      }
-    });
-    return data;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function keepTogether(data) {
-    var _data$offsets = data.offsets,
-        popper = _data$offsets.popper,
-        reference = _data$offsets.reference;
-
-    var placement = data.placement.split('-')[0];
-    var floor = Math.floor;
-    var isVertical = ['top', 'bottom'].indexOf(placement) !== -1;
-    var side = isVertical ? 'right' : 'bottom';
-    var opSide = isVertical ? 'left' : 'top';
-    var measurement = isVertical ? 'width' : 'height';
-
-    if (popper[side] < floor(reference[opSide])) {
-      data.offsets.popper[opSide] = floor(reference[opSide]) - popper[measurement];
-    }
-    if (popper[opSide] > floor(reference[side])) {
-      data.offsets.popper[opSide] = floor(reference[side]);
-    }
-
-    return data;
-  }
-
-  /**
-   * Converts a string containing value + unit into a px value number
-   * @function
-   * @memberof {modifiers~offset}
-   * @private
-   * @argument {String} str - Value + unit string
-   * @argument {String} measurement - `height` or `width`
-   * @argument {Object} popperOffsets
-   * @argument {Object} referenceOffsets
-   * @returns {Number|String}
-   * Value in pixels, or original string if no values were extracted
-   */
-  function toValue(str, measurement, popperOffsets, referenceOffsets) {
-    // separate value from unit
-    var split = str.match(/((?:\-|\+)?\d*\.?\d*)(.*)/);
-    var value = +split[1];
-    var unit = split[2];
-
-    // If it's not a number it's an operator, I guess
-    if (!value) {
-      return str;
-    }
-
-    if (unit.indexOf('%') === 0) {
-      var element = void 0;
-      switch (unit) {
-        case '%p':
-          element = popperOffsets;
-          break;
-        case '%':
-        case '%r':
-        default:
-          element = referenceOffsets;
+        $parent
+          .toggleClass('open')
+          .trigger(eventer.create('shown.bs.dropdown', relatedTarget))
       }
 
-      var rect = getClientRect(element);
-      return rect[measurement] / 100 * value;
-    } else if (unit === 'vh' || unit === 'vw') {
-      // if is a vh or vw, we calculate the size based on the viewport
-      var size = void 0;
-      if (unit === 'vh') {
-        size = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-      } else {
-        size = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-      }
-      return size / 100 * value;
-    } else {
-      // if is an explicit pixel unit, we get rid of the unit and keep the value
-      // if is an implicit unit, it's px, and we return just the value
-      return value;
-    }
-  }
+      return false
+    },
 
-  /**
-   * Parse an `offset` string to extrapolate `x` and `y` numeric offsets.
-   * @function
-   * @memberof {modifiers~offset}
-   * @private
-   * @argument {String} offset
-   * @argument {Object} popperOffsets
-   * @argument {Object} referenceOffsets
-   * @argument {String} basePlacement
-   * @returns {Array} a two cells array with x and y offsets in numbers
-   */
-  function parseOffset(offset, popperOffsets, referenceOffsets, basePlacement) {
-    var offsets = [0, 0];
+    keydown : function (e) {
+      if (!/(38|40|27|32)/.test(e.which) || /input|textarea/i.test(e.target.tagName)) return
 
-    // Use height if placement is left or right and index is 0 otherwise use width
-    // in this way the first offset will use an axis and the second one
-    // will use the other one
-    var useHeight = ['right', 'left'].indexOf(basePlacement) !== -1;
+      var $this = $(this)
 
-    // Split the offset string to obtain a list of values and operands
-    // The regex addresses values with the plus or minus sign in front (+10, -20, etc)
-    var fragments = offset.split(/(\+|\-)/).map(function (frag) {
-      return frag.trim();
-    });
+      e.preventDefault()
+      e.stopPropagation()
 
-    // Detect if the offset string contains a pair of values or a single one
-    // they could be separated by comma or space
-    var divider = fragments.indexOf(find(fragments, function (frag) {
-      return frag.search(/,|\s/) !== -1;
-    }));
+      if ($this.is('.disabled, :disabled')) return
 
-    if (fragments[divider] && fragments[divider].indexOf(',') === -1) {
-      console.warn('Offsets separated by white space(s) are deprecated, use a comma (,) instead.');
-    }
+      var $parent  = getParent($this)
+      var isActive = $parent.hasClass('open')
 
-    // If divider is found, we divide the list of values and operands to divide
-    // them by ofset X and Y.
-    var splitRegex = /\s*,\s*|\s+/;
-    var ops = divider !== -1 ? [fragments.slice(0, divider).concat([fragments[divider].split(splitRegex)[0]]), [fragments[divider].split(splitRegex)[1]].concat(fragments.slice(divider + 1))] : [fragments];
-
-    // Convert the values with units to absolute pixels to allow our computations
-    ops = ops.map(function (op, index) {
-      // Most of the units rely on the orientation of the popper
-      var measurement = (index === 1 ? !useHeight : useHeight) ? 'height' : 'width';
-      var mergeWithPrevious = false;
-      return op
-      // This aggregates any `+` or `-` sign that aren't considered operators
-      // e.g.: 10 + +5 => [10, +, +5]
-      .reduce(function (a, b) {
-        if (a[a.length - 1] === '' && ['+', '-'].indexOf(b) !== -1) {
-          a[a.length - 1] = b;
-          mergeWithPrevious = true;
-          return a;
-        } else if (mergeWithPrevious) {
-          a[a.length - 1] += b;
-          mergeWithPrevious = false;
-          return a;
-        } else {
-          return a.concat(b);
-        }
-      }, [])
-      // Here we convert the string values into number values (in px)
-      .map(function (str) {
-        return toValue(str, measurement, popperOffsets, referenceOffsets);
-      });
-    });
-
-    // Loop trough the offsets arrays and execute the operations
-    ops.forEach(function (op, index) {
-      op.forEach(function (frag, index2) {
-        if (isNumeric(frag)) {
-          offsets[index] += frag * (op[index2 - 1] === '-' ? -1 : 1);
-        }
-      });
-    });
-    return offsets;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @argument {Number|String} options.offset=0
-   * The offset value as described in the modifier description
-   * @returns {Object} The data object, properly modified
-   */
-  function offset(data, _ref) {
-    var offset = _ref.offset;
-    var placement = data.placement,
-        _data$offsets = data.offsets,
-        popper = _data$offsets.popper,
-        reference = _data$offsets.reference;
-
-    var basePlacement = placement.split('-')[0];
-
-    var offsets = void 0;
-    if (isNumeric(+offset)) {
-      offsets = [+offset, 0];
-    } else {
-      offsets = parseOffset(offset, popper, reference, basePlacement);
-    }
-
-    if (basePlacement === 'left') {
-      popper.top += offsets[0];
-      popper.left -= offsets[1];
-    } else if (basePlacement === 'right') {
-      popper.top += offsets[0];
-      popper.left += offsets[1];
-    } else if (basePlacement === 'top') {
-      popper.left += offsets[0];
-      popper.top -= offsets[1];
-    } else if (basePlacement === 'bottom') {
-      popper.left += offsets[0];
-      popper.top += offsets[1];
-    }
-
-    data.popper = popper;
-    return data;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function preventOverflow(data, options) {
-    var boundariesElement = options.boundariesElement || getOffsetParent(data.instance.popper);
-
-    // If offsetParent is the reference element, we really want to
-    // go one step up and use the next offsetParent as reference to
-    // avoid to make this modifier completely useless and look like broken
-    if (data.instance.reference === boundariesElement) {
-      boundariesElement = getOffsetParent(boundariesElement);
-    }
-
-    // NOTE: DOM access here
-    // resets the popper's position so that the document size can be calculated excluding
-    // the size of the popper element itself
-    var transformProp = getSupportedPropertyName('transform');
-    var popperStyles = data.instance.popper.style; // assignment to help minification
-    var top = popperStyles.top,
-        left = popperStyles.left,
-        transform = popperStyles[transformProp];
-
-    popperStyles.top = '';
-    popperStyles.left = '';
-    popperStyles[transformProp] = '';
-
-    var boundaries = getBoundaries(data.instance.popper, data.instance.reference, options.padding, boundariesElement, data.positionFixed);
-
-    // NOTE: DOM access here
-    // restores the original style properties after the offsets have been computed
-    popperStyles.top = top;
-    popperStyles.left = left;
-    popperStyles[transformProp] = transform;
-
-    options.boundaries = boundaries;
-
-    var order = options.priority;
-    var popper = data.offsets.popper;
-
-    var check = {
-      primary: function primary(placement) {
-        var value = popper[placement];
-        if (popper[placement] < boundaries[placement] && !options.escapeWithReference) {
-          value = Math.max(popper[placement], boundaries[placement]);
-        }
-        return defineProperty({}, placement, value);
-      },
-      secondary: function secondary(placement) {
-        var mainSide = placement === 'right' ? 'left' : 'top';
-        var value = popper[mainSide];
-        if (popper[placement] > boundaries[placement] && !options.escapeWithReference) {
-          value = Math.min(popper[mainSide], boundaries[placement] - (placement === 'right' ? popper.width : popper.height));
-        }
-        return defineProperty({}, mainSide, value);
-      }
-    };
-
-    order.forEach(function (placement) {
-      var side = ['left', 'top'].indexOf(placement) !== -1 ? 'primary' : 'secondary';
-      popper = _extends({}, popper, check[side](placement));
-    });
-
-    data.offsets.popper = popper;
-
-    return data;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function shift(data) {
-    var placement = data.placement;
-    var basePlacement = placement.split('-')[0];
-    var shiftvariation = placement.split('-')[1];
-
-    // if shift shiftvariation is specified, run the modifier
-    if (shiftvariation) {
-      var _data$offsets = data.offsets,
-          reference = _data$offsets.reference,
-          popper = _data$offsets.popper;
-
-      var isVertical = ['bottom', 'top'].indexOf(basePlacement) !== -1;
-      var side = isVertical ? 'left' : 'top';
-      var measurement = isVertical ? 'width' : 'height';
-
-      var shiftOffsets = {
-        start: defineProperty({}, side, reference[side]),
-        end: defineProperty({}, side, reference[side] + reference[measurement] - popper[measurement])
-      };
-
-      data.offsets.popper = _extends({}, popper, shiftOffsets[shiftvariation]);
-    }
-
-    return data;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by update method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function hide(data) {
-    if (!isModifierRequired(data.instance.modifiers, 'hide', 'preventOverflow')) {
-      return data;
-    }
-
-    var refRect = data.offsets.reference;
-    var bound = find(data.instance.modifiers, function (modifier) {
-      return modifier.name === 'preventOverflow';
-    }).boundaries;
-
-    if (refRect.bottom < bound.top || refRect.left > bound.right || refRect.top > bound.bottom || refRect.right < bound.left) {
-      // Avoid unnecessary DOM access if visibility hasn't changed
-      if (data.hide === true) {
-        return data;
+      if (!isActive && e.which != 27 || isActive && e.which == 27) {
+        if (e.which == 27) $parent.find(toggle).trigger('focus')
+        return $this.trigger('click')
       }
 
-      data.hide = true;
-      data.attributes['x-out-of-boundaries'] = '';
-    } else {
-      // Avoid unnecessary DOM access if visibility hasn't changed
-      if (data.hide === false) {
-        return data;
+      var desc = ' li:not(.disabled):visible a'
+      var $items = $parent.find('.dropdown-menu' + desc)
+
+      if (!$items.length) return
+
+      var index = $items.index(e.target)
+
+      if (e.which == 38 && index > 0)                 index--         // up
+      if (e.which == 40 && index < $items.length - 1) index++         // down
+      if (!~index)                                    index = 0
+
+      $items.eq(index).trigger('focus')
+    }
+
+  });
+
+  Dropdown.VERSION = '3.3.7'
+
+  function getParent($this) {
+    var selector = $this.attr('data-target')
+
+    if (!selector) {
+      selector = $this.attr('href')
+      selector = selector && /#[A-Za-z]/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+    }
+
+    var $parent = selector && $(selector)
+
+    return $parent && $parent.length ? $parent : $this.parent()
+  }
+
+  function clearMenus(e) {
+    if (e && e.which === 3) return
+    $(backdrop).remove()
+    $(toggle).each(function () {
+      var $this         = $(this)
+      var $parent       = getParent($this)
+      var relatedTarget = { relatedTarget: this }
+
+      if (!$parent.hasClass('open')) return
+
+      if (e && e.type == 'click' && /input|textarea/i.test(e.target.tagName) && noder.contains($parent[0], e.target)) return
+
+      $parent.trigger(e = eventer.create('hide.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this.attr('aria-expanded', 'false')
+      $parent.removeClass('open').trigger(eventer.create('hidden.bs.dropdown', relatedTarget))
+    })
+  }
+
+
+  /*
+  // DROPDOWN PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var data  = $this.data('bs.dropdown')
+
+      if (!data) $this.data('bs.dropdown', (data = new Dropdown(this)))
+      if (typeof option == 'string') data[option].call($this)
+    })
+  }
+
+  var old = $.fn.dropdown
+
+  $.fn.dropdown             = Plugin;
+  $.fn.dropdown.Constructor = Dropdown;
+
+
+  // DROPDOWN NO CONFLICT
+  // ====================
+
+  $.fn.dropdown.noConflict = function () {
+    $.fn.dropdown = old
+    return this
+  }
+
+
+
+  return $.fn.dropdown;
+  */
+
+  // APPLY TO STANDARD DROPDOWN ELEMENTS
+  // ===================================
+  $(document)
+    .on('click.bs.dropdown.data-api', clearMenus)
+    .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() });
+
+  plugins.register(Dropdown,"dropdown");
+
+  return Dropdown;
+
+});
+
+define('skylark-bootstrap3/modal',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+/* ========================================================================
+ * Bootstrap: modal.js v3.3.7
+ * http://getbootstrap.com/javascript/#modals
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  // MODAL CLASS DEFINITION
+  // ======================
+
+  var Modal = bs3.Modal = plugins.Plugin.inherit({
+    klassName: "Modal",
+
+    pluginName : "bs3.modal",
+
+    _construct : function(element,options) {
+      options = langx.mixin({}, Modal.DEFAULTS, $(element).data(), options)
+      this.overrided(element,options);
+      this.$container               = $(options.container || document.body)
+      this.$element            = $(element)
+      this.$dialog             = this.$element.find('.modal-dialog')
+      if (!this.$container.is("body")) {
+        this.$element.css("position","absolute");
       }
+      //this.$container.append(this.$element);
+      this.$backdrop           = null
+      this.isShown             = null
+      this.originalBodyPad     = null
+      this.scrollbarWidth      = 0
+      this.ignoreBackdropClick = false
 
-      data.hide = false;
-      data.attributes['x-out-of-boundaries'] = false;
-    }
-
-    return data;
-  }
-
-  /**
-   * @function
-   * @memberof Modifiers
-   * @argument {Object} data - The data object generated by `update` method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {Object} The data object, properly modified
-   */
-  function inner(data) {
-    var placement = data.placement;
-    var basePlacement = placement.split('-')[0];
-    var _data$offsets = data.offsets,
-        popper = _data$offsets.popper,
-        reference = _data$offsets.reference;
-
-    var isHoriz = ['left', 'right'].indexOf(basePlacement) !== -1;
-
-    var subtractLength = ['top', 'left'].indexOf(basePlacement) === -1;
-
-    popper[isHoriz ? 'left' : 'top'] = reference[basePlacement] - (subtractLength ? popper[isHoriz ? 'width' : 'height'] : 0);
-
-    data.placement = getOppositePlacement(placement);
-    data.offsets.popper = getClientRect(popper);
-
-    return data;
-  }
-
-  /**
-   * Modifier function, each modifier can have a function of this type assigned
-   * to its `fn` property.<br />
-   * These functions will be called on each update, this means that you must
-   * make sure they are performant enough to avoid performance bottlenecks.
-   *
-   * @function ModifierFn
-   * @argument {dataObject} data - The data object generated by `update` method
-   * @argument {Object} options - Modifiers configuration and options
-   * @returns {dataObject} The data object, properly modified
-   */
-
-  /**
-   * Modifiers are plugins used to alter the behavior of your poppers.<br />
-   * Popper.js uses a set of 9 modifiers to provide all the basic functionalities
-   * needed by the library.
-   *
-   * Usually you don't want to override the `order`, `fn` and `onLoad` props.
-   * All the other properties are configurations that could be tweaked.
-   * @namespace modifiers
-   */
-  var modifiers = {
-    /**
-     * Modifier used to shift the popper on the start or end of its reference
-     * element.<br />
-     * It will read the variation of the `placement` property.<br />
-     * It can be one either `-end` or `-start`.
-     * @memberof modifiers
-     * @inner
-     */
-    shift: {
-      /** @prop {number} order=100 - Index used to define the order of execution */
-      order: 100,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: shift
+      if (this.options.remote) {
+        this.$element
+          .find('.modal-content')
+          .load(this.options.remote, langx.proxy(function () {
+            this.$element.trigger('loaded.bs.modal')
+          }, this))
+      }
     },
 
-    /**
-     * The `offset` modifier can shift your popper on both its axis.
-     *
-     * It accepts the following units:
-     * - `px` or unit-less, interpreted as pixels
-     * - `%` or `%r`, percentage relative to the length of the reference element
-     * - `%p`, percentage relative to the length of the popper element
-     * - `vw`, CSS viewport width unit
-     * - `vh`, CSS viewport height unit
-     *
-     * For length is intended the main axis relative to the placement of the popper.<br />
-     * This means that if the placement is `top` or `bottom`, the length will be the
-     * `width`. In case of `left` or `right`, it will be the `height`.
-     *
-     * You can provide a single value (as `Number` or `String`), or a pair of values
-     * as `String` divided by a comma or one (or more) white spaces.<br />
-     * The latter is a deprecated method because it leads to confusion and will be
-     * removed in v2.<br />
-     * Additionally, it accepts additions and subtractions between different units.
-     * Note that multiplications and divisions aren't supported.
-     *
-     * Valid examples are:
-     * ```
-     * 10
-     * '10%'
-     * '10, 10'
-     * '10%, 10'
-     * '10 + 10%'
-     * '10 - 5vh + 3%'
-     * '-10px + 5vh, 5px - 6%'
-     * ```
-     * > **NB**: If you desire to apply offsets to your poppers in a way that may make them overlap
-     * > with their reference element, unfortunately, you will have to disable the `flip` modifier.
-     * > You can read more on this at this [issue](https://github.com/FezVrasta/popper.js/issues/373).
-     *
-     * @memberof modifiers
-     * @inner
-     */
-    offset: {
-      /** @prop {number} order=200 - Index used to define the order of execution */
-      order: 200,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: offset,
-      /** @prop {Number|String} offset=0
-       * The offset value as described in the modifier description
-       */
-      offset: 0
+    toggle : function (_relatedTarget) {
+      return this.isShown ? this.hide() : this.show(_relatedTarget)
     },
 
-    /**
-     * Modifier used to prevent the popper from being positioned outside the boundary.
-     *
-     * A scenario exists where the reference itself is not within the boundaries.<br />
-     * We can say it has "escaped the boundaries" — or just "escaped".<br />
-     * In this case we need to decide whether the popper should either:
-     *
-     * - detach from the reference and remain "trapped" in the boundaries, or
-     * - if it should ignore the boundary and "escape with its reference"
-     *
-     * When `escapeWithReference` is set to`true` and reference is completely
-     * outside its boundaries, the popper will overflow (or completely leave)
-     * the boundaries in order to remain attached to the edge of the reference.
-     *
-     * @memberof modifiers
-     * @inner
-     */
-    preventOverflow: {
-      /** @prop {number} order=300 - Index used to define the order of execution */
-      order: 300,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: preventOverflow,
-      /**
-       * @prop {Array} [priority=['left','right','top','bottom']]
-       * Popper will try to prevent overflow following these priorities by default,
-       * then, it could overflow on the left and on top of the `boundariesElement`
-       */
-      priority: ['left', 'right', 'top', 'bottom'],
-      /**
-       * @prop {number} padding=5
-       * Amount of pixel used to define a minimum distance between the boundaries
-       * and the popper. This makes sure the popper always has a little padding
-       * between the edges of its container
-       */
-      padding: 5,
-      /**
-       * @prop {String|HTMLElement} boundariesElement='scrollParent'
-       * Boundaries used by the modifier. Can be `scrollParent`, `window`,
-       * `viewport` or any DOM element.
-       */
-      boundariesElement: 'scrollParent'
-    },
+    show : function (_relatedTarget) {
+      var that = this
+      var e    = eventer.create('show.bs.modal', { relatedTarget: _relatedTarget })
 
-    /**
-     * Modifier used to make sure the reference and its popper stay near each other
-     * without leaving any gap between the two. Especially useful when the arrow is
-     * enabled and you want to ensure that it points to its reference element.
-     * It cares only about the first axis. You can still have poppers with margin
-     * between the popper and its reference element.
-     * @memberof modifiers
-     * @inner
-     */
-    keepTogether: {
-      /** @prop {number} order=400 - Index used to define the order of execution */
-      order: 400,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: keepTogether
-    },
+      this.$element.trigger(e)
 
-    /**
-     * This modifier is used to move the `arrowElement` of the popper to make
-     * sure it is positioned between the reference element and its popper element.
-     * It will read the outer size of the `arrowElement` node to detect how many
-     * pixels of conjunction are needed.
-     *
-     * It has no effect if no `arrowElement` is provided.
-     * @memberof modifiers
-     * @inner
-     */
-    arrow: {
-      /** @prop {number} order=500 - Index used to define the order of execution */
-      order: 500,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: arrow,
-      /** @prop {String|HTMLElement} element='[x-arrow]' - Selector or node used as arrow */
-      element: '[x-arrow]'
-    },
+      if (this.isShown || e.isDefaultPrevented()) return
 
-    /**
-     * Modifier used to flip the popper's placement when it starts to overlap its
-     * reference element.
-     *
-     * Requires the `preventOverflow` modifier before it in order to work.
-     *
-     * **NOTE:** this modifier will interrupt the current update cycle and will
-     * restart it if it detects the need to flip the placement.
-     * @memberof modifiers
-     * @inner
-     */
-    flip: {
-      /** @prop {number} order=600 - Index used to define the order of execution */
-      order: 600,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: flip,
-      /**
-       * @prop {String|Array} behavior='flip'
-       * The behavior used to change the popper's placement. It can be one of
-       * `flip`, `clockwise`, `counterclockwise` or an array with a list of valid
-       * placements (with optional variations)
-       */
-      behavior: 'flip',
-      /**
-       * @prop {number} padding=5
-       * The popper will flip if it hits the edges of the `boundariesElement`
-       */
-      padding: 5,
-      /**
-       * @prop {String|HTMLElement} boundariesElement='viewport'
-       * The element which will define the boundaries of the popper position.
-       * The popper will never be placed outside of the defined boundaries
-       * (except if `keepTogether` is enabled)
-       */
-      boundariesElement: 'viewport'
-    },
+      this.isShown = true
 
-    /**
-     * Modifier used to make the popper flow toward the inner of the reference element.
-     * By default, when this modifier is disabled, the popper will be placed outside
-     * the reference element.
-     * @memberof modifiers
-     * @inner
-     */
-    inner: {
-      /** @prop {number} order=700 - Index used to define the order of execution */
-      order: 700,
-      /** @prop {Boolean} enabled=false - Whether the modifier is enabled or not */
-      enabled: false,
-      /** @prop {ModifierFn} */
-      fn: inner
-    },
+      this.checkScrollbar()
+      this.setScrollbar()
+      this.$container.addClass('modal-open')
 
-    /**
-     * Modifier used to hide the popper when its reference element is outside of the
-     * popper boundaries. It will set a `x-out-of-boundaries` attribute which can
-     * be used to hide with a CSS selector the popper when its reference is
-     * out of boundaries.
-     *
-     * Requires the `preventOverflow` modifier before it in order to work.
-     * @memberof modifiers
-     * @inner
-     */
-    hide: {
-      /** @prop {number} order=800 - Index used to define the order of execution */
-      order: 800,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: hide
-    },
+      this.escape()
+      this.resize()
 
-    /**
-     * Computes the style that will be applied to the popper element to gets
-     * properly positioned.
-     *
-     * Note that this modifier will not touch the DOM, it just prepares the styles
-     * so that `applyStyle` modifier can apply it. This separation is useful
-     * in case you need to replace `applyStyle` with a custom implementation.
-     *
-     * This modifier has `850` as `order` value to maintain backward compatibility
-     * with previous versions of Popper.js. Expect the modifiers ordering method
-     * to change in future major versions of the library.
-     *
-     * @memberof modifiers
-     * @inner
-     */
-    computeStyle: {
-      /** @prop {number} order=850 - Index used to define the order of execution */
-      order: 850,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: computeStyle,
-      /**
-       * @prop {Boolean} gpuAcceleration=true
-       * If true, it uses the CSS 3D transformation to position the popper.
-       * Otherwise, it will use the `top` and `left` properties
-       */
-      gpuAcceleration: true,
-      /**
-       * @prop {string} [x='bottom']
-       * Where to anchor the X axis (`bottom` or `top`). AKA X offset origin.
-       * Change this if your popper should grow in a direction different from `bottom`
-       */
-      x: 'bottom',
-      /**
-       * @prop {string} [x='left']
-       * Where to anchor the Y axis (`left` or `right`). AKA Y offset origin.
-       * Change this if your popper should grow in a direction different from `right`
-       */
-      y: 'right'
-    },
+      this.$element.on('click.dismiss.bs.modal', '[data-dismiss="modal"]', langx.proxy(this.hide, this))
 
-    /**
-     * Applies the computed styles to the popper element.
-     *
-     * All the DOM manipulations are limited to this modifier. This is useful in case
-     * you want to integrate Popper.js inside a framework or view library and you
-     * want to delegate all the DOM manipulations to it.
-     *
-     * Note that if you disable this modifier, you must make sure the popper element
-     * has its position set to `absolute` before Popper.js can do its work!
-     *
-     * Just disable this modifier and define your own to achieve the desired effect.
-     *
-     * @memberof modifiers
-     * @inner
-     */
-    applyStyle: {
-      /** @prop {number} order=900 - Index used to define the order of execution */
-      order: 900,
-      /** @prop {Boolean} enabled=true - Whether the modifier is enabled or not */
-      enabled: true,
-      /** @prop {ModifierFn} */
-      fn: applyStyle,
-      /** @prop {Function} */
-      onLoad: applyStyleOnLoad,
-      /**
-       * @deprecated since version 1.10.0, the property moved to `computeStyle` modifier
-       * @prop {Boolean} gpuAcceleration=true
-       * If true, it uses the CSS 3D transformation to position the popper.
-       * Otherwise, it will use the `top` and `left` properties
-       */
-      gpuAcceleration: undefined
-    }
-  };
-
-  /**
-   * The `dataObject` is an object containing all the information used by Popper.js.
-   * This object is passed to modifiers and to the `onCreate` and `onUpdate` callbacks.
-   * @name dataObject
-   * @property {Object} data.instance The Popper.js instance
-   * @property {String} data.placement Placement applied to popper
-   * @property {String} data.originalPlacement Placement originally defined on init
-   * @property {Boolean} data.flipped True if popper has been flipped by flip modifier
-   * @property {Boolean} data.hide True if the reference element is out of boundaries, useful to know when to hide the popper
-   * @property {HTMLElement} data.arrowElement Node used as arrow by arrow modifier
-   * @property {Object} data.styles Any CSS property defined here will be applied to the popper. It expects the JavaScript nomenclature (eg. `marginBottom`)
-   * @property {Object} data.arrowStyles Any CSS property defined here will be applied to the popper arrow. It expects the JavaScript nomenclature (eg. `marginBottom`)
-   * @property {Object} data.boundaries Offsets of the popper boundaries
-   * @property {Object} data.offsets The measurements of popper, reference and arrow elements
-   * @property {Object} data.offsets.popper `top`, `left`, `width`, `height` values
-   * @property {Object} data.offsets.reference `top`, `left`, `width`, `height` values
-   * @property {Object} data.offsets.arrow] `top` and `left` offsets, only one of them will be different from 0
-   */
-
-  /**
-   * Default options provided to Popper.js constructor.<br />
-   * These can be overridden using the `options` argument of Popper.js.<br />
-   * To override an option, simply pass an object with the same
-   * structure of the `options` object, as the 3rd argument. For example:
-   * ```
-   * new Popper(ref, pop, {
-   *   modifiers: {
-   *     preventOverflow: { enabled: false }
-   *   }
-   * })
-   * ```
-   * @type {Object}
-   * @static
-   * @memberof Popper
-   */
-  var Defaults = {
-    /**
-     * Popper's placement.
-     * @prop {Popper.placements} placement='bottom'
-     */
-    placement: 'bottom',
-
-    /**
-     * Set this to true if you want popper to position it self in 'fixed' mode
-     * @prop {Boolean} positionFixed=false
-     */
-    positionFixed: false,
-
-    /**
-     * Whether events (resize, scroll) are initially enabled.
-     * @prop {Boolean} eventsEnabled=true
-     */
-    eventsEnabled: true,
-
-    /**
-     * Set to true if you want to automatically remove the popper when
-     * you call the `destroy` method.
-     * @prop {Boolean} removeOnDestroy=false
-     */
-    removeOnDestroy: false,
-
-    /**
-     * Callback called when the popper is created.<br />
-     * By default, it is set to no-op.<br />
-     * Access Popper.js instance with `data.instance`.
-     * @prop {onCreate}
-     */
-    onCreate: function onCreate() {},
-
-    /**
-     * Callback called when the popper is updated. This callback is not called
-     * on the initialization/creation of the popper, but only on subsequent
-     * updates.<br />
-     * By default, it is set to no-op.<br />
-     * Access Popper.js instance with `data.instance`.
-     * @prop {onUpdate}
-     */
-    onUpdate: function onUpdate() {},
-
-    /**
-     * List of modifiers used to modify the offsets before they are applied to the popper.
-     * They provide most of the functionalities of Popper.js.
-     * @prop {modifiers}
-     */
-    modifiers: modifiers
-  };
-
-  /**
-   * @callback onCreate
-   * @param {dataObject} data
-   */
-
-  /**
-   * @callback onUpdate
-   * @param {dataObject} data
-   */
-
-  // Utils
-  // Methods
-  var Popper = function () {
-    /**
-     * Creates a new Popper.js instance.
-     * @class Popper
-     * @param {HTMLElement|referenceObject} reference - The reference element used to position the popper
-     * @param {HTMLElement} popper - The HTML element used as the popper
-     * @param {Object} options - Your custom options to override the ones defined in [Defaults](#defaults)
-     * @return {Object} instance - The generated Popper.js instance
-     */
-    function Popper(reference, popper) {
-      var _this = this;
-
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      classCallCheck(this, Popper);
-
-      this.scheduleUpdate = function () {
-        return requestAnimationFrame(_this.update);
-      };
-
-      // make update() debounced, so that it only runs at most once-per-tick
-      this.update = debounce(this.update.bind(this));
-
-      // with {} we create a new object with the options inside it
-      this.options = _extends({}, Popper.Defaults, options);
-
-      // init state
-      this.state = {
-        isDestroyed: false,
-        isCreated: false,
-        scrollParents: []
-      };
-
-      // get reference and popper elements (allow jQuery wrappers)
-      this.reference = reference && reference.jquery ? reference[0] : reference;
-      this.popper = popper && popper.jquery ? popper[0] : popper;
-
-      // Deep merge modifiers options
-      this.options.modifiers = {};
-      Object.keys(_extends({}, Popper.Defaults.modifiers, options.modifiers)).forEach(function (name) {
-        _this.options.modifiers[name] = _extends({}, Popper.Defaults.modifiers[name] || {}, options.modifiers ? options.modifiers[name] : {});
-      });
-
-      // Refactoring modifiers' list (Object => Array)
-      this.modifiers = Object.keys(this.options.modifiers).map(function (name) {
-        return _extends({
-          name: name
-        }, _this.options.modifiers[name]);
+      this.$dialog.on('mousedown.dismiss.bs.modal', function () {
+        that.$element.one('mouseup.dismiss.bs.modal', function (e) {
+          if ($(e.target).is(that.$element)) that.ignoreBackdropClick = true
+        })
       })
-      // sort the modifiers by order
-      .sort(function (a, b) {
-        return a.order - b.order;
-      });
 
-      // modifiers have the ability to execute arbitrary code when Popper.js get inited
-      // such code is executed in the same order of its modifier
-      // they could add new properties to their options configuration
-      // BE AWARE: don't add options to `options.modifiers.name` but to `modifierOptions`!
-      this.modifiers.forEach(function (modifierOptions) {
-        if (modifierOptions.enabled && isFunction(modifierOptions.onLoad)) {
-          modifierOptions.onLoad(_this.reference, _this.popper, _this.options, modifierOptions, _this.state);
+      this.backdrop(function () {
+        var transition = browser.support.transition && that.$element.hasClass('fade')
+
+        if (!noder.isChildOf(that.$element[0],that.$container[0])) {
+          that.$element.appendTo(that.$container) // don't move modals dom position
         }
-      });
 
-      // fire the first update to position the popper in the right place
-      this.update();
+        that.$element
+          .show()
+          .scrollTop(0)
 
-      var eventsEnabled = this.options.eventsEnabled;
-      if (eventsEnabled) {
-        // setup event listeners, they will take care of update the position in specific situations
-        this.enableEventListeners();
+        that.adjustDialog()
+
+        if (transition) {
+          that.$element[0].offsetWidth // force reflow
+        }
+
+        that.$element.addClass('in')
+
+        that.enforceFocus()
+
+        var e = eventer.create('shown.bs.modal', { relatedTarget: _relatedTarget })
+
+        transition ?
+          that.$dialog // wait for modal to slide in
+            .one('transitionEnd', function () {
+              that.$element.trigger('focus').trigger(e)
+            })
+            .emulateTransitionEnd(Modal.TRANSITION_DURATION) :
+          that.$element.trigger('focus').trigger(e)
+      })
+    },
+
+    hide : function (e) {
+      if (e) e.preventDefault()
+
+      e = eventer.create('hide.bs.modal')
+
+      this.$element.trigger(e)
+
+      if (!this.isShown || e.isDefaultPrevented()) return
+
+      this.isShown = false
+
+      this.escape()
+      this.resize()
+
+      $(document).off('focusin.bs.modal')
+
+      this.$element
+        .removeClass('in')
+        .off('click.dismiss.bs.modal')
+        .off('mouseup.dismiss.bs.modal')
+
+      this.$dialog.off('mousedown.dismiss.bs.modal')
+
+      browser.support.transition && this.$element.hasClass('fade') ?
+        this.$element
+          .one('transitionEnd', langx.proxy(this.hideModal, this))
+          .emulateTransitionEnd(Modal.TRANSITION_DURATION) :
+        this.hideModal()
+    },
+
+    enforceFocus : function () {
+      $(document)
+        .off('focusin.bs.modal') // guard against infinite focus loop
+        .on('focusin.bs.modal', langx.proxy(function (e) {
+          if (document !== e.target &&
+              this.$element[0] !== e.target &&
+              !this.$element.has(e.target).length) {
+            this.$element.trigger('focus')
+          }
+        }, this))
+    },
+
+    escape : function () {
+      if (this.isShown && this.options.keyboard) {
+        this.$element.on('keydown.dismiss.bs.modal', langx.proxy(function (e) {
+          e.which == 27 && this.hide()
+        }, this))
+      } else if (!this.isShown) {
+        this.$element.off('keydown.dismiss.bs.modal')
       }
+    },
 
-      this.state.eventsEnabled = eventsEnabled;
+    resize : function () {
+      if (this.isShown) {
+        $(window).on('resize.bs.modal', langx.proxy(this.handleUpdate, this))
+      } else {
+        $(window).off('resize.bs.modal')
+      }
+    },
+
+    hideModal : function () {
+      var that = this
+      this.$element.hide()
+      this.backdrop(function () {
+        that.$container.removeClass('modal-open')
+        that.resetAdjustments()
+        that.resetScrollbar()
+        that.$element.trigger('hidden.bs.modal')
+      })
+    },
+
+    removeBackdrop : function () {
+      this.$backdrop && this.$backdrop.remove()
+      this.$backdrop = null
+    },
+
+    backdrop : function (callback) {
+      var that = this
+      var animate = this.$element.hasClass('fade') ? 'fade' : ''
+
+      if (this.isShown && this.options.backdrop) {
+        var doAnimate = browser.support.transition && animate
+
+        this.$backdrop = $(document.createElement('div'))
+          .addClass('modal-backdrop ' + animate)
+          .appendTo(this.$container)
+
+        if (!this.$container.is("body")) {
+          this.$backdrop.css("position","absolute");
+        }
+
+
+        this.$element.on('click.dismiss.bs.modal', langx.proxy(function (e) {
+          if (this.ignoreBackdropClick) {
+            this.ignoreBackdropClick = false
+            return
+          }
+          if (e.target !== e.currentTarget) return
+          this.options.backdrop == 'static'
+            ? this.$element[0].focus()
+            : this.hide()
+        }, this))
+
+        if (doAnimate) this.$backdrop[0].offsetWidth // force reflow
+
+        this.$backdrop.addClass('in')
+
+        if (!callback) return
+
+        doAnimate ?
+          this.$backdrop
+            .one('transitionEnd', callback)
+            .emulateTransitionEnd(Modal.BACKDROP_TRANSITION_DURATION) :
+          callback()
+
+      } else if (!this.isShown && this.$backdrop) {
+        this.$backdrop.removeClass('in')
+
+        var callbackRemove = function () {
+          that.removeBackdrop()
+          callback && callback()
+        }
+        browser.support.transition && this.$element.hasClass('fade') ?
+          this.$backdrop
+            .one('transitionEnd', callbackRemove)
+            .emulateTransitionEnd(Modal.BACKDROP_TRANSITION_DURATION) :
+          callbackRemove()
+
+      } else if (callback) {
+        callback()
+      }
+    },
+
+    // these following methods are used to handle overflowing modals
+
+    handleUpdate : function () {
+      this.adjustDialog()
+    },
+
+    adjustDialog : function () {
+      var modalIsOverflowing = this.$element[0].scrollHeight > document.documentElement.clientHeight
+
+      this.$element.css({
+        paddingLeft:  !this.bodyIsOverflowing && modalIsOverflowing ? this.scrollbarWidth : '',
+        paddingRight: this.bodyIsOverflowing && !modalIsOverflowing ? this.scrollbarWidth : ''
+      })
+    },
+
+    resetAdjustments : function () {
+      this.$element.css({
+        paddingLeft: '',
+        paddingRight: ''
+      })
+    },
+
+    checkScrollbar : function () {
+      var fullWindowWidth = window.innerWidth
+      if (!fullWindowWidth) { // workaround for missing window.innerWidth in IE8
+        var documentElementRect = document.documentElement.getBoundingClientRect()
+        fullWindowWidth = documentElementRect.right - Math.abs(documentElementRect.left)
+      }
+      this.bodyIsOverflowing = document.body.clientWidth < fullWindowWidth
+      this.scrollbarWidth = this.measureScrollbar()
+    },
+
+    setScrollbar : function () {
+      var bodyPad = parseInt((this.$container.css('padding-right') || 0), 10)
+      this.originalBodyPad = document.body.style.paddingRight || ''
+      if (this.bodyIsOverflowing) this.$container.css('padding-right', bodyPad + this.scrollbarWidth)
+    },
+
+    resetScrollbar : function () {
+      this.$container.css('padding-right', this.originalBodyPad)
+    },
+
+    measureScrollbar : function () { // thx walsh
+      var scrollDiv = document.createElement('div')
+      scrollDiv.className = 'modal-scrollbar-measure'
+      this.$container.append(scrollDiv)
+      var scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth
+      this.$container[0].removeChild(scrollDiv)
+      return scrollbarWidth
     }
 
-    // We can't use class properties because they don't get listed in the
-    // class prototype and break stuff like Sinon stubs
+  });  
 
 
-    createClass(Popper, [{
-      key: 'update',
-      value: function update$$1() {
-        return update.call(this);
+  Modal.VERSION  = '3.3.7'
+
+  Modal.TRANSITION_DURATION = 300
+  Modal.BACKDROP_TRANSITION_DURATION = 150
+
+  Modal.DEFAULTS = {
+    backdrop: true,
+    keyboard: true,
+    show: true
+  }
+
+  /*
+
+  // MODAL PLUGIN DEFINITION
+  // =======================
+
+  function Plugin(option, _relatedTarget) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.modal')
+      var options = langx.mixin({}, Modal.DEFAULTS, $this.data(), typeof option == 'object' && option)
+
+      if (!data) $this.data('bs.modal', (data = new Modal(this, options)))
+      if (typeof option == 'string') data[option](_relatedTarget)
+      else if (options.show) data.show(_relatedTarget)
+    })
+  }
+
+  var old = $.fn.modal
+
+  $.fn.modal             = Plugin;
+  $.fn.modal.Constructor = Modal;
+
+
+  // MODAL NO CONFLICT
+  // =================
+
+  $.fn.modal.noConflict = function () {
+    $.fn.modal = old
+    return this
+  }
+
+
+  return $.fn.modal;
+  */
+
+  plugins.register(Modal,"modal",function(options,_relatedTarget){
+      //this -> plugin instance
+      if (typeof options == 'string') {
+        this[options](_relatedTarget);
+      } else if (this.options.show) {
+        this.show(_relatedTarget);
+      } 
+  });
+
+  return Modal;
+
+});
+
+define('skylark-bootstrap3/tooltip',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+/* ========================================================================
+ * Bootstrap: tooltip.js v3.3.7
+ * http://getbootstrap.com/javascript/#tooltip
+ * Inspired by the original jQuery.tipsy by Jason Frame
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  // TOOLTIP PUBLIC CLASS DEFINITION
+  // ===============================
+
+  var Tooltip = bs3.Tooltip = plugins.Plugin.inherit({
+    klassName: "Tooltip",
+
+    pluginName : "bs3.tooltip",
+
+    _construct : function(element,options) {
+      this.type       = null
+      this.options    = null
+      this.enabled    = null
+      this.timeout    = null
+      this.hoverState = null
+      this.$element   = null
+      this.inState    = null
+
+      this.enabled   = true;
+      this.type      = 'tooltip';
+      this.$element  = $(element)
+      this.options   = this.getOptions(options)
+      this.$viewport = this.options.viewport && $(langx.isFunction(this.options.viewport) ? this.options.viewport.call(this, this.$element) : (this.options.viewport.selector || this.options.viewport))
+      this.inState   = { click: false, hover: false, focus: false }
+
+      if (this.$element[0] instanceof document.constructor && !this.options.selector) {
+        throw new Error('`selector` option must be specified when initializing ' + this.type + ' on the window.document object!')
       }
-    }, {
-      key: 'destroy',
-      value: function destroy$$1() {
-        return destroy.call(this);
+
+      var triggers = this.options.trigger.split(' ')
+
+      for (var i = triggers.length; i--;) {
+        var trigger = triggers[i]
+
+        if (trigger == 'click') {
+          this.$element.on('click.' + this.type, this.options.selector, langx.proxy(this.toggle, this))
+        } else if (trigger != 'manual') {
+          var eventIn  = trigger == 'hover' ? 'mouseenter' : 'focusin'
+          var eventOut = trigger == 'hover' ? 'mouseleave' : 'focusout'
+
+          this.$element.on(eventIn  + '.' + this.type, this.options.selector, langx.proxy(this.enter, this))
+          this.$element.on(eventOut + '.' + this.type, this.options.selector, langx.proxy(this.leave, this))
+        }
       }
-    }, {
-      key: 'enableEventListeners',
-      value: function enableEventListeners$$1() {
-        return enableEventListeners.call(this);
+
+      this.options.selector ?
+        (this._options = langx.mixin({}, this.options, { trigger: 'manual', selector: '' })) :
+        this.fixTitle()
+    },
+
+    getDefaults : function () {
+      return Tooltip.DEFAULTS
+    },
+
+    getOptions : function (options) {
+      options = langx.mixin({}, this.getDefaults(), this.$element.data(), options)
+
+      if (options.delay && typeof options.delay == 'number') {
+        options.delay = {
+          show: options.delay,
+          hide: options.delay
+        }
       }
-    }, {
-      key: 'disableEventListeners',
-      value: function disableEventListeners$$1() {
-        return disableEventListeners.call(this);
+
+      return options
+    },
+
+    getDelegateOptions : function () {
+      var options  = {}
+      var defaults = this.getDefaults()
+
+      this._options && langx.each(this._options, function (key, value) {
+        if (defaults[key] != value) options[key] = value
+      })
+
+      return options
+    },
+
+    enter : function (obj) {
+      var self = obj instanceof this.constructor ?
+        obj : $(obj.currentTarget).plugin(this.pluginName)
+
+      if (!self) {
+        //self = new this.constructor(obj.currentTarget, this.getDelegateOptions())
+        self = $(obj.currentTarget).plugin(this.pluginName, this.getDelegateOptions())
       }
 
-      /**
-       * Schedules an update. It will run on the next UI update available.
-       * @method scheduleUpdate
-       * @memberof Popper
-       */
+      if (obj instanceof eventer.create) {
+        self.inState[obj.type == 'focusin' ? 'focus' : 'hover'] = true
+      }
+
+      if (self.tip().hasClass('in') || self.hoverState == 'in') {
+        self.hoverState = 'in'
+        return
+      }
+
+      clearTimeout(self.timeout)
+
+      self.hoverState = 'in'
+
+      if (!self.options.delay || !self.options.delay.show) return self.show()
+
+      self.timeout = setTimeout(function () {
+        if (self.hoverState == 'in') self.show()
+      }, self.options.delay.show)
+    },
+
+    isInStateTrue : function () {
+      for (var key in this.inState) {
+        if (this.inState[key]) return true
+      }
+
+      return false
+    },
+
+    leave : function (obj) {
+      var self = obj instanceof this.constructor ?
+        obj : $(obj.currentTarget).plugin(this.pluginName)
+
+      if (!self) {
+        //self = new this.constructor(obj.currentTarget, this.getDelegateOptions())
+        self = $(obj.currentTarget).plugin(this.pluginName, this.getDelegateOptions())
+      }
+
+      if (obj instanceof eventer.create) {
+        self.inState[obj.type == 'focusout' ? 'focus' : 'hover'] = false
+      }
+
+      if (self.isInStateTrue()) return
+
+      clearTimeout(self.timeout)
+
+      self.hoverState = 'out'
+
+      if (!self.options.delay || !self.options.delay.hide) return self.hide()
+
+      self.timeout = setTimeout(function () {
+        if (self.hoverState == 'out') self.hide()
+      }, self.options.delay.hide)
+    },
+
+    show : function () {
+      var e = eventer.create('show.bs.' + this.type)
+
+      if (this.hasContent() && this.enabled) {
+        this.$element.trigger(e)
+
+        var inDom = noder.contains(this.$element[0].ownerDocument.documentElement, this.$element[0])
+        if (e.isDefaultPrevented() || !inDom) return
+        var that = this
+
+        var $tip = this.tip()
+
+        var tipId = this.getUID(this.type)
+
+        this.setContent()
+        $tip.attr('id', tipId)
+        this.$element.attr('aria-describedby', tipId)
+
+        if (this.options.animation) $tip.addClass('fade')
+
+        var placement = typeof this.options.placement == 'function' ?
+          this.options.placement.call(this, $tip[0], this.$element[0]) :
+          this.options.placement
+
+        var autoToken = /\s?auto?\s?/i
+        var autoPlace = autoToken.test(placement)
+        if (autoPlace) placement = placement.replace(autoToken, '') || 'top'
+
+        $tip
+          .detach()
+          .css({ top: 0, left: 0, display: 'block' })
+          .addClass(placement)
+          .data('bs3.' + this.type, this)
+
+        this.options.container ? $tip.appendTo(this.options.container) : $tip.insertAfter(this.$element)
+        this.$element.trigger('inserted.bs3.' + this.type)
+
+        var pos          = this.getPosition()
+        var actualWidth  = $tip[0].offsetWidth
+        var actualHeight = $tip[0].offsetHeight
+
+        if (autoPlace) {
+          var orgPlacement = placement
+          var viewportDim = this.getPosition(this.$viewport)
+
+          placement = placement == 'bottom' && pos.bottom + actualHeight > viewportDim.bottom ? 'top'    :
+                      placement == 'top'    && pos.top    - actualHeight < viewportDim.top    ? 'bottom' :
+                      placement == 'right'  && pos.right  + actualWidth  > viewportDim.width  ? 'left'   :
+                      placement == 'left'   && pos.left   - actualWidth  < viewportDim.left   ? 'right'  :
+                      placement
+
+          $tip
+            .removeClass(orgPlacement)
+            .addClass(placement)
+        }
+
+        var calculatedOffset = this.getCalculatedOffset(placement, pos, actualWidth, actualHeight)
+
+        this.applyPlacement(calculatedOffset, placement)
+
+        var complete = function () {
+          var prevHoverState = that.hoverState
+          that.$element.trigger('shown.bs3.' + that.type)
+          that.hoverState = null
+
+          if (prevHoverState == 'out') that.leave(that)
+        }
+
+        browser.support.transition && this.$tip.hasClass('fade') ?
+          $tip
+            .one('transitionEnd', complete)
+            .emulateTransitionEnd(Tooltip.TRANSITION_DURATION) :
+          complete()
+      }
+    },
+
+    applyPlacement : function (offset, placement) {
+      var $tip   = this.tip()
+      var width  = $tip[0].offsetWidth
+      var height = $tip[0].offsetHeight
+
+      // manually read margins because getBoundingClientRect includes difference
+      var marginTop = parseInt($tip.css('margin-top'), 10)
+      var marginLeft = parseInt($tip.css('margin-left'), 10)
+
+      // we must check for NaN for ie 8/9
+      if (isNaN(marginTop))  marginTop  = 0
+      if (isNaN(marginLeft)) marginLeft = 0
+
+      offset.top  += marginTop
+      offset.left += marginLeft
+
+      // $.fn.offset doesn't round pixel values
+      // so we use setOffset directly with our own function B-0
+      //$.offset.setOffset($tip[0], langx.mixin({
+       // using: function (props) {
+       //   $tip.css({
+       //     top: Math.round(props.top),
+       //     left: Math.round(props.left)
+       //   })
+       /// }
+      //}, offset), 0);
+
+      geom.pagePosition($tip[0],offset);
+      
+
+      $tip.addClass('in')
+
+      // check to see if placing tip in new offset caused the tip to resize itself
+      var actualWidth  = $tip[0].offsetWidth
+      var actualHeight = $tip[0].offsetHeight
+
+      if (placement == 'top' && actualHeight != height) {
+        offset.top = offset.top + height - actualHeight
+      }
+
+      var delta = this.getViewportAdjustedDelta(placement, offset, actualWidth, actualHeight)
+
+      if (delta.left) offset.left += delta.left
+      else offset.top += delta.top
+
+      var isVertical          = /top|bottom/.test(placement)
+      var arrowDelta          = isVertical ? delta.left * 2 - width + actualWidth : delta.top * 2 - height + actualHeight
+      var arrowOffsetPosition = isVertical ? 'offsetWidth' : 'offsetHeight'
+
+      $tip.offset(offset)
+      this.replaceArrow(arrowDelta, $tip[0][arrowOffsetPosition], isVertical)
+    },
+
+    replaceArrow : function (delta, dimension, isVertical) {
+      this.arrow()
+        .css(isVertical ? 'left' : 'top', 50 * (1 - delta / dimension) + '%')
+        .css(isVertical ? 'top' : 'left', '')
+    },
+
+    setContent : function () {
+      var $tip  = this.tip()
+      var title = this.getTitle()
+
+      $tip.find('.tooltip-inner')[this.options.html ? 'html' : 'text'](title)
+      $tip.removeClass('fade in top bottom left right')
+    },
+
+    hide : function (callback) {
+      var that = this
+      var $tip = $(this.$tip)
+      var e    = eventer.create('hide.bs3.' + this.type)
+
+      function complete() {
+        if (that.hoverState != 'in') $tip.detach()
+        if (that.$element) { // TODO: Check whether guarding this code with this `if` is really necessary.
+          that.$element
+            .removeAttr('aria-describedby')
+            .trigger('hidden.bs3.' + that.type)
+        }
+        callback && callback()
+      }
+
+      this.$element.trigger(e)
+
+      if (e.isDefaultPrevented()) return
+
+      $tip.removeClass('in')
+
+      browser.support.transition && $tip.hasClass('fade') ?
+        $tip
+          .one('transitionEnd', complete)
+          .emulateTransitionEnd(Tooltip.TRANSITION_DURATION) :
+        complete()
+
+      this.hoverState = null
+
+      return this
+    },
+
+    fixTitle : function () {
+      var $e = this.$element
+      if ($e.attr('title') || typeof $e.attr('data-original-title') != 'string') {
+        $e.attr('data-original-title', $e.attr('title') || '').attr('title', '')
+      }
+    },
+
+    hasContent : function () {
+      return this.getTitle()
+    },
+
+    getPosition : function ($element) {
+      $element   = $element || this.$element
+
+      var el     = $element[0]
+      var isBody = el.tagName == 'BODY'
+
+      var elRect    = el.getBoundingClientRect()
+      if (elRect.width == null) {
+        // width and height are missing in IE8, so compute them manually; see https://github.com/twbs/bootstrap/issues/14093
+        elRect = langx.mixin({}, elRect, { width: elRect.right - elRect.left, height: elRect.bottom - elRect.top })
+      }
+      var isSvg = window.SVGElement && el instanceof window.SVGElement
+      // Avoid using $.offset() on SVGs since it gives incorrect results in jQuery 3.
+      // See https://github.com/twbs/bootstrap/issues/20280
+      var elOffset  = isBody ? { top: 0, left: 0 } : (isSvg ? null : $element.offset())
+      var scroll    = { scroll: isBody ? document.documentElement.scrollTop || document.body.scrollTop : $element.scrollTop() }
+      var outerDims = isBody ? { width: $(window).width(), height: $(window).height() } : null
+
+      return langx.mixin({}, elRect, scroll, outerDims, elOffset)
+    },
+
+    getCalculatedOffset : function (placement, pos, actualWidth, actualHeight) {
+      return placement == 'bottom' ? { top: pos.top + pos.height,   left: pos.left + pos.width / 2 - actualWidth / 2 } :
+             placement == 'top'    ? { top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2 } :
+             placement == 'left'   ? { top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth } :
+          /* placement == 'right' */ { top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width }
+
+    },
+
+    getViewportAdjustedDelta : function (placement, pos, actualWidth, actualHeight) {
+      var delta = { top: 0, left: 0 }
+      if (!this.$viewport) return delta
+
+      var viewportPadding = this.options.viewport && this.options.viewport.padding || 0
+      var viewportDimensions = this.getPosition(this.$viewport)
+
+      if (/right|left/.test(placement)) {
+        var topEdgeOffset    = pos.top - viewportPadding - viewportDimensions.scroll
+        var bottomEdgeOffset = pos.top + viewportPadding - viewportDimensions.scroll + actualHeight
+        if (topEdgeOffset < viewportDimensions.top) { // top overflow
+          delta.top = viewportDimensions.top - topEdgeOffset
+        } else if (bottomEdgeOffset > viewportDimensions.top + viewportDimensions.height) { // bottom overflow
+          delta.top = viewportDimensions.top + viewportDimensions.height - bottomEdgeOffset
+        }
+      } else {
+        var leftEdgeOffset  = pos.left - viewportPadding
+        var rightEdgeOffset = pos.left + viewportPadding + actualWidth
+        if (leftEdgeOffset < viewportDimensions.left) { // left overflow
+          delta.left = viewportDimensions.left - leftEdgeOffset
+        } else if (rightEdgeOffset > viewportDimensions.right) { // right overflow
+          delta.left = viewportDimensions.left + viewportDimensions.width - rightEdgeOffset
+        }
+      }
+
+      return delta
+    },
+
+    getTitle : function () {
+      var title
+      var $e = this.$element
+      var o  = this.options
+
+      title = $e.attr('data-original-title')
+        || (typeof o.title == 'function' ? o.title.call($e[0]) :  o.title)
+
+      return title
+    },
+
+    getUID : function (prefix) {
+      do prefix += ~~(Math.random() * 1000000)
+      while (document.getElementById(prefix))
+      return prefix
+    },
+
+    tip : function () {
+      if (!this.$tip) {
+        this.$tip = $(this.options.template)
+        if (this.$tip.length != 1) {
+          throw new Error(this.type + ' `template` option must consist of exactly 1 top-level element!')
+        }
+      }
+      return this.$tip
+    },
+
+    arrow : function () {
+      return (this.$arrow = this.$arrow || this.tip().find('.tooltip-arrow'))
+    },
+
+    enable : function () {
+      this.enabled = true
+    },
+
+    disable : function () {
+      this.enabled = false
+    },
+
+    toggleEnabled : function () {
+      this.enabled = !this.enabled
+    },
+
+    toggle : function (e) {
+      var self = this
+      if (e) {
+        self = $(e.currentTarget).plugin(this.pluginName)
+        if (!self) {
+          //self = new this.constructor(e.currentTarget, this.getDelegateOptions())
+          self = $(e.currentTarget).plugin(this.pluginName, this.getDelegateOptions());
+        }
+      }
+
+      if (e) {
+        self.inState.click = !self.inState.click
+        if (self.isInStateTrue()) self.enter(self)
+        else self.leave(self)
+      } else {
+        self.tip().hasClass('in') ? self.leave(self) : self.enter(self)
+      }
+    },
+
+    destroy : function () {
+      var that = this
+      clearTimeout(this.timeout)
+      this.hide(function () {
+        that.$element.off('.' + that.type).removeData('bs3.' + that.type)
+        if (that.$tip) {
+          that.$tip.detach()
+        }
+        that.$tip = null
+        that.$arrow = null
+        that.$viewport = null
+        that.$element = null
+      })
+    }
+
+  }); 
 
 
-      /**
-       * Collection of utilities useful when writing custom modifiers.
-       * Starting from version 1.7, this method is available only if you
-       * include `popper-utils.js` before `popper.js`.
-       *
-       * **DEPRECATION**: This way to access PopperUtils is deprecated
-       * and will be removed in v2! Use the PopperUtils module directly instead.
-       * Due to the high instability of the methods contained in Utils, we can't
-       * guarantee them to follow semver. Use them at your own risk!
-       * @static
-       * @private
-       * @type {Object}
-       * @deprecated since version 1.8
-       * @member Utils
-       * @memberof Popper
-       */
 
-    }]);
-    return Popper;
-  }();
+  Tooltip.VERSION  = '3.3.7'
+
+  Tooltip.TRANSITION_DURATION = 150
+
+  Tooltip.DEFAULTS = {
+    animation: true,
+    placement: 'top',
+    selector: false,
+    template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>',
+    trigger: 'hover focus',
+    title: '',
+    delay: 0,
+    html: false,
+    container: false,
+    viewport: {
+      selector: 'body',
+      padding: 0
+    }
+  }
+
+
+  /*
+  // TOOLTIP PLUGIN DEFINITION
+  // =========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.tooltip')
+      var options = typeof option == 'object' && option
+
+      if (!data && /destroy|hide/.test(option)) return
+      if (!data) $this.data('bs.tooltip', (data = new Tooltip(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.tooltip
+
+  $.fn.tooltip             = Plugin;
+  $.fn.tooltip.Constructor = Tooltip;
+
+
+  // TOOLTIP NO CONFLICT
+  // ===================
+
+  $.fn.tooltip.noConflict = function () {
+    $.fn.tooltip = old;
+    return this;
+  }
+
+  return $.fn.tooltip;
+  */
+
+  plugins.register(Tooltip,"tooltip");
+
+  return Tooltip;
+});
+
+define('skylark-bootstrap3/popover',[
+  "skylark-domx-browser",
+  "skylark-langx/langx",
+  "skylark-domx-eventer",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3",
+  "./tooltip" 
+],function(browser,langx,eventer,$,plugins,bs3,Tooltip){
+/* ========================================================================
+ * Bootstrap: popover.js v3.3.7
+ * http://getbootstrap.com/javascript/#popovers
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  // POPOVER PUBLIC CLASS DEFINITION
+  // ===============================
+
+  var Popover = bs3.Popover = Tooltip.inherit({
+    klassName: "Popover",
+
+    pluginName : "bs3.popover",
+
+    _construct : function(element,options) {
+      this.overrided(element,options);
+      this.type = "popover";
+    },
+    getDefaults : function () {
+      return Popover.DEFAULTS
+    },
+
+    setContent : function () {
+      var $tip    = this.tip()
+      var title   = this.getTitle()
+      var content = this.getContent()
+
+      $tip.find('.popover-title')[this.options.html ? 'html' : 'text'](title)
+      $tip.find('.popover-content').children().detach().end()[ // we use append for html objects to maintain js events
+        this.options.html ? (typeof content == 'string' ? 'html' : 'append') : 'text'
+      ](content)
+
+      $tip.removeClass('fade top bottom left right in')
+
+      // IE8 doesn't accept hiding via the `:empty` pseudo selector, we have to do
+      // this manually by checking the contents.
+      if (!$tip.find('.popover-title').html()) $tip.find('.popover-title').hide()
+    },
+
+    hasContent : function () {
+      return this.getTitle() || this.getContent()
+    },
+
+    getContent : function () {
+      var $e = this.$element
+      var o  = this.options
+
+      return $e.attr('data-content')
+        || (typeof o.content == 'function' ?
+              o.content.call($e[0]) :
+              o.content)
+    },
+
+    arrow : function () {
+      return (this.$arrow = this.$arrow || this.tip().find('.arrow'))
+    }
+
+  });  
+
+  Popover.VERSION  = '3.3.7'
+
+  Popover.DEFAULTS = langx.mixin({}, Tooltip.DEFAULTS, {
+    placement: 'right',
+    trigger: 'click',
+    content: '',
+    template: '<div class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
+  })
+
+
+  // NOTE: POPOVER EXTENDS tooltip.js
+  // ================================
+
+  /*
+
+  // POPOVER PLUGIN DEFINITION
+  // =========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.popover')
+      var options = typeof option == 'object' && option
+
+      if (!data && /destroy|hide/.test(option)) return
+      if (!data) $this.data('bs.popover', (data = new Popover(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.popover;
+
+  $.fn.popover             = Plugin;
+  $.fn.popover.Constructor = Popover;
+
+
+  // POPOVER NO CONFLICT
+  // ===================
+
+  $.fn.popover.noConflict = function () {
+    $.fn.popover = old
+    return this
+  };
+
+  return $.fn.popover;
+  */
+
+  plugins.register(Popover,"popover");
+
+  return Popover;
+
+});
+
+define('skylark-bootstrap3/scrollspy',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+/* ========================================================================
+ * Bootstrap: scrollspy.js v3.3.7
+ * http://getbootstrap.com/javascript/#scrollspy
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  // SCROLLSPY CLASS DEFINITION
+  // ==========================
+
+  var ScrollSpy = bs3.ScrollSpy = plugins.Plugin.inherit({
+    klassName: "ScrollSpy",
+
+    pluginName : "bs3.scrollspy",
+
+    _construct : function(element,options) {
+      this.$body          = $(document.body)
+      this.$scrollElement = $(element).is(document.body) ? $(window) : $(element)
+      this.options        = langx.mixin({}, ScrollSpy.DEFAULTS, options)
+      this.selector       = (this.options.target || '') + ' .nav li > a'
+      this.offsets        = []
+      this.targets        = []
+      this.activeTarget   = null
+      this.scrollHeight   = 0
+
+      this.$scrollElement.on('scroll.bs.scrollspy', langx.proxy(this.process, this))
+      this.refresh()
+      this.process()
+    },
+
+    getScrollHeight : function () {
+      return this.$scrollElement[0].scrollHeight || Math.max(this.$body[0].scrollHeight, document.documentElement.scrollHeight)
+    },
+
+    refresh : function () {
+      var that          = this
+      var offsetMethod  = 'offset'
+      var offsetBase    = 0
+
+      this.offsets      = []
+      this.targets      = []
+      this.scrollHeight = this.getScrollHeight()
+
+      if (!langx.isWindow(this.$scrollElement[0])) {
+        offsetMethod = 'position'
+        offsetBase   = this.$scrollElement.scrollTop()
+      }
+
+      this.$body
+        .find(this.selector)
+        .map(function () {
+          var $el   = $(this)
+          var href  = $el.data('target') || $el.attr('href')
+          var $href = /^#./.test(href) && $(href)
+
+          return ($href
+            && $href.length
+            && $href.is(':visible')
+            && [[$href[offsetMethod]().top + offsetBase, href]]) || null
+        })
+        .sort(function (a, b) { return a[0] - b[0] })
+        .each(function () {
+          that.offsets.push(this[0])
+          that.targets.push(this[1])
+        })
+    },
+
+    process : function () {
+      var scrollTop    = this.$scrollElement.scrollTop() + this.options.offset
+      var scrollHeight = this.getScrollHeight()
+      var maxScroll    = this.options.offset + scrollHeight - this.$scrollElement.height()
+      var offsets      = this.offsets
+      var targets      = this.targets
+      var activeTarget = this.activeTarget
+      var i
+
+      if (this.scrollHeight != scrollHeight) {
+        this.refresh()
+      }
+
+      if (scrollTop >= maxScroll) {
+        return activeTarget != (i = targets[targets.length - 1]) && this.activate(i)
+      }
+
+      if (activeTarget && scrollTop < offsets[0]) {
+        this.activeTarget = null
+        return this.clear()
+      }
+
+      for (i = offsets.length; i--;) {
+        activeTarget != targets[i]
+          && scrollTop >= offsets[i]
+          && (offsets[i + 1] === undefined || scrollTop < offsets[i + 1])
+          && this.activate(targets[i])
+      }
+    },
+
+    activate : function (target) {
+      this.activeTarget = target
+
+      this.clear()
+
+      var selector = this.selector +
+        '[data-target="' + target + '"],' +
+        this.selector + '[href="' + target + '"]'
+
+      var active = $(selector)
+        .parents('li')
+        .addClass('active')
+
+      if (active.parent('.dropdown-menu').length) {
+        active = active
+          .closest('li.dropdown')
+          .addClass('active')
+      }
+
+      active.trigger('activate.bs.scrollspy')
+    },
+
+    clear : function () {
+      $(this.selector)
+        .parentsUntil(this.options.target, '.active')
+        .removeClass('active')
+    }
+
+  });
+
+  ScrollSpy.VERSION  = '3.3.7'
+
+  ScrollSpy.DEFAULTS = {
+    offset: 10
+  }
+
+  /*
+
+  // SCROLLSPY PLUGIN DEFINITION
+  // ===========================
+  var old = $.fn.scrollspy;
+
+  $.fn.scrollspy = function scrollspy(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.scrollspy')
+      var options = typeof option == 'object' && option
+
+      if (!data) $this.data('bs.scrollspy', (data = new ScrollSpy(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+
+  $.fn.scrollspy.Constructor = ScrollSpy;
+
+
+  // SCROLLSPY NO CONFLICT
+  // =====================
+
+  $.fn.scrollspy.noConflict = function () {
+    $.fn.scrollspy = old;
+    return this;
+  }
+
+
+  return $.fn.scrollspy;
+  */
+
+  plugins.register(ScrollSpy,"scrollspy");
+
+  return ScrollSpy;
+
+});
+
+define('skylark-bootstrap3/tab',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+/* ========================================================================
+ * Bootstrap: tab.js v3.3.7
+ * http://getbootstrap.com/javascript/#tabs
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+  'use strict';
+
+  // TAB CLASS DEFINITION
+  // ====================
+
+
+  var Tab = bs3.Tab = plugins.Plugin.inherit({
+    klassName: "Tab",
+
+    pluginName : "bs3.tab",
+
+    _construct : function(element,options) {
+      // jscs:disable requireDollarBeforejQueryAssignment
+      this.element = $(element)
+      this.target = options && options.target;
+
+      // jscs:enable requireDollarBeforejQueryAssignment
+      this.element.on("click.bs.tab.data-api",langx.proxy(function(e){
+        e.preventDefault()
+        this.show();
+      },this));    
+    },
+
+    show : function () {
+      var $this    = this.element
+      var $ul      = $this.closest('ul:not(.dropdown-menu)')
+      var selector = this.target || $this.data('target');
+
+      if (!selector) {
+        selector = $this.attr('href')
+        selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+      }
+
+      if ($this.parent('li').hasClass('active')) return
+
+      var $previous = $ul.find('.active:last a')
+      var hideEvent = eventer.create('hide.bs.tab', {
+        relatedTarget: $this[0]
+      })
+      var showEvent = eventer.create('show.bs.tab', {
+        relatedTarget: $previous[0]
+      })
+
+      $previous.trigger(hideEvent)
+      $this.trigger(showEvent)
+
+      if (showEvent.isDefaultPrevented() || hideEvent.isDefaultPrevented()) return
+
+      var $target = $(selector)
+
+      this.activate($this.closest('li'), $ul)
+      this.activate($target, $target.parent(), function () {
+        $previous.trigger({
+          type: 'hidden.bs.tab',
+          relatedTarget: $this[0]
+        })
+        $this.trigger({
+          type: 'shown.bs.tab',
+          relatedTarget: $previous[0]
+        })
+      })
+    },
+
+    activate : function (element, container, callback) {
+      var $active    = container.find('> .active')
+      var transition = callback
+        && browser.support.transition
+        && ($active.length && $active.hasClass('fade') || !!container.find('> .fade').length)
+
+      function next() {
+        $active
+          .removeClass('active')
+          .find('> .dropdown-menu > .active')
+            .removeClass('active')
+          .end()
+          .find('[data-toggle="tab"]')
+            .attr('aria-expanded', false)
+
+        element
+          .addClass('active')
+          .find('[data-toggle="tab"]')
+            .attr('aria-expanded', true)
+
+        if (transition) {
+          element[0].offsetWidth // reflow for transition
+          element.addClass('in')
+        } else {
+          element.removeClass('fade')
+        }
+
+        if (element.parent('.dropdown-menu').length) {
+          element
+            .closest('li.dropdown')
+              .addClass('active')
+            .end()
+            .find('[data-toggle="tab"]')
+              .attr('aria-expanded', true)
+        }
+
+        callback && callback()
+      }
+
+      $active.length && transition ?
+        $active
+          .one('transitionEnd', next)
+          .emulateTransitionEnd(Tab.TRANSITION_DURATION) :
+        next()
+
+      $active.removeClass('in')
+    }
+
+
+  });
+
+
+  Tab.VERSION = '3.3.7'
+
+  Tab.TRANSITION_DURATION = 150
+
+  /*
+  // TAB PLUGIN DEFINITION
+  // =====================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var data  = $this.data('bs.tab')
+
+      if (!data) $this.data('bs.tab', (data = new Tab(this,option)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.tab
+
+  $.fn.tab             = Plugin
+  $.fn.tab.Constructor = Tab
+
+
+  // TAB NO CONFLICT
+  // ===============
+
+  $.fn.tab.noConflict = function () {
+    $.fn.tab = old
+    return this
+  }
+
+  return $.fn.tab;
+  */
+
+  plugins.register(Tab,"tab");
+
+  return Tab;
+});
+
+define('skylark-bootstrap3/taginput',[
+  "skylark-langx/langx",
+  "skylark-domx-browser",
+  "skylark-domx-eventer",
+  "skylark-domx-noder",
+  "skylark-domx-geom",
+  "skylark-domx-query",
+  "skylark-domx-plugins",
+  "./bs3"
+],function(langx,browser,eventer,noder,geom,$,plugins,bs3){
+
+  "use strict";
+
+  var defaultOptions = {
+    tagClass: function(item) {
+      return 'label label-info';
+    },
+    focusClass: 'focus',
+    itemValue: function(item) {
+      return item ? item.toString() : item;
+    },
+    itemText: function(item) {
+      return this.itemValue(item);
+    },
+    itemTitle: function(item) {
+      return null;
+    },
+    freeInput: true,
+    addOnBlur: true,
+    maxTags: undefined,
+    maxChars: undefined,
+    confirmKeys: [13, 44],
+    delimiter: ',',
+    delimiterRegex: null,
+    cancelConfirmKeysOnEmpty: false,
+    onTagExists: function(item, $tag) {
+      $tag.hide().fadeIn();
+    },
+    trimValue: false,
+    allowDuplicates: false,
+    triggerChange: true
+  };
+
+
+  var TagsInput = bs3.TagsInput = plugins.Plugin.inherit({
+    klassName: "TagsInput",
+
+    pluginName : "bs3.TagsInput",
 
   /**
-   * The `referenceObject` is an object that provides an interface compatible with Popper.js
-   * and lets you use it as replacement of a real DOM node.<br />
-   * You can use this method to position a popper relatively to a set of coordinates
-   * in case you don't have a DOM node to use as reference.
-   *
-   * ```
-   * new Popper(referenceObject, popperNode);
-   * ```
-   *
-   * NB: This feature isn't supported in Internet Explorer 10.
-   * @name referenceObject
-   * @property {Function} data.getBoundingClientRect
-   * A function that returns a set of coordinates compatible with the native `getBoundingClientRect` method.
-   * @property {number} data.clientWidth
-   * An ES6 getter that will return the width of the virtual reference element.
-   * @property {number} data.clientHeight
-   * An ES6 getter that will return the height of the virtual reference element.
+   * Constructor function
    */
+    _construct : function(element, options) {
+      this.objectItems = options && options.itemValue;
+      options = langx.mixin({}, defaultOptions, $(element).data(), options)
+      this.overrided(element,options);
+
+      this.isInit = true;
+      this.itemsArray = [];
 
 
-  Popper.Utils = (typeof window !== 'undefined' ? window : global).PopperUtils;
-  Popper.placements = placements;
-  Popper.Defaults = Defaults;
+      this.$element = $(element);
+      this.$element.hide();
+
+      this.isSelect = (element.tagName === 'SELECT');
+      this.multiple = (this.isSelect && element.hasAttribute('multiple'));
+      this.placeholderText = element.hasAttribute('placeholder') ? this.$element.attr('placeholder') : '';
+      this.inputSize = Math.max(1, this.placeholderText.length);
+
+      this.$container = $('<div class="bootstrap-tagsinput"></div>');
+      this.$input = $('<input type="text" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
+
+      this.$element.before(this.$container);
+
+      this.build();
+      this.isInit = false;
+    },
 
 
-  skylark.ui = skylark.ui || {};
+    /**
+     * Adds the given item as a new tag. Pass true to dontPushVal to prevent
+     * updating the elements val()
+     */
+    add: function(item, dontPushVal, options) {
+      var self = this;
 
-  return skylark.ui.Popper = Popper;
+      if (self.options.maxTags && self.itemsArray.length >= self.options.maxTags)
+        return;
 
-});
+      // Ignore falsey values, except false
+      if (item !== false && !item)
+        return;
 
+      // Trim value
+      if (typeof item === "string" && self.options.trimValue) {
+        item = langx.trim(item);
+      }
 
-define('skylark-bootstrap4/dropdown',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    'skylark-ui-popper/Popper',
-    './util'
-], function (langx,$, plugins,bs4,Popper,Util) {
-    'use strict';
-    const NAME = 'dropdown';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.dropdown';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const ESCAPE_KEYCODE = 27;
-    const SPACE_KEYCODE = 32;
-    const TAB_KEYCODE = 9;
-    const ARROW_UP_KEYCODE = 38;
-    const ARROW_DOWN_KEYCODE = 40;
-    const RIGHT_MOUSE_BUTTON_WHICH = 3;
-    const REGEXP_KEYDOWN = new RegExp(`${ ARROW_UP_KEYCODE }|${ ARROW_DOWN_KEYCODE }|${ ESCAPE_KEYCODE }`);
-    const Event = {
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        CLICK: `click${ EVENT_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`,
-        KEYDOWN_DATA_API: `keydown${ EVENT_KEY }${ DATA_API_KEY }`,
-        KEYUP_DATA_API: `keyup${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        DISABLED: 'disabled',
-        SHOW: 'show',
-        DROPUP: 'dropup',
-        DROPRIGHT: 'dropright',
-        DROPLEFT: 'dropleft',
-        MENURIGHT: 'dropdown-menu-right',
-        MENULEFT: 'dropdown-menu-left',
-        POSITION_STATIC: 'position-static'
-    };
-    const Selector = {
-        DATA_TOGGLE: '[data-toggle="dropdown"]',
-        FORM_CHILD: '.dropdown form',
-        MENU: '.dropdown-menu',
-        NAVBAR_NAV: '.navbar-nav',
-        VISIBLE_ITEMS: '.dropdown-menu .dropdown-item:not(.disabled):not(:disabled)'
-    };
-    const AttachmentMap = {
-        TOP: 'top-start',
-        TOPEND: 'top-end',
-        BOTTOM: 'bottom-start',
-        BOTTOMEND: 'bottom-end',
-        RIGHT: 'right-start',
-        RIGHTEND: 'right-end',
-        LEFT: 'left-start',
-        LEFTEND: 'left-end'
-    };
-    const Default = {
-        offset: 0,
-        flip: true,
-        boundary: 'scrollParent',
-        reference: 'toggle',
-        display: 'dynamic'
-    };
-    const DefaultType = {
-        offset: '(number|string|function)',
-        flip: 'boolean',
-        boundary: '(string|element)',
-        reference: '(string|element)',
-        display: 'string'
-    };
-    class Dropdown {
-        constructor(element, config) {
-            this._element = element;
-            this._popper = null;
-            this._config = this._getConfig(config);
-            this._menu = this._getMenuElement();
-            this._inNavbar = this._detectNavbar();
-            this._addEventListeners();
+      // Throw an error when trying to add an object while the itemValue option was not set
+      if (typeof item === "object" && !self.objectItems)
+        throw("Can't add objects when itemValue option is not set");
+
+      // Ignore strings only containg whitespace
+      if (item.toString().match(/^\s*$/))
+        return;
+
+      // If SELECT but not multiple, remove current tag
+      if (self.isSelect && !self.multiple && self.itemsArray.length > 0)
+        self.remove(self.itemsArray[0]);
+
+      if (typeof item === "string" && this.$element[0].tagName === 'INPUT') {
+        var delimiter = (self.options.delimiterRegex) ? self.options.delimiterRegex : self.options.delimiter;
+        var items = item.split(delimiter);
+        if (items.length > 1) {
+          for (var i = 0; i < items.length; i++) {
+            this.add(items[i], true);
+          }
+
+          if (!dontPushVal)
+            self.pushVal(self.options.triggerChange);
+          return;
         }
-        static get VERSION() {
-            return VERSION;
+      }
+
+      var itemValue = self.options.itemValue(item),
+          itemText = self.options.itemText(item),
+          tagClass = self.options.tagClass(item),
+          itemTitle = self.options.itemTitle(item);
+
+      // Ignore items allready added
+      var existing = langx.grep(self.itemsArray, function(item) { return self.options.itemValue(item) === itemValue; } )[0];
+      if (existing && !self.options.allowDuplicates) {
+        // Invoke onTagExists
+        if (self.options.onTagExists) {
+          var $existingTag = $(".tag", self.$container).filter(function() { return $(this).data("item") === existing; });
+          self.options.onTagExists(item, $existingTag);
         }
-        static get Default() {
-            return Default;
-        }
-        static get DefaultType() {
-            return DefaultType;
-        }
-        toggle() {
-            if (this._element.disabled || $(this._element).hasClass(ClassName.DISABLED)) {
-                return;
+        return;
+      }
+
+      // if length greater than limit
+      if (self.items().toString().length + item.length + 1 > self.options.maxInputLength)
+        return;
+
+      // raise beforeItemAdd arg
+      var beforeItemAddEvent = eventer.create('beforeItemAdd', { item: item, cancel: false, options: options});
+      self.$element.trigger(beforeItemAddEvent);
+      if (beforeItemAddEvent.cancel)
+        return;
+
+      // register item in internal array and map
+      self.itemsArray.push(item);
+
+      // add a tag element
+
+      var $tag = $('<span class="tag ' + htmlEncode(tagClass) + (itemTitle !== null ? ('" title="' + itemTitle) : '') + '">' + htmlEncode(itemText) + '<span data-role="remove"></span></span>');
+      $tag.data('item', item);
+      self.findInputWrapper().before($tag);
+      $tag.after(' ');
+
+      // Check to see if the tag exists in its raw or uri-encoded form
+      var optionExists = (
+        $('option[value="' + encodeURIComponent(itemValue) + '"]', self.$element).length ||
+        $('option[value="' + htmlEncode(itemValue) + '"]', self.$element).length
+      );
+
+      // add <option /> if item represents a value not present in one of the <select />'s options
+      if (self.isSelect && !optionExists) {
+        var $option = $('<option selected>' + htmlEncode(itemText) + '</option>');
+        $option.data('item', item);
+        $option.attr('value', itemValue);
+        self.$element.append($option);
+      }
+
+      if (!dontPushVal)
+        self.pushVal(self.options.triggerChange);
+
+      // Add class when reached maxTags
+      if (self.options.maxTags === self.itemsArray.length || self.items().toString().length === self.options.maxInputLength)
+        self.$container.addClass('bootstrap-tagsinput-max');
+
+      // If using typeahead, once the tag has been added, clear the typeahead value so it does not stick around in the input.
+      if ($('.typeahead, .twitter-typeahead', self.$container).length) {
+        self.$input.typeahead('val', '');
+      }
+
+      if (this.isInit) {
+        self.$element.trigger(eventer.create('itemAddedOnInit', { item: item, options: options }));
+      } else {
+        self.$element.trigger(eventer.create('itemAdded', { item: item, options: options }));
+      }
+    },
+
+    /**
+     * Removes the given item. Pass true to dontPushVal to prevent updating the
+     * elements val()
+     */
+    remove: function(item, dontPushVal, options) {
+      var self = this;
+
+      if (self.objectItems) {
+        if (typeof item === "object")
+          item = langx.grep(self.itemsArray, function(other) { return self.options.itemValue(other) ==  self.options.itemValue(item); } );
+        else
+          item = langx.grep(self.itemsArray, function(other) { return self.options.itemValue(other) ==  item; } );
+
+        item = item[item.length-1];
+      }
+
+      if (item) {
+        var beforeItemRemoveEvent = eventer.create('beforeItemRemove', { item: item, cancel: false, options: options });
+        self.$element.trigger(beforeItemRemoveEvent);
+        if (beforeItemRemoveEvent.cancel)
+          return;
+
+        $('.tag', self.$container).filter(function() { return $(this).data('item') === item; }).remove();
+        $('option', self.$element).filter(function() { return $(this).data('item') === item; }).remove();
+        if(langx.inArray(item, self.itemsArray) !== -1)
+          self.itemsArray.splice(langx.inArray(item, self.itemsArray), 1);
+      }
+
+      if (!dontPushVal)
+        self.pushVal(self.options.triggerChange);
+
+      // Remove class when reached maxTags
+      if (self.options.maxTags > self.itemsArray.length)
+        self.$container.removeClass('bootstrap-tagsinput-max');
+
+      self.$element.trigger(eventer.create('itemRemoved',  { item: item, options: options }));
+    },
+
+    /**
+     * Removes all items
+     */
+    removeAll: function() {
+      var self = this;
+
+      $('.tag', self.$container).remove();
+      $('option', self.$element).remove();
+
+      while(self.itemsArray.length > 0)
+        self.itemsArray.pop();
+
+      self.pushVal(self.options.triggerChange);
+    },
+
+    /**
+     * Refreshes the tags so they match the text/value of their corresponding
+     * item.
+     */
+    refresh: function() {
+      var self = this;
+      $('.tag', self.$container).each(function() {
+        var $tag = $(this),
+            item = $tag.data('item'),
+            itemValue = self.options.itemValue(item),
+            itemText = self.options.itemText(item),
+            tagClass = self.options.tagClass(item);
+
+          // Update tag's class and inner text
+          $tag.attr('class', null);
+          $tag.addClass('tag ' + htmlEncode(tagClass));
+          $tag.contents().filter(function() {
+            return this.nodeType == 3;
+          })[0].nodeValue = htmlEncode(itemText);
+
+          if (self.isSelect) {
+            var option = $('option', self.$element).filter(function() { return $(this).data('item') === item; });
+            option.attr('value', itemValue);
+          }
+      });
+    },
+
+    /**
+     * Returns the items added as tags
+     */
+    items: function() {
+      return this.itemsArray;
+    },
+
+    /**
+     * Assembly value by retrieving the value of each item, and set it on the
+     * element.
+     */
+    pushVal: function() {
+      var self = this,
+          val = langx.map(self.items(), function(item) {
+            return self.options.itemValue(item).toString();
+          });
+
+      self.$element.val(val, true);
+
+      if (self.options.triggerChange)
+        self.$element.trigger('change');
+    },
+
+    /**
+     * Initializes the tags input behaviour on the element
+     */
+    build: function(options) {
+      var self = this;
+
+      //self.options = $.extend({}, defaultOptions, options);
+
+      // When itemValue is set, freeInput should always be false
+      if (self.objectItems)
+        self.options.freeInput = false;
+
+      makeOptionItemFunction(self.options, 'itemValue');
+      makeOptionItemFunction(self.options, 'itemText');
+      makeOptionFunction(self.options, 'tagClass');
+
+      // Typeahead Bootstrap version 2.3.2
+      if (self.options.typeahead) {
+        var typeahead = self.options.typeahead || {};
+
+        makeOptionFunction(typeahead, 'source');
+
+        self.$input.typeahead(langx.extend({}, typeahead, {
+          source: function (query, process) {
+            function processItems(items) {
+              var texts = [];
+
+              for (var i = 0; i < items.length; i++) {
+                var text = self.options.itemText(items[i]);
+                map[text] = items[i];
+                texts.push(text);
+              }
+              process(texts);
             }
-            const parent = Dropdown._getParentFromElement(this._element);
-            const isActive = $(this._menu).hasClass(ClassName.SHOW);
-            Dropdown._clearMenus();
-            if (isActive) {
-                return;
-            }
-            const relatedTarget = { relatedTarget: this._element };
-            const showEvent = $.Event(Event.SHOW, relatedTarget);
-            $(parent).trigger(showEvent);
-            if (showEvent.isDefaultPrevented()) {
-                return;
-            }
-            if (!this._inNavbar) {
-                if (typeof Popper === 'undefined') {
-                    throw new TypeError("Bootstrap's dropdowns require skylark-ui-popper/Popper (https://skylark-ui-popper/Popper.org/)");
-                }
-                let referenceElement = this._element;
-                if (this._config.reference === 'parent') {
-                    referenceElement = parent;
-                } else if (Util.isElement(this._config.reference)) {
-                    referenceElement = this._config.reference;
-                    if (typeof this._config.reference.skylark-utils-dom/query !== 'undefined') {
-                        referenceElement = this._config.reference[0];
-                    }
-                }
-                if (this._config.boundary !== 'scrollParent') {
-                    $(parent).addClass(ClassName.POSITION_STATIC);
-                }
-                this._popper = new Popper(referenceElement, this._menu, this._getPopperConfig());
-            }
-            if ('ontouchstart' in document.documentElement && $(parent).closest(Selector.NAVBAR_NAV).length === 0) {
-                $(document.body).children().on('mouseover', null, $.noop);
-            }
-            this._element.focus();
-            this._element.setAttribute('aria-expanded', true);
-            $(this._menu).toggleClass(ClassName.SHOW);
-            $(parent).toggleClass(ClassName.SHOW).trigger($.Event(Event.SHOWN, relatedTarget));
-        }
-        show() {
-            if (this._element.disabled || $(this._element).hasClass(ClassName.DISABLED) || $(this._menu).hasClass(ClassName.SHOW)) {
-                return;
-            }
-            const relatedTarget = { relatedTarget: this._element };
-            const showEvent = $.Event(Event.SHOW, relatedTarget);
-            const parent = Dropdown._getParentFromElement(this._element);
-            $(parent).trigger(showEvent);
-            if (showEvent.isDefaultPrevented()) {
-                return;
-            }
-            $(this._menu).toggleClass(ClassName.SHOW);
-            $(parent).toggleClass(ClassName.SHOW).trigger($.Event(Event.SHOWN, relatedTarget));
-        }
-        hide() {
-            if (this._element.disabled || $(this._element).hasClass(ClassName.DISABLED) || !$(this._menu).hasClass(ClassName.SHOW)) {
-                return;
-            }
-            const relatedTarget = { relatedTarget: this._element };
-            const hideEvent = $.Event(Event.HIDE, relatedTarget);
-            const parent = Dropdown._getParentFromElement(this._element);
-            $(parent).trigger(hideEvent);
-            if (hideEvent.isDefaultPrevented()) {
-                return;
-            }
-            $(this._menu).toggleClass(ClassName.SHOW);
-            $(parent).toggleClass(ClassName.SHOW).trigger($.Event(Event.HIDDEN, relatedTarget));
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            $(this._element).off(EVENT_KEY);
-            this._element = null;
-            this._menu = null;
-            if (this._popper !== null) {
-                this._popper.destroy();
-                this._popper = null;
-            }
-        }
-        update() {
-            this._inNavbar = this._detectNavbar();
-            if (this._popper !== null) {
-                this._popper.scheduleUpdate();
-            }
-        }
-        _addEventListeners() {
-            $(this._element).on(Event.CLICK, event => {
-                event.preventDefault();
-                event.stopPropagation();
-                this.toggle();
-            });
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...this.constructor.Default,
-            //    ...$(this._element).data(),
-            //    ...config
-            //};
-            config = langx.mixin({},this.constructor.Default,$(this._element).data(),config);
-            Util.typeCheckConfig(NAME, config, this.constructor.DefaultType);
-            return config;
-        }
-        _getMenuElement() {
-            if (!this._menu) {
-                const parent = Dropdown._getParentFromElement(this._element);
-                if (parent) {
-                    this._menu = parent.querySelector(Selector.MENU);
-                }
-            }
-            return this._menu;
-        }
-        _getPlacement() {
-            const $parentDropdown = $(this._element.parentNode);
-            let placement = AttachmentMap.BOTTOM;
-            if ($parentDropdown.hasClass(ClassName.DROPUP)) {
-                placement = AttachmentMap.TOP;
-                if ($(this._menu).hasClass(ClassName.MENURIGHT)) {
-                    placement = AttachmentMap.TOPEND;
-                }
-            } else if ($parentDropdown.hasClass(ClassName.DROPRIGHT)) {
-                placement = AttachmentMap.RIGHT;
-            } else if ($parentDropdown.hasClass(ClassName.DROPLEFT)) {
-                placement = AttachmentMap.LEFT;
-            } else if ($(this._menu).hasClass(ClassName.MENURIGHT)) {
-                placement = AttachmentMap.BOTTOMEND;
-            }
-            return placement;
-        }
-        _detectNavbar() {
-            return $(this._element).closest('.navbar').length > 0;
-        }
-        _getPopperConfig() {
-            const offsetConf = {};
-            if (typeof this._config.offset === 'function') {
-                offsetConf.fn = data => {
-                    //data.offsets = {
-                    //    ...data.offsets,
-                    //    ...this._config.offset(data.offsets) || {}
-                    //};
-                    langx.mixin(data.offsets,this._config.offset(data.offsets) || {});
-                    return data;
-                };
+
+            this.map = {};
+            var map = this.map,
+                data = typeahead.source(query);
+
+            if (langx.isFunction(data.success)) {
+              // support for Angular callbacks
+              data.success(processItems);
+            } else if (langx.isFunction(data.then)) {
+              // support for Angular promises
+              data.then(processItems);
             } else {
-                offsetConf.offset = this._config.offset;
+              // support for functions and jquery promises
+              langx.Deferred.when(data)
+               .then(processItems);
             }
-            const popperConfig = {
-                placement: this._getPlacement(),
-                modifiers: {
-                    offset: offsetConf,
-                    flip: { enabled: this._config.flip },
-                    preventOverflow: { boundariesElement: this._config.boundary }
-                }
-            };
-            if (this._config.display === 'static') {
-                popperConfig.modifiers.applyStyle = { enabled: false };
-            }
-            return popperConfig;
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                const _config = typeof config === 'object' ? config : null;
-                if (!data) {
-                    data = new Dropdown(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
-        }
-        static _clearMenus(event) {
-            if (event && (event.which === RIGHT_MOUSE_BUTTON_WHICH || event.type === 'keyup' && event.which !== TAB_KEYCODE)) {
-                return;
-            }
-            const toggles = [].slice.call(document.querySelectorAll(Selector.DATA_TOGGLE));
-            for (let i = 0, len = toggles.length; i < len; i++) {
-                const parent = Dropdown._getParentFromElement(toggles[i]);
-                const context = $(toggles[i]).data(DATA_KEY);
-                const relatedTarget = { relatedTarget: toggles[i] };
-                if (event && event.type === 'click') {
-                    relatedTarget.clickEvent = event;
-                }
-                if (!context) {
-                    continue;
-                }
-                const dropdownMenu = context._menu;
-                if (!$(parent).hasClass(ClassName.SHOW)) {
-                    continue;
-                }
-                if (event && (event.type === 'click' && /input|textarea/i.test(event.target.tagName) || event.type === 'keyup' && event.which === TAB_KEYCODE) && $.contains(parent, event.target)) {
-                    continue;
-                }
-                const hideEvent = $.Event(Event.HIDE, relatedTarget);
-                $(parent).trigger(hideEvent);
-                if (hideEvent.isDefaultPrevented()) {
-                    continue;
-                }
-                if ('ontouchstart' in document.documentElement) {
-                    $(document.body).children().off('mouseover', null, $.noop);
-                }
-                toggles[i].setAttribute('aria-expanded', 'false');
-                $(dropdownMenu).removeClass(ClassName.SHOW);
-                $(parent).removeClass(ClassName.SHOW).trigger($.Event(Event.HIDDEN, relatedTarget));
-            }
-        }
-        static _getParentFromElement(element) {
-            let parent;
-            const selector = Util.getSelectorFromElement(element);
-            if (selector) {
-                parent = document.querySelector(selector);
-            }
-            return parent || element.parentNode;
-        }
-        static _dataApiKeydownHandler(event) {
-            if (/input|textarea/i.test(event.target.tagName) ? event.which === SPACE_KEYCODE || event.which !== ESCAPE_KEYCODE && (event.which !== ARROW_DOWN_KEYCODE && event.which !== ARROW_UP_KEYCODE || $(event.target).closest(Selector.MENU).length) : !REGEXP_KEYDOWN.test(event.which)) {
-                return;
-            }
-            event.preventDefault();
-            event.stopPropagation();
-            if (this.disabled || $(this).hasClass(ClassName.DISABLED)) {
-                return;
-            }
-            const parent = Dropdown._getParentFromElement(this);
-            const isActive = $(parent).hasClass(ClassName.SHOW);
-            if (!isActive || isActive && (event.which === ESCAPE_KEYCODE || event.which === SPACE_KEYCODE)) {
-                if (event.which === ESCAPE_KEYCODE) {
-                    const toggle = parent.querySelector(Selector.DATA_TOGGLE);
-                    $(toggle).trigger('focus');
-                }
-                $(this).trigger('click');
-                return;
-            }
-            const items = [].slice.call(parent.querySelectorAll(Selector.VISIBLE_ITEMS));
-            if (items.length === 0) {
-                return;
-            }
-            let index = items.indexOf(event.target);
-            if (event.which === ARROW_UP_KEYCODE && index > 0) {
-                index--;
-            }
-            if (event.which === ARROW_DOWN_KEYCODE && index < items.length - 1) {
-                index++;
-            }
-            if (index < 0) {
-                index = 0;
-            }
-            items[index].focus();
-        }
-    }
-    $(document).on(Event.KEYDOWN_DATA_API, Selector.DATA_TOGGLE, Dropdown._dataApiKeydownHandler).on(Event.KEYDOWN_DATA_API, Selector.MENU, Dropdown._dataApiKeydownHandler).on(`${ Event.CLICK_DATA_API } ${ Event.KEYUP_DATA_API }`, Dropdown._clearMenus).on(Event.CLICK_DATA_API, Selector.DATA_TOGGLE, function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        Dropdown._jqueryInterface.call($(this), 'toggle');
-    }).on(Event.CLICK_DATA_API, Selector.FORM_CHILD, e => {
-        e.stopPropagation();
-    });
-    $.fn[NAME] = Dropdown._jqueryInterface;
-    $.fn[NAME].Constructor = Dropdown;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Dropdown._jqueryInterface;
-    };
-    return Dropdown;
-});
-define('skylark-bootstrap4/modal',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function (langx,$, plugins,bs4,Util) {
+          },
+          updater: function (text) {
+            self.add(this.map[text]);
+            return this.map[text];
+          },
+          matcher: function (text) {
+            return (text.toLowerCase().indexOf(this.query.trim().toLowerCase()) !== -1);
+          },
+          sorter: function (texts) {
+            return texts.sort();
+          },
+          highlighter: function (text) {
+            var regex = new RegExp( '(' + this.query + ')', 'gi' );
+            return text.replace( regex, "<strong>$1</strong>" );
+          }
+        }));
+      }
 
-    'use strict';
-    const NAME = 'modal';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.modal';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const ESCAPE_KEYCODE = 27;
-    const Default = {
-        backdrop: true,
-        keyboard: true,
-        focus: true,
-        show: true
-    };
-    const DefaultType = {
-        backdrop: '(boolean|string)',
-        keyboard: 'boolean',
-        focus: 'boolean',
-        show: 'boolean'
-    };
-    const Event = {
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        FOCUSIN: `focusin${ EVENT_KEY }`,
-        RESIZE: `resize${ EVENT_KEY }`,
-        CLICK_DISMISS: `click.dismiss${ EVENT_KEY }`,
-        KEYDOWN_DISMISS: `keydown.dismiss${ EVENT_KEY }`,
-        MOUSEUP_DISMISS: `mouseup.dismiss${ EVENT_KEY }`,
-        MOUSEDOWN_DISMISS: `mousedown.dismiss${ EVENT_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        SCROLLBAR_MEASURER: 'modal-scrollbar-measure',
-        BACKDROP: 'modal-backdrop',
-        OPEN: 'modal-open',
-        FADE: 'fade',
-        SHOW: 'show'
-    };
-    const Selector = {
-        DIALOG: '.modal-dialog',
-        DATA_TOGGLE: '[data-toggle="modal"]',
-        DATA_DISMISS: '[data-dismiss="modal"]',
-        FIXED_CONTENT: '.fixed-top, .fixed-bottom, .is-fixed, .sticky-top',
-        STICKY_CONTENT: '.sticky-top'
-    };
-    class Modal {
-        constructor(element, config) {
-            this._config = this._getConfig(config);
-            this._element = element;
-            this._dialog = element.querySelector(Selector.DIALOG);
-            this._backdrop = null;
-            this._isShown = false;
-            this._isBodyOverflowing = false;
-            this._ignoreBackdropClick = false;
-            this._isTransitioning = false;
-            this._scrollbarWidth = 0;
+      // typeahead.js
+      if (self.options.typeaheadjs) {
+        // Determine if main configurations were passed or simply a dataset
+        var typeaheadjs = self.options.typeaheadjs;
+        if (!langx.isArray(typeaheadjs)) {
+            typeaheadjs = [null, typeaheadjs];
         }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        toggle(relatedTarget) {
-            return this._isShown ? this.hide() : this.show(relatedTarget);
-        }
-        show(relatedTarget) {
-            if (this._isShown || this._isTransitioning) {
-                return;
-            }
-            if ($(this._element).hasClass(ClassName.FADE)) {
-                this._isTransitioning = true;
-            }
-            const showEvent = $.Event(Event.SHOW, { relatedTarget });
-            $(this._element).trigger(showEvent);
-            if (this._isShown || showEvent.isDefaultPrevented()) {
-                return;
-            }
-            this._isShown = true;
-            this._checkScrollbar();
-            this._setScrollbar();
-            this._adjustDialog();
-            this._setEscapeEvent();
-            this._setResizeEvent();
-            $(this._element).on(Event.CLICK_DISMISS, Selector.DATA_DISMISS, event => this.hide(event));
-            $(this._dialog).on(Event.MOUSEDOWN_DISMISS, () => {
-                $(this._element).one(Event.MOUSEUP_DISMISS, event => {
-                    if ($(event.target).is(this._element)) {
-                        this._ignoreBackdropClick = true;
-                    }
-                });
-            });
-            this._showBackdrop(() => this._showElement(relatedTarget));
-        }
-        hide(event) {
-            if (event) {
-                event.preventDefault();
-            }
-            if (!this._isShown || this._isTransitioning) {
-                return;
-            }
-            const hideEvent = $.Event(Event.HIDE);
-            $(this._element).trigger(hideEvent);
-            if (!this._isShown || hideEvent.isDefaultPrevented()) {
-                return;
-            }
-            this._isShown = false;
-            const transition = $(this._element).hasClass(ClassName.FADE);
-            if (transition) {
-                this._isTransitioning = true;
-            }
-            this._setEscapeEvent();
-            this._setResizeEvent();
-            $(document).off(Event.FOCUSIN);
-            $(this._element).removeClass(ClassName.SHOW);
-            $(this._element).off(Event.CLICK_DISMISS);
-            $(this._dialog).off(Event.MOUSEDOWN_DISMISS);
-            if (transition) {
-                const transitionDuration = Util.getTransitionDurationFromElement(this._element);
-                $(this._element).one(Util.TRANSITION_END, event => this._hideModal(event)).emulateTransitionEnd(transitionDuration);
-            } else {
-                this._hideModal();
-            }
-        }
-        dispose() {
-            [
-                window,
-                this._element,
-                this._dialog
-            ].forEach(htmlElement => $(htmlElement).off(EVENT_KEY));
-            $(document).off(Event.FOCUSIN);
-            $.removeData(this._element, DATA_KEY);
-            this._config = null;
-            this._element = null;
-            this._dialog = null;
-            this._backdrop = null;
-            this._isShown = null;
-            this._isBodyOverflowing = null;
-            this._ignoreBackdropClick = null;
-            this._isTransitioning = null;
-            this._scrollbarWidth = null;
-        }
-        handleUpdate() {
-            this._adjustDialog();
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...Default,
-            //    ...config
-            //};
-            config = langx.mixin({},Default,config);
 
-            Util.typeCheckConfig(NAME, config, DefaultType);
-            return config;
-        }
-        _showElement(relatedTarget) {
-            const transition = $(this._element).hasClass(ClassName.FADE);
-            if (!this._element.parentNode || this._element.parentNode.nodeType !== Node.ELEMENT_NODE) {
-                document.body.appendChild(this._element);
-            }
-            this._element.style.display = 'block';
-            this._element.removeAttribute('aria-hidden');
-            this._element.setAttribute('aria-modal', true);
-            this._element.scrollTop = 0;
-            if (transition) {
-                Util.reflow(this._element);
-            }
-            $(this._element).addClass(ClassName.SHOW);
-            if (this._config.focus) {
-                this._enforceFocus();
-            }
-            const shownEvent = $.Event(Event.SHOWN, { relatedTarget });
-            const transitionComplete = () => {
-                if (this._config.focus) {
-                    this._element.focus();
-                }
-                this._isTransitioning = false;
-                $(this._element).trigger(shownEvent);
-            };
-            if (transition) {
-                const transitionDuration = Util.getTransitionDurationFromElement(this._dialog);
-                $(this._dialog).one(Util.TRANSITION_END, transitionComplete).emulateTransitionEnd(transitionDuration);
-            } else {
-                transitionComplete();
-            }
-        }
-        _enforceFocus() {
-            $(document).off(Event.FOCUSIN).on(Event.FOCUSIN, event => {
-                if (document !== event.target && this._element !== event.target && $(this._element).has(event.target).length === 0) {
-                    this._element.focus();
-                }
-            });
-        }
-        _setEscapeEvent() {
-            if (this._isShown && this._config.keyboard) {
-                $(this._element).on(Event.KEYDOWN_DISMISS, event => {
-                    if (event.which === ESCAPE_KEYCODE) {
-                        event.preventDefault();
-                        this.hide();
-                    }
-                });
-            } else if (!this._isShown) {
-                $(this._element).off(Event.KEYDOWN_DISMISS);
-            }
-        }
-        _setResizeEvent() {
-            if (this._isShown) {
-                $(window).on(Event.RESIZE, event => this.handleUpdate(event));
-            } else {
-                $(window).off(Event.RESIZE);
-            }
-        }
-        _hideModal() {
-            this._element.style.display = 'none';
-            this._element.setAttribute('aria-hidden', true);
-            this._element.removeAttribute('aria-modal');
-            this._isTransitioning = false;
-            this._showBackdrop(() => {
-                $(document.body).removeClass(ClassName.OPEN);
-                this._resetAdjustments();
-                this._resetScrollbar();
-                $(this._element).trigger(Event.HIDDEN);
-            });
-        }
-        _removeBackdrop() {
-            if (this._backdrop) {
-                $(this._backdrop).remove();
-                this._backdrop = null;
-            }
-        }
-        _showBackdrop(callback) {
-            const animate = $(this._element).hasClass(ClassName.FADE) ? ClassName.FADE : '';
-            if (this._isShown && this._config.backdrop) {
-                this._backdrop = document.createElement('div');
-                this._backdrop.className = ClassName.BACKDROP;
-                if (animate) {
-                    this._backdrop.classList.add(animate);
-                }
-                $(this._backdrop).appendTo(document.body);
-                $(this._element).on(Event.CLICK_DISMISS, event => {
-                    if (this._ignoreBackdropClick) {
-                        this._ignoreBackdropClick = false;
-                        return;
-                    }
-                    if (event.target !== event.currentTarget) {
-                        return;
-                    }
-                    if (this._config.backdrop === 'static') {
-                        this._element.focus();
-                    } else {
-                        this.hide();
-                    }
-                });
-                if (animate) {
-                    Util.reflow(this._backdrop);
-                }
-                $(this._backdrop).addClass(ClassName.SHOW);
-                if (!callback) {
-                    return;
-                }
-                if (!animate) {
-                    callback();
-                    return;
-                }
-                const backdropTransitionDuration = Util.getTransitionDurationFromElement(this._backdrop);
-                $(this._backdrop).one(Util.TRANSITION_END, callback).emulateTransitionEnd(backdropTransitionDuration);
-            } else if (!this._isShown && this._backdrop) {
-                $(this._backdrop).removeClass(ClassName.SHOW);
-                const callbackRemove = () => {
-                    this._removeBackdrop();
-                    if (callback) {
-                        callback();
-                    }
-                };
-                if ($(this._element).hasClass(ClassName.FADE)) {
-                    const backdropTransitionDuration = Util.getTransitionDurationFromElement(this._backdrop);
-                    $(this._backdrop).one(Util.TRANSITION_END, callbackRemove).emulateTransitionEnd(backdropTransitionDuration);
-                } else {
-                    callbackRemove();
-                }
-            } else if (callback) {
-                callback();
-            }
-        }
-        _adjustDialog() {
-            const isModalOverflowing = this._element.scrollHeight > document.documentElement.clientHeight;
-            if (!this._isBodyOverflowing && isModalOverflowing) {
-                this._element.style.paddingLeft = `${ this._scrollbarWidth }px`;
-            }
-            if (this._isBodyOverflowing && !isModalOverflowing) {
-                this._element.style.paddingRight = `${ this._scrollbarWidth }px`;
-            }
-        }
-        _resetAdjustments() {
-            this._element.style.paddingLeft = '';
-            this._element.style.paddingRight = '';
-        }
-        _checkScrollbar() {
-            const rect = document.body.getBoundingClientRect();
-            this._isBodyOverflowing = rect.left + rect.right < window.innerWidth;
-            this._scrollbarWidth = this._getScrollbarWidth();
-        }
-        _setScrollbar() {
-            if (this._isBodyOverflowing) {
-                const fixedContent = [].slice.call(document.querySelectorAll(Selector.FIXED_CONTENT));
-                const stickyContent = [].slice.call(document.querySelectorAll(Selector.STICKY_CONTENT));
-                $(fixedContent).each((index, element) => {
-                    const actualPadding = element.style.paddingRight;
-                    const calculatedPadding = $(element).css('padding-right');
-                    $(element).data('padding-right', actualPadding).css('padding-right', `${ parseFloat(calculatedPadding) + this._scrollbarWidth }px`);
-                });
-                $(stickyContent).each((index, element) => {
-                    const actualMargin = element.style.marginRight;
-                    const calculatedMargin = $(element).css('margin-right');
-                    $(element).data('margin-right', actualMargin).css('margin-right', `${ parseFloat(calculatedMargin) - this._scrollbarWidth }px`);
-                });
-                const actualPadding = document.body.style.paddingRight;
-                const calculatedPadding = $(document.body).css('padding-right');
-                $(document.body).data('padding-right', actualPadding).css('padding-right', `${ parseFloat(calculatedPadding) + this._scrollbarWidth }px`);
-            }
-            $(document.body).addClass(ClassName.OPEN);
-        }
-        _resetScrollbar() {
-            const fixedContent = [].slice.call(document.querySelectorAll(Selector.FIXED_CONTENT));
-            $(fixedContent).each((index, element) => {
-                const padding = $(element).data('padding-right');
-                $(element).removeData('padding-right');
-                element.style.paddingRight = padding ? padding : '';
-            });
-            const elements = [].slice.call(document.querySelectorAll(`${ Selector.STICKY_CONTENT }`));
-            $(elements).each((index, element) => {
-                const margin = $(element).data('margin-right');
-                if (typeof margin !== 'undefined') {
-                    $(element).css('margin-right', margin).removeData('margin-right');
-                }
-            });
-            const padding = $(document.body).data('padding-right');
-            $(document.body).removeData('padding-right');
-            document.body.style.paddingRight = padding ? padding : '';
-        }
-        _getScrollbarWidth() {
-            const scrollDiv = document.createElement('div');
-            scrollDiv.className = ClassName.SCROLLBAR_MEASURER;
-            document.body.appendChild(scrollDiv);
-            const scrollbarWidth = scrollDiv.getBoundingClientRect().width - scrollDiv.clientWidth;
-            document.body.removeChild(scrollDiv);
-            return scrollbarWidth;
-        }
-        static _jqueryInterface(config, relatedTarget) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                //const _config = {
-                //    ...Default,
-                //    ...$this.data(),
-                //    ...typeof config === 'object' && config ? config : {}
-                //};
-                const _config = langx.mixin({},Default,$this.data(),typeof config === 'object' && config ? config : {});
-                if (!data) {
-                    data = new Modal(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config](relatedTarget);
-                } else if (_config.show) {
-                    data.show(relatedTarget);
-                }
-            });
-        }
-    }
-    $(document).on(Event.CLICK_DATA_API, Selector.DATA_TOGGLE, function (event) {
-        let target;
-        const selector = Util.getSelectorFromElement(this);
-        if (selector) {
-            target = document.querySelector(selector);
-        }
-        //const config = $(target).data(DATA_KEY) ? 'toggle' : {
-        //    ...$(target).data(),
-        //    ...$(this).data()
-        //};
-        const config = $(target).data(DATA_KEY) ? 'toggle' : langx.mixin({},$(target).data(),$(this).data());
-        if (this.tagName === 'A' || this.tagName === 'AREA') {
-            event.preventDefault();
-        }
-        const $target = $(target).one(Event.SHOW, showEvent => {
-            if (showEvent.isDefaultPrevented()) {
-                return;
-            }
-            $target.one(Event.HIDDEN, () => {
-                if ($(this).is(':visible')) {
-                    this.focus();
-                }
-            });
-        });
-        Modal._jqueryInterface.call($(target), config, this);
-    });
-    $.fn[NAME] = Modal._jqueryInterface;
-    $.fn[NAME].Constructor = Modal;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Modal._jqueryInterface;
-    };
-    return Modal;
-});
-define('skylark-bootstrap4/tooltip',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    'skylark-ui-popper/Popper',
-    './util'
-], function (langx,$, plugins,bs4,Popper,Util) {
-    'use strict';
-    const NAME = 'tooltip';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.tooltip';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const CLASS_PREFIX = 'bs-tooltip';
-    const BSCLS_PREFIX_REGEX = new RegExp(`(^|\\s)${ CLASS_PREFIX }\\S+`, 'g');
-    const DefaultType = {
-        animation: 'boolean',
-        template: 'string',
-        title: '(string|element|function)',
-        trigger: 'string',
-        delay: '(number|object)',
-        html: 'boolean',
-        selector: '(string|boolean)',
-        placement: '(string|function)',
-        offset: '(number|string)',
-        container: '(string|element|boolean)',
-        fallbackPlacement: '(string|array)',
-        boundary: '(string|element)'
-    };
-    const AttachmentMap = {
-        AUTO: 'auto',
-        TOP: 'top',
-        RIGHT: 'right',
-        BOTTOM: 'bottom',
-        LEFT: 'left'
-    };
-    const Default = {
-        animation: true,
-        template: '<div class="tooltip" role="tooltip">' + '<div class="arrow"></div>' + '<div class="tooltip-inner"></div></div>',
-        trigger: 'hover focus',
-        title: '',
-        delay: 0,
-        html: false,
-        selector: false,
-        placement: 'top',
-        offset: 0,
-        container: false,
-        fallbackPlacement: 'flip',
-        boundary: 'scrollParent'
-    };
-    const HoverState = {
-        SHOW: 'show',
-        OUT: 'out'
-    };
-    const Event = {
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        INSERTED: `inserted${ EVENT_KEY }`,
-        CLICK: `click${ EVENT_KEY }`,
-        FOCUSIN: `focusin${ EVENT_KEY }`,
-        FOCUSOUT: `focusout${ EVENT_KEY }`,
-        MOUSEENTER: `mouseenter${ EVENT_KEY }`,
-        MOUSELEAVE: `mouseleave${ EVENT_KEY }`
-    };
-    const ClassName = {
-        FADE: 'fade',
-        SHOW: 'show'
-    };
-    const Selector = {
-        TOOLTIP: '.tooltip',
-        TOOLTIP_INNER: '.tooltip-inner',
-        ARROW: '.arrow'
-    };
-    const Trigger = {
-        HOVER: 'hover',
-        FOCUS: 'focus',
-        CLICK: 'click',
-        MANUAL: 'manual'
-    };
-    class Tooltip {
-        constructor(element, config) {
-            if (typeof Popper === 'undefined') {
-                throw new TypeError("Bootstrap's tooltips require skylark-ui-popper/Popper (https://skylark-ui-popper/Popper.org/)");
-            }
-            this._isEnabled = true;
-            this._timeout = 0;
-            this._hoverState = '';
-            this._activeTrigger = {};
-            this._popper = null;
-            this.element = element;
-            this.config = this._getConfig(config);
-            this.tip = null;
-            this._setListeners();
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        static get NAME() {
-            return NAME;
-        }
-        static get DATA_KEY() {
-            return DATA_KEY;
-        }
-        static get Event() {
-            return Event;
-        }
-        static get EVENT_KEY() {
-            return EVENT_KEY;
-        }
-        static get DefaultType() {
-            return DefaultType;
-        }
-        enable() {
-            this._isEnabled = true;
-        }
-        disable() {
-            this._isEnabled = false;
-        }
-        toggleEnabled() {
-            this._isEnabled = !this._isEnabled;
-        }
-        toggle(event) {
-            if (!this._isEnabled) {
-                return;
-            }
-            if (event) {
-                const dataKey = this.constructor.DATA_KEY;
-                let context = $(event.currentTarget).data(dataKey);
-                if (!context) {
-                    context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-                    $(event.currentTarget).data(dataKey, context);
-                }
-                context._activeTrigger.click = !context._activeTrigger.click;
-                if (context._isWithActiveTrigger()) {
-                    context._enter(null, context);
-                } else {
-                    context._leave(null, context);
-                }
-            } else {
-                if ($(this.getTipElement()).hasClass(ClassName.SHOW)) {
-                    this._leave(null, this);
-                    return;
-                }
-                this._enter(null, this);
-            }
-        }
-        dispose() {
-            clearTimeout(this._timeout);
-            $.removeData(this.element, this.constructor.DATA_KEY);
-            $(this.element).off(this.constructor.EVENT_KEY);
-            $(this.element).closest('.modal').off('hide.bs.modal');
-            if (this.tip) {
-                $(this.tip).remove();
-            }
-            this._isEnabled = null;
-            this._timeout = null;
-            this._hoverState = null;
-            this._activeTrigger = null;
-            if (this._popper !== null) {
-                this._popper.destroy();
-            }
-            this._popper = null;
-            this.element = null;
-            this.config = null;
-            this.tip = null;
-        }
-        show() {
-            if ($(this.element).css('display') === 'none') {
-                throw new Error('Please use show on visible elements');
-            }
-            const showEvent = $.Event(this.constructor.Event.SHOW);
-            if (this.isWithContent() && this._isEnabled) {
-                $(this.element).trigger(showEvent);
-                const shadowRoot = Util.findShadowRoot(this.element);
-                const isInTheDom = $.contains(shadowRoot !== null ? shadowRoot : this.element.ownerDocument.documentElement, this.element);
-                if (showEvent.isDefaultPrevented() || !isInTheDom) {
-                    return;
-                }
-                const tip = this.getTipElement();
-                const tipId = Util.getUID(this.constructor.NAME);
-                tip.setAttribute('id', tipId);
-                this.element.setAttribute('aria-describedby', tipId);
-                this.setContent();
-                if (this.config.animation) {
-                    $(tip).addClass(ClassName.FADE);
-                }
-                const placement = typeof this.config.placement === 'function' ? this.config.placement.call(this, tip, this.element) : this.config.placement;
-                const attachment = this._getAttachment(placement);
-                this.addAttachmentClass(attachment);
-                const container = this._getContainer();
-                $(tip).data(this.constructor.DATA_KEY, this);
-                if (!$.contains(this.element.ownerDocument.documentElement, this.tip)) {
-                    $(tip).appendTo(container);
-                }
-                $(this.element).trigger(this.constructor.Event.INSERTED);
-                this._popper = new Popper(this.element, tip, {
-                    placement: attachment,
-                    modifiers: {
-                        offset: { offset: this.config.offset },
-                        flip: { behavior: this.config.fallbackPlacement },
-                        arrow: { element: Selector.ARROW },
-                        preventOverflow: { boundariesElement: this.config.boundary }
-                    },
-                    onCreate: data => {
-                        if (data.originalPlacement !== data.placement) {
-                            this._handlePopperPlacementChange(data);
-                        }
-                    },
-                    onUpdate: data => this._handlePopperPlacementChange(data)
-                });
-                $(tip).addClass(ClassName.SHOW);
-                if ('ontouchstart' in document.documentElement) {
-                    $(document.body).children().on('mouseover', null, $.noop);
-                }
-                const complete = () => {
-                    if (this.config.animation) {
-                        this._fixTransition();
-                    }
-                    const prevHoverState = this._hoverState;
-                    this._hoverState = null;
-                    $(this.element).trigger(this.constructor.Event.SHOWN);
-                    if (prevHoverState === HoverState.OUT) {
-                        this._leave(null, this);
-                    }
-                };
-                if ($(this.tip).hasClass(ClassName.FADE)) {
-                    const transitionDuration = Util.getTransitionDurationFromElement(this.tip);
-                    $(this.tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-                } else {
-                    complete();
-                }
-            }
-        }
-        hide(callback) {
-            const tip = this.getTipElement();
-            const hideEvent = $.Event(this.constructor.Event.HIDE);
-            const complete = () => {
-                if (this._hoverState !== HoverState.SHOW && tip.parentNode) {
-                    tip.parentNode.removeChild(tip);
-                }
-                this._cleanTipClass();
-                this.element.removeAttribute('aria-describedby');
-                $(this.element).trigger(this.constructor.Event.HIDDEN);
-                if (this._popper !== null) {
-                    this._popper.destroy();
-                }
-                if (callback) {
-                    callback();
-                }
-            };
-            $(this.element).trigger(hideEvent);
-            if (hideEvent.isDefaultPrevented()) {
-                return;
-            }
-            $(tip).removeClass(ClassName.SHOW);
-            if ('ontouchstart' in document.documentElement) {
-                $(document.body).children().off('mouseover', null, $.noop);
-            }
-            this._activeTrigger[Trigger.CLICK] = false;
-            this._activeTrigger[Trigger.FOCUS] = false;
-            this._activeTrigger[Trigger.HOVER] = false;
-            if ($(this.tip).hasClass(ClassName.FADE)) {
-                const transitionDuration = Util.getTransitionDurationFromElement(tip);
-                $(tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-            } else {
-                complete();
-            }
-            this._hoverState = '';
-        }
-        update() {
-            if (this._popper !== null) {
-                this._popper.scheduleUpdate();
-            }
-        }
-        isWithContent() {
-            return Boolean(this.getTitle());
-        }
-        addAttachmentClass(attachment) {
-            $(this.getTipElement()).addClass(`${ CLASS_PREFIX }-${ attachment }`);
-        }
-        getTipElement() {
-            this.tip = this.tip || $(this.config.template)[0];
-            return this.tip;
-        }
-        setContent() {
-            const tip = this.getTipElement();
-            this.setElementContent($(tip.querySelectorAll(Selector.TOOLTIP_INNER)), this.getTitle());
-            $(tip).removeClass(`${ ClassName.FADE } ${ ClassName.SHOW }`);
-        }
-        setElementContent($element, content) {
-            const html = this.config.html;
-            if (typeof content === 'object' && (content.nodeType || content.skylark-utils-dom/query)) {
-                if (html) {
-                    if (!$(content).parent().is($element)) {
-                        $element.empty().append(content);
-                    }
-                } else {
-                    $element.text($(content).text());
-                }
-            } else {
-                $element[html ? 'html' : 'text'](content);
-            }
-        }
-        getTitle() {
-            let title = this.element.getAttribute('data-original-title');
-            if (!title) {
-                title = typeof this.config.title === 'function' ? this.config.title.call(this.element) : this.config.title;
-            }
-            return title;
-        }
-        _getContainer() {
-            if (this.config.container === false) {
-                return document.body;
-            }
-            if (Util.isElement(this.config.container)) {
-                return $(this.config.container);
-            }
-            return $(document).find(this.config.container);
-        }
-        _getAttachment(placement) {
-            return AttachmentMap[placement.toUpperCase()];
-        }
-        _setListeners() {
-            const triggers = this.config.trigger.split(' ');
-            triggers.forEach(trigger => {
-                if (trigger === 'click') {
-                    $(this.element).on(this.constructor.Event.CLICK, this.config.selector, event => this.toggle(event));
-                } else if (trigger !== Trigger.MANUAL) {
-                    const eventIn = trigger === Trigger.HOVER ? this.constructor.Event.MOUSEENTER : this.constructor.Event.FOCUSIN;
-                    const eventOut = trigger === Trigger.HOVER ? this.constructor.Event.MOUSELEAVE : this.constructor.Event.FOCUSOUT;
-                    $(this.element).on(eventIn, this.config.selector, event => this._enter(event)).on(eventOut, this.config.selector, event => this._leave(event));
-                }
-            });
-            $(this.element).closest('.modal').on('hide.bs.modal', () => {
-                if (this.element) {
-                    this.hide();
-                }
-            });
-            if (this.config.selector) {
-                //this.config = {
-                //    ...this.config,
-                //    trigger: 'manual',
-                //    selector: ''
-                //};
-                langx.mixin(this.config,{
-                    trigger: 'manual',
-                    selector: ''
-                });
-            } else {
-                this._fixTitle();
-            }
-        }
-        _fixTitle() {
-            const titleType = typeof this.element.getAttribute('data-original-title');
-            if (this.element.getAttribute('title') || titleType !== 'string') {
-                this.element.setAttribute('data-original-title', this.element.getAttribute('title') || '');
-                this.element.setAttribute('title', '');
-            }
-        }
-        _enter(event, context) {
-            const dataKey = this.constructor.DATA_KEY;
-            context = context || $(event.currentTarget).data(dataKey);
-            if (!context) {
-                context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-                $(event.currentTarget).data(dataKey, context);
-            }
-            if (event) {
-                context._activeTrigger[event.type === 'focusin' ? Trigger.FOCUS : Trigger.HOVER] = true;
-            }
-            if ($(context.getTipElement()).hasClass(ClassName.SHOW) || context._hoverState === HoverState.SHOW) {
-                context._hoverState = HoverState.SHOW;
-                return;
-            }
-            clearTimeout(context._timeout);
-            context._hoverState = HoverState.SHOW;
-            if (!context.config.delay || !context.config.delay.show) {
-                context.show();
-                return;
-            }
-            context._timeout = setTimeout(() => {
-                if (context._hoverState === HoverState.SHOW) {
-                    context.show();
-                }
-            }, context.config.delay.show);
-        }
-        _leave(event, context) {
-            const dataKey = this.constructor.DATA_KEY;
-            context = context || $(event.currentTarget).data(dataKey);
-            if (!context) {
-                context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-                $(event.currentTarget).data(dataKey, context);
-            }
-            if (event) {
-                context._activeTrigger[event.type === 'focusout' ? Trigger.FOCUS : Trigger.HOVER] = false;
-            }
-            if (context._isWithActiveTrigger()) {
-                return;
-            }
-            clearTimeout(context._timeout);
-            context._hoverState = HoverState.OUT;
-            if (!context.config.delay || !context.config.delay.hide) {
-                context.hide();
-                return;
-            }
-            context._timeout = setTimeout(() => {
-                if (context._hoverState === HoverState.OUT) {
-                    context.hide();
-                }
-            }, context.config.delay.hide);
-        }
-        _isWithActiveTrigger() {
-            for (const trigger in this._activeTrigger) {
-                if (this._activeTrigger[trigger]) {
-                    return true;
-                }
+        $.fn.typeahead.apply(self.$input, typeaheadjs).on('typeahead:selected', langx.proxy(function (obj, datum, name) {
+          var index = 0;
+          typeaheadjs.some(function(dataset, _index) {
+            if (dataset.name === name) {
+              index = _index;
+              return true;
             }
             return false;
+          });
+
+          // @TODO Dep: https://github.com/corejavascript/typeahead.js/issues/89
+          if (typeaheadjs[index].valueKey) {
+            self.add(datum[typeaheadjs[index].valueKey]);
+          } else {
+            self.add(datum);
+          }
+
+          self.$input.typeahead('val', '');
+        }, self));
+      }
+
+      self.$container.on('click', langx.proxy(function(event) {
+        if (! self.$element.attr('disabled')) {
+          self.$input.removeAttr('disabled');
         }
-        _getConfig(config) {
-            //config = {
-            //    ...this.constructor.Default,
-            //    ...$(this.element).data(),
-            //    ...typeof config === 'object' && config ? config : {}
-            //};
-            config = langx.mixin({},this.constructor.Default,$(this.element).data(),config);
-            if (typeof config.delay === 'number') {
-                config.delay = {
-                    show: config.delay,
-                    hide: config.delay
-                };
+        self.$input.focus();
+      }, self));
+
+        if (self.options.addOnBlur && self.options.freeInput) {
+          self.$input.on('focusout', langx.proxy(function(event) {
+              // HACK: only process on focusout when no typeahead opened, to
+              //       avoid adding the typeahead text as tag
+              if ($('.typeahead, .twitter-typeahead', self.$container).length === 0) {
+                self.add(self.$input.val());
+                self.$input.val('');
+              }
+          }, self));
+        }
+
+      // Toggle the 'focus' css class on the container when it has focus
+      self.$container.on({
+        focusin: function() {
+          self.$container.addClass(self.options.focusClass);
+        },
+        focusout: function() {
+          self.$container.removeClass(self.options.focusClass);
+        },
+      });
+
+      self.$container.on('keydown', 'input', langx.proxy(function(event) {
+        var $input = $(event.target),
+            $inputWrapper = self.findInputWrapper();
+
+        if (self.$element.attr('disabled')) {
+          self.$input.attr('disabled', 'disabled');
+          return;
+        }
+
+        switch (event.which) {
+          // BACKSPACE
+          case 8:
+            if (doGetCaretPosition($input[0]) === 0) {
+              var prev = $inputWrapper.prev();
+              if (prev.length) {
+                self.remove(prev.data('item'));
+              }
             }
-            if (typeof config.title === 'number') {
-                config.title = config.title.toString();
+            break;
+
+          // DELETE
+          case 46:
+            if (doGetCaretPosition($input[0]) === 0) {
+              var next = $inputWrapper.next();
+              if (next.length) {
+                self.remove(next.data('item'));
+              }
             }
-            if (typeof config.content === 'number') {
-                config.content = config.content.toString();
+            break;
+
+          // LEFT ARROW
+          case 37:
+            // Try to move the input before the previous tag
+            var $prevTag = $inputWrapper.prev();
+            if ($input.val().length === 0 && $prevTag[0]) {
+              $prevTag.before($inputWrapper);
+              $input.focus();
             }
-            Util.typeCheckConfig(NAME, config, this.constructor.DefaultType);
-            return config;
-        }
-        _getDelegateConfig() {
-            const config = {};
-            if (this.config) {
-                for (const key in this.config) {
-                    if (this.constructor.Default[key] !== this.config[key]) {
-                        config[key] = this.config[key];
-                    }
-                }
+            break;
+          // RIGHT ARROW
+          case 39:
+            // Try to move the input after the next tag
+            var $nextTag = $inputWrapper.next();
+            if ($input.val().length === 0 && $nextTag[0]) {
+              $nextTag.after($inputWrapper);
+              $input.focus();
             }
-            return config;
-        }
-        _cleanTipClass() {
-            const $tip = $(this.getTipElement());
-            const tabClass = $tip.attr('class').match(BSCLS_PREFIX_REGEX);
-            if (tabClass !== null && tabClass.length) {
-                $tip.removeClass(tabClass.join(''));
+            break;
+         default:
+             // ignore
+         }
+
+        // Reset internal input's size
+        var textLength = $input.val().length,
+            wordSpace = Math.ceil(textLength / 5),
+            size = textLength + wordSpace + 1;
+        $input.attr('size', Math.max(this.inputSize, $input.val().length));
+      }, self));
+
+      self.$container.on('keypress', 'input', langx.proxy(function(event) {
+         var $input = $(event.target);
+
+         if (self.$element.attr('disabled')) {
+            self.$input.attr('disabled', 'disabled');
+            return;
+         }
+
+         var text = $input.val(),
+         maxLengthReached = self.options.maxChars && text.length >= self.options.maxChars;
+         if (self.options.freeInput && (keyCombinationInList(event, self.options.confirmKeys) || maxLengthReached)) {
+            // Only attempt to add a tag if there is data in the field
+            if (text.length !== 0) {
+               self.add(maxLengthReached ? text.substr(0, self.options.maxChars) : text);
+               $input.val('');
             }
-        }
-        _handlePopperPlacementChange(popperData) {
-            const popperInstance = popperData.instance;
-            this.tip = popperInstance.popper;
-            this._cleanTipClass();
-            this.addAttachmentClass(this._getAttachment(popperData.placement));
-        }
-        _fixTransition() {
-            const tip = this.getTipElement();
-            const initConfigAnimation = this.config.animation;
-            if (tip.getAttribute('x-placement') !== null) {
-                return;
+
+            // If the field is empty, let the event triggered fire as usual
+            if (self.options.cancelConfirmKeysOnEmpty === false) {
+                event.preventDefault();
             }
-            $(tip).removeClass(ClassName.FADE);
-            this.config.animation = false;
-            this.hide();
-            this.show();
-            this.config.animation = initConfigAnimation;
+         }
+
+         // Reset internal input's size
+         var textLength = $input.val().length,
+            wordSpace = Math.ceil(textLength / 5),
+            size = textLength + wordSpace + 1;
+         $input.attr('size', Math.max(this.inputSize, $input.val().length));
+      }, self));
+
+      // Remove icon clicked
+      self.$container.on('click', '[data-role=remove]', langx.proxy(function(event) {
+        if (self.$element.attr('disabled')) {
+          return;
         }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                const _config = typeof config === 'object' && config;
-                if (!data && /dispose|hide/.test(config)) {
-                    return;
-                }
-                if (!data) {
-                    data = new Tooltip(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
+        self.remove($(event.target).closest('.tag').data('item'));
+      }, self));
+
+      // Only add existing value as tags when using strings as tags
+      if (self.options.itemValue === defaultOptions.itemValue) {
+        if (self.$element[0].tagName === 'INPUT') {
+            self.add(self.$element.val());
+        } else {
+          $('option', self.$element).each(function() {
+            self.add($(this).attr('value'), true);
+          });
         }
+      }
+    },
+
+    /**
+     * Removes all tagsinput behaviour and unregsiter all event handlers
+     */
+    destroy: function() {
+      var self = this;
+
+      // Unbind events
+      self.$container.off('keypress', 'input');
+      self.$container.off('click', '[role=remove]');
+
+      self.$container.remove();
+      self.$element.removeData('tagsinput');
+      self.$element.show();
+    },
+
+    /**
+     * Sets focus on the tagsinput
+     */
+    focus: function() {
+      this.$input.focus();
+    },
+
+    /**
+     * Returns the internal input element
+     */
+    input: function() {
+      return this.$input;
+    },
+
+    /**
+     * Returns the element which is wrapped around the internal input. This
+     * is normally the $container, but typeahead.js moves the $input element.
+     */
+    findInputWrapper: function() {
+      var elt = this.$input[0],
+          container = this.$container[0];
+      while(elt && elt.parentNode !== container)
+        elt = elt.parentNode;
+
+      return $(elt);
     }
-    $.fn[NAME] = Tooltip._jqueryInterface;
-    $.fn[NAME].Constructor = Tooltip;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Tooltip._jqueryInterface;
-    };
-    return Tooltip;
+  });
+
+  /**
+   * Register JQuery plugin
+   */
+  $.fn.tagsinput = function(arg1, arg2, arg3) {
+    var results = [];
+
+    this.each(function() {
+      var tagsinput = $(this).data('tagsinput');
+      // Initialize a new tags input
+      if (!tagsinput) {
+          tagsinput = new TagsInput(this, arg1);
+          $(this).data('tagsinput', tagsinput);
+          results.push(tagsinput);
+
+          if (this.tagName === 'SELECT') {
+              $('option', $(this)).attr('selected', 'selected');
+          }
+
+          // Init tags from $(this).val()
+          $(this).val($(this).val());
+      } else if (!arg1 && !arg2) {
+          // tagsinput already exists
+          // no function, trying to init
+          results.push(tagsinput);
+      } else if(tagsinput[arg1] !== undefined) {
+          // Invoke function on existing tags input
+            if(tagsinput[arg1].length === 3 && arg3 !== undefined){
+               var retVal = tagsinput[arg1](arg2, null, arg3);
+            }else{
+               var retVal = tagsinput[arg1](arg2);
+            }
+          if (retVal !== undefined)
+              results.push(retVal);
+      }
+    });
+
+    if ( typeof arg1 == 'string') {
+      // Return the results from the invoked function calls
+      return results.length > 1 ? results : results[0];
+    } else {
+      return results;
+    }
+  };
+
+  $.fn.tagsinput.Constructor = TagsInput;
+
+  /**
+   * Most options support both a string or number as well as a function as
+   * option value. This function makes sure that the option with the given
+   * key in the given options is wrapped in a function
+   */
+  function makeOptionItemFunction(options, key) {
+    if (typeof options[key] !== 'function') {
+      var propertyName = options[key];
+      options[key] = function(item) { return item[propertyName]; };
+    }
+  }
+  function makeOptionFunction(options, key) {
+    if (typeof options[key] !== 'function') {
+      var value = options[key];
+      options[key] = function() { return value; };
+    }
+  }
+  /**
+   * HtmlEncodes the given value
+   */
+  var htmlEncodeContainer = $('<div />');
+  function htmlEncode(value) {
+    if (value) {
+      return htmlEncodeContainer.text(value).html();
+    } else {
+      return '';
+    }
+  }
+
+  /**
+   * Returns the position of the caret in the given input field
+   * http://flightschool.acylt.com/devnotes/caret-position-woes/
+   */
+  function doGetCaretPosition(oField) {
+    var iCaretPos = 0;
+    if (document.selection) {
+      oField.focus ();
+      var oSel = document.selection.createRange();
+      oSel.moveStart ('character', -oField.value.length);
+      iCaretPos = oSel.text.length;
+    } else if (oField.selectionStart || oField.selectionStart == '0') {
+      iCaretPos = oField.selectionStart;
+    }
+    return (iCaretPos);
+  }
+
+  /**
+    * Returns boolean indicates whether user has pressed an expected key combination.
+    * @param object keyPressEvent: JavaScript event object, refer
+    *     http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+    * @param object lookupList: expected key combinations, as in:
+    *     [13, {which: 188, shiftKey: true}]
+    */
+  function keyCombinationInList(keyPressEvent, lookupList) {
+      var found = false;
+      langx.each(lookupList, function (index, keyCombination) {
+          if (typeof (keyCombination) === 'number' && keyPressEvent.which === keyCombination) {
+              found = true;
+              return false;
+          }
+
+          if (keyPressEvent.which === keyCombination.which) {
+              var alt = !keyCombination.hasOwnProperty('altKey') || keyPressEvent.altKey === keyCombination.altKey,
+                  shift = !keyCombination.hasOwnProperty('shiftKey') || keyPressEvent.shiftKey === keyCombination.shiftKey,
+                  ctrl = !keyCombination.hasOwnProperty('ctrlKey') || keyPressEvent.ctrlKey === keyCombination.ctrlKey;
+              if (alt && shift && ctrl) {
+                  found = true;
+                  return false;
+              }
+          }
+      });
+
+      return found;
+  }
+
+  return TagsInput;
+
 });
-define('skylark-bootstrap4/popover',[
-    'skylark-utils-dom/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './tooltip'
-], function (langx,$, plugins,bs4,Tooltip) {
+define('skylark-bootstrap3/loadedInit',[
+ 	"skylark-langx/langx",
+ 	"skylark-domx-query",
+	"./affix",
+	"./alert",
+	"./button",
+	"./carousel",
+	"./collapse",
+	"./dropdown",
+	"./modal",
+	"./popover",
+	"./scrollspy",
+	"./tab",
+	"./taginput",
+	"./tooltip",
+	"./transition"
+],function(langx,$,Affix,Alert,Button,Carousel,Collapse,Dropdown,Modal,Popover,ScrollSpy,Tab,Tooltip){
+	function getTargetFromTrigger($trigger) {
+		var href
+		var target = $trigger.attr('data-target')
+		  || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
+
+		return $(target);
+	}
+
+	var init = function() {
     
-    'use strict';
-    const NAME = 'popover';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.popover';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const CLASS_PREFIX = 'bs-popover';
-    const BSCLS_PREFIX_REGEX = new RegExp(`(^|\\s)${ CLASS_PREFIX }\\S+`, 'g');
-    //const Default = {
-    //    ...Tooltip.Default,
-    //    placement: 'right',
-    //    trigger: 'click',
-    //    content: '',
-    //    template: '<div class="popover" role="tooltip">' + '<div class="arrow"></div>' + '<h3 class="popover-header"></h3>' + '<div class="popover-body"></div></div>'
-    //};
-    //const DefaultType = {
-    //    ...Tooltip.DefaultType,
-    //    content: '(string|element|function)'
-    //};
-    const Default = langx.mixin(
-        {},
-        Tooltip.Default,
-        {
-            placement: 'right',
-            trigger: 'click',
-            content: '',
-            template: '<div class="popover" role="tooltip">' + '<div class="arrow"></div>' + '<h3 class="popover-header"></h3>' + '<div class="popover-body"></div></div>'
-        }
-    );
-    const DefaultType = langx.mixin(
-        {},  
-        Tooltip.DefaultType,
-        {
-            content: '(string|element|function)'
-        }
-    );
-    const ClassName = {
-        FADE: 'fade',
-        SHOW: 'show'
-    };
-    const Selector = {
-        TITLE: '.popover-header',
-        CONTENT: '.popover-body'
-    };
-    const Event = {
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        INSERTED: `inserted${ EVENT_KEY }`,
-        CLICK: `click${ EVENT_KEY }`,
-        FOCUSIN: `focusin${ EVENT_KEY }`,
-        FOCUSOUT: `focusout${ EVENT_KEY }`,
-        MOUSEENTER: `mouseenter${ EVENT_KEY }`,
-        MOUSELEAVE: `mouseleave${ EVENT_KEY }`
-    };
-    class Popover extends Tooltip {
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        static get NAME() {
-            return NAME;
-        }
-        static get DATA_KEY() {
-            return DATA_KEY;
-        }
-        static get Event() {
-            return Event;
-        }
-        static get EVENT_KEY() {
-            return EVENT_KEY;
-        }
-        static get DefaultType() {
-            return DefaultType;
-        }
-        isWithContent() {
-            return this.getTitle() || this._getContent();
-        }
-        addAttachmentClass(attachment) {
-            $(this.getTipElement()).addClass(`${ CLASS_PREFIX }-${ attachment }`);
-        }
-        getTipElement() {
-            this.tip = this.tip || $(this.config.template)[0];
-            return this.tip;
-        }
-        setContent() {
-            const $tip = $(this.getTipElement());
-            this.setElementContent($tip.find(Selector.TITLE), this.getTitle());
-            let content = this._getContent();
-            if (typeof content === 'function') {
-                content = content.call(this.element);
-            }
-            this.setElementContent($tip.find(Selector.CONTENT), content);
-            $tip.removeClass(`${ ClassName.FADE } ${ ClassName.SHOW }`);
-        }
-        _getContent() {
-            return this.element.getAttribute('data-content') || this.config.content;
-        }
-        _cleanTipClass() {
-            const $tip = $(this.getTipElement());
-            const tabClass = $tip.attr('class').match(BSCLS_PREFIX_REGEX);
-            if (tabClass !== null && tabClass.length > 0) {
-                $tip.removeClass(tabClass.join(''));
-            }
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                const _config = typeof config === 'object' ? config : null;
-                if (!data && /dispose|hide/.test(config)) {
-                    return;
-                }
-                if (!data) {
-                    data = new Popover(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
-        }
-    }
-    $.fn[NAME] = Popover._jqueryInterface;
-    $.fn[NAME].Constructor = Popover;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Popover._jqueryInterface;
-    };
-    return Popover;
-});
-define('skylark-bootstrap4/scrollspy',[
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function ($, plugins,bs4,Util) {
+		$(function () {
+		    // AFFIX DATA-API
+		    // =================
+			$('[data-spy="affix"]').each(function () {
+				var $spy = $(this)
+				var data = $spy.data()
 
-    'use strict';
-    const NAME = 'scrollspy';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.scrollspy';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const Default = {
-        offset: 10,
-        method: 'auto',
-        target: ''
-    };
-    const DefaultType = {
-        offset: 'number',
-        method: 'string',
-        target: '(string|element)'
-    };
-    const Event = {
-        ACTIVATE: `activate${ EVENT_KEY }`,
-        SCROLL: `scroll${ EVENT_KEY }`,
-        LOAD_DATA_API: `load${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        DROPDOWN_ITEM: 'dropdown-item',
-        DROPDOWN_MENU: 'dropdown-menu',
-        ACTIVE: 'active'
-    };
-    const Selector = {
-        DATA_SPY: '[data-spy="scroll"]',
-        ACTIVE: '.active',
-        NAV_LIST_GROUP: '.nav, .list-group',
-        NAV_LINKS: '.nav-link',
-        NAV_ITEMS: '.nav-item',
-        LIST_ITEMS: '.list-group-item',
-        DROPDOWN: '.dropdown',
-        DROPDOWN_ITEMS: '.dropdown-item',
-        DROPDOWN_TOGGLE: '.dropdown-toggle'
-    };
-    const OffsetMethod = {
-        OFFSET: 'offset',
-        POSITION: 'position'
-    };
-    class ScrollSpy {
-        constructor(element, config) {
-            this._element = element;
-            this._scrollElement = element.tagName === 'BODY' ? window : element;
-            this._config = this._getConfig(config);
-            this._selector = `${ this._config.target } ${ Selector.NAV_LINKS },` + `${ this._config.target } ${ Selector.LIST_ITEMS },` + `${ this._config.target } ${ Selector.DROPDOWN_ITEMS }`;
-            this._offsets = [];
-            this._targets = [];
-            this._activeTarget = null;
-            this._scrollHeight = 0;
-            $(this._scrollElement).on(Event.SCROLL, event => this._process(event));
-            this.refresh();
-            this._process();
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get Default() {
-            return Default;
-        }
-        refresh() {
-            const autoMethod = this._scrollElement === this._scrollElement.window ? OffsetMethod.OFFSET : OffsetMethod.POSITION;
-            const offsetMethod = this._config.method === 'auto' ? autoMethod : this._config.method;
-            const offsetBase = offsetMethod === OffsetMethod.POSITION ? this._getScrollTop() : 0;
-            this._offsets = [];
-            this._targets = [];
-            this._scrollHeight = this._getScrollHeight();
-            const targets = [].slice.call(document.querySelectorAll(this._selector));
-            targets.map(element => {
-                let target;
-                const targetSelector = Util.getSelectorFromElement(element);
-                if (targetSelector) {
-                    target = document.querySelector(targetSelector);
-                }
-                if (target) {
-                    const targetBCR = target.getBoundingClientRect();
-                    if (targetBCR.width || targetBCR.height) {
-                        return [
-                            $(target)[offsetMethod]().top + offsetBase,
-                            targetSelector
-                        ];
-                    }
-                }
-                return null;
-            }).filter(item => item).sort((a, b) => a[0] - b[0]).forEach(item => {
-                this._offsets.push(item[0]);
-                this._targets.push(item[1]);
-            });
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            $(this._scrollElement).off(EVENT_KEY);
-            this._element = null;
-            this._scrollElement = null;
-            this._config = null;
-            this._selector = null;
-            this._offsets = null;
-            this._targets = null;
-            this._activeTarget = null;
-            this._scrollHeight = null;
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...Default,
-            //    ...typeof config === 'object' && config ? config : {}
-            //};
-            config = langx.mixin({},Default,typeof config === 'object' && config ? config : {});
-            if (typeof config.target !== 'string') {
-                let id = $(config.target).attr('id');
-                if (!id) {
-                    id = Util.getUID(NAME);
-                    $(config.target).attr('id', id);
-                }
-                config.target = `#${ id }`;
-            }
-            Util.typeCheckConfig(NAME, config, DefaultType);
-            return config;
-        }
-        _getScrollTop() {
-            return this._scrollElement === window ? this._scrollElement.pageYOffset : this._scrollElement.scrollTop;
-        }
-        _getScrollHeight() {
-            return this._scrollElement.scrollHeight || Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-        }
-        _getOffsetHeight() {
-            return this._scrollElement === window ? window.innerHeight : this._scrollElement.getBoundingClientRect().height;
-        }
-        _process() {
-            const scrollTop = this._getScrollTop() + this._config.offset;
-            const scrollHeight = this._getScrollHeight();
-            const maxScroll = this._config.offset + scrollHeight - this._getOffsetHeight();
-            if (this._scrollHeight !== scrollHeight) {
-                this.refresh();
-            }
-            if (scrollTop >= maxScroll) {
-                const target = this._targets[this._targets.length - 1];
-                if (this._activeTarget !== target) {
-                    this._activate(target);
-                }
-                return;
-            }
-            if (this._activeTarget && scrollTop < this._offsets[0] && this._offsets[0] > 0) {
-                this._activeTarget = null;
-                this._clear();
-                return;
-            }
-            const offsetLength = this._offsets.length;
-            for (let i = offsetLength; i--;) {
-                const isActiveTarget = this._activeTarget !== this._targets[i] && scrollTop >= this._offsets[i] && (typeof this._offsets[i + 1] === 'undefined' || scrollTop < this._offsets[i + 1]);
-                if (isActiveTarget) {
-                    this._activate(this._targets[i]);
-                }
-            }
-        }
-        _activate(target) {
-            this._activeTarget = target;
-            this._clear();
-            const queries = this._selector.split(',').map(selector => `${ selector }[data-target="${ target }"],${ selector }[href="${ target }"]`);
-            const $link = $([].slice.call(document.querySelectorAll(queries.join(','))));
-            if ($link.hasClass(ClassName.DROPDOWN_ITEM)) {
-                $link.closest(Selector.DROPDOWN).find(Selector.DROPDOWN_TOGGLE).addClass(ClassName.ACTIVE);
-                $link.addClass(ClassName.ACTIVE);
-            } else {
-                $link.addClass(ClassName.ACTIVE);
-                $link.parents(Selector.NAV_LIST_GROUP).prev(`${ Selector.NAV_LINKS }, ${ Selector.LIST_ITEMS }`).addClass(ClassName.ACTIVE);
-                $link.parents(Selector.NAV_LIST_GROUP).prev(Selector.NAV_ITEMS).children(Selector.NAV_LINKS).addClass(ClassName.ACTIVE);
-            }
-            $(this._scrollElement).trigger(Event.ACTIVATE, { relatedTarget: target });
-        }
-        _clear() {
-            [].slice.call(document.querySelectorAll(this._selector)).filter(node => node.classList.contains(ClassName.ACTIVE)).forEach(node => node.classList.remove(ClassName.ACTIVE));
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                let data = $(this).data(DATA_KEY);
-                const _config = typeof config === 'object' && config;
-                if (!data) {
-                    data = new ScrollSpy(this, _config);
-                    $(this).data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
-        }
-    }
-    $(window).on(Event.LOAD_DATA_API, () => {
-        const scrollSpys = [].slice.call(document.querySelectorAll(Selector.DATA_SPY));
-        const scrollSpysLength = scrollSpys.length;
-        for (let i = scrollSpysLength; i--;) {
-            const $spy = $(scrollSpys[i]);
-            ScrollSpy._jqueryInterface.call($spy, $spy.data());
-        }
-    });
-    $.fn[NAME] = ScrollSpy._jqueryInterface;
-    $.fn[NAME].Constructor = ScrollSpy;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return ScrollSpy._jqueryInterface;
-    };
-    return ScrollSpy;
-});
-define('skylark-bootstrap4/tab',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/eventer',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function (langx,eventer,$, plugins,bs4,Util) {
+				data.offset = data.offset || {};
 
-    'use strict';
-    const NAME = 'tab';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.tab';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const DATA_API_KEY = '.data-api';
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const Event = {
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`,
-        CLICK_DATA_API: `click${ EVENT_KEY }${ DATA_API_KEY }`
-    };
-    const ClassName = {
-        DROPDOWN_MENU: 'dropdown-menu',
-        ACTIVE: 'active',
-        DISABLED: 'disabled',
-        FADE: 'fade',
-        SHOW: 'show'
-    };
-    const Selector = {
-        DROPDOWN: '.dropdown',
-        NAV_LIST_GROUP: '.nav, .list-group',
-        ACTIVE: '.active',
-        ACTIVE_UL: '> li > .active',
-        DATA_TOGGLE: '[data-toggle="tab"], [data-toggle="pill"], [data-toggle="list"]',
-        DROPDOWN_TOGGLE: '.dropdown-toggle',
-        DROPDOWN_ACTIVE_CHILD: '> .dropdown-menu .active'
-    };
-    class Tab {
-        constructor(element) {
-            this._element = element;
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        show() {
-            if (this._element.parentNode && this._element.parentNode.nodeType === Node.ELEMENT_NODE && $(this._element).hasClass(ClassName.ACTIVE) || $(this._element).hasClass(ClassName.DISABLED)) {
-                return;
-            }
-            let target;
-            let previous;
-            const listElement = $(this._element).closest(Selector.NAV_LIST_GROUP)[0];
-            const selector = Util.getSelectorFromElement(this._element);
-            if (listElement) {
-                const itemSelector = listElement.nodeName === 'UL' || listElement.nodeName === 'OL' ? Selector.ACTIVE_UL : Selector.ACTIVE;
-                previous = langx.makeArray($(listElement).find(itemSelector));
-                previous = previous[previous.length - 1];
-            }
-            const hideEvent = eventer.create(Event.HIDE, { relatedTarget: this._element });
-            const showEvent = eventer.create(Event.SHOW, { relatedTarget: previous });
-            if (previous) {
-                $(previous).trigger(hideEvent);
-            }
-            $(this._element).trigger(showEvent);
-            if (showEvent.isDefaultPrevented() || hideEvent.isDefaultPrevented()) {
-                return;
-            }
-            if (selector) {
-                target = document.querySelector(selector);
-            }
-            this._activate(this._element, listElement);
-            const complete = () => {
-                const hiddenEvent = $.Event(Event.HIDDEN, { relatedTarget: this._element });
-                const shownEvent = $.Event(Event.SHOWN, { relatedTarget: previous });
-                $(previous).trigger(hiddenEvent);
-                $(this._element).trigger(shownEvent);
-            };
-            if (target) {
-                this._activate(target, target.parentNode, complete);
-            } else {
-                complete();
-            }
-        }
-        dispose() {
-            $.removeData(this._element, DATA_KEY);
-            this._element = null;
-        }
-        _activate(element, container, callback) {
-            const activeElements = container && (container.nodeName === 'UL' || container.nodeName === 'OL') ? $(container).find(Selector.ACTIVE_UL) : $(container).children(Selector.ACTIVE);
-            const active = activeElements[0];
-            const isTransitioning = callback && (active && $(active).hasClass(ClassName.FADE));
-            const complete = () => this._transitionComplete(element, active, callback);
-            if (active && isTransitioning) {
-                const transitionDuration = Util.getTransitionDurationFromElement(active);
-                $(active).removeClass(ClassName.SHOW).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-            } else {
-                complete();
-            }
-        }
-        _transitionComplete(element, active, callback) {
-            if (active) {
-                $(active).removeClass(ClassName.ACTIVE);
-                const dropdownChild = $(active.parentNode).find(Selector.DROPDOWN_ACTIVE_CHILD)[0];
-                if (dropdownChild) {
-                    $(dropdownChild).removeClass(ClassName.ACTIVE);
-                }
-                if (active.getAttribute('role') === 'tab') {
-                    active.setAttribute('aria-selected', false);
-                }
-            }
-            $(element).addClass(ClassName.ACTIVE);
-            if (element.getAttribute('role') === 'tab') {
-                element.setAttribute('aria-selected', true);
-            }
-            Util.reflow(element);
-            $(element).addClass(ClassName.SHOW);
-            if (element.parentNode && $(element.parentNode).hasClass(ClassName.DROPDOWN_MENU)) {
-                const dropdownElement = $(element).closest(Selector.DROPDOWN)[0];
-                if (dropdownElement) {
-                    const dropdownToggleList = [].slice.call(dropdownElement.querySelectorAll(Selector.DROPDOWN_TOGGLE));
-                    $(dropdownToggleList).addClass(ClassName.ACTIVE);
-                }
-                element.setAttribute('aria-expanded', true);
-            }
-            if (callback) {
-                callback();
-            }
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                const $this = $(this);
-                let data = $this.data(DATA_KEY);
-                if (!data) {
-                    data = new Tab(this);
-                    $this.data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config]();
-                }
-            });
-        }
-    }
-    $(document).on(Event.CLICK_DATA_API, Selector.DATA_TOGGLE, function (event) {
-        event.preventDefault();
-        Tab._jqueryInterface.call($(this), 'show');
-    });
-    $.fn[NAME] = Tab._jqueryInterface;
-    $.fn[NAME].Constructor = Tab;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Tab._jqueryInterface;
-    };
-    return Tab;
-});
-define('skylark-bootstrap4/toast',[
-    'skylark-langx/langx',
-    'skylark-utils-dom/query',
-    'skylark-utils-dom/plugins',
-    "./bs4",
-    './util'
-], function (langx,$, plugins,bs4,Util) {
+				if (data.offsetBottom != null) data.offset.bottom = data.offsetBottom
+				if (data.offsetTop    != null) data.offset.top    = data.offsetTop
 
-    'use strict';
-    const NAME = 'toast';
-    const VERSION = '4.1.3';
-    const DATA_KEY = 'bs.toast';
-    const EVENT_KEY = `.${ DATA_KEY }`;
-    const jquery_NO_CONFLICT = $.fn[NAME];
-    const Event = {
-        CLICK_DISMISS: `click.dismiss${ EVENT_KEY }`,
-        HIDE: `hide${ EVENT_KEY }`,
-        HIDDEN: `hidden${ EVENT_KEY }`,
-        SHOW: `show${ EVENT_KEY }`,
-        SHOWN: `shown${ EVENT_KEY }`
-    };
-    const ClassName = {
-        FADE: 'fade',
-        HIDE: 'hide',
-        SHOW: 'show',
-        SHOWING: 'showing'
-    };
-    const DefaultType = {
-        animation: 'boolean',
-        autohide: 'boolean',
-        delay: 'number'
-    };
-    const Default = {
-        animation: true,
-        autohide: true,
-        delay: 500
-    };
-    const Selector = { DATA_DISMISS: '[data-dismiss="toast"]' };
-    class Toast {
-        constructor(element, config) {
-            this._element = element;
-            this._config = this._getConfig(config);
-            this._timeout = null;
-            this._setListeners();
-        }
-        static get VERSION() {
-            return VERSION;
-        }
-        static get DefaultType() {
-            return DefaultType;
-        }
-        show() {
-            $(this._element).trigger(Event.SHOW);
-            if (this._config.animation) {
-                this._element.classList.add(ClassName.FADE);
-            }
-            const complete = () => {
-                this._element.classList.remove(ClassName.SHOWING);
-                this._element.classList.add(ClassName.SHOW);
-                $(this._element).trigger(Event.SHOWN);
-                if (this._config.autohide) {
-                    this.hide();
-                }
-            };
-            this._element.classList.remove(ClassName.HIDE);
-            this._element.classList.add(ClassName.SHOWING);
-            if (this._config.animation) {
-                const transitionDuration = Util.getTransitionDurationFromElement(this._element);
-                $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-            } else {
-                complete();
-            }
-        }
-        hide(withoutTimeout) {
-            if (!this._element.classList.contains(ClassName.SHOW)) {
-                return;
-            }
-            $(this._element).trigger(Event.HIDE);
-            if (withoutTimeout) {
-                this._close();
-            } else {
-                this._timeout = setTimeout(() => {
-                    this._close();
-                }, this._config.delay);
-            }
-        }
-        dispose() {
-            clearTimeout(this._timeout);
-            this._timeout = null;
-            if (this._element.classList.contains(ClassName.SHOW)) {
-                this._element.classList.remove(ClassName.SHOW);
-            }
-            $(this._element).off(Event.CLICK_DISMISS);
-            $.removeData(this._element, DATA_KEY);
-            this._element = null;
-            this._config = null;
-        }
-        _getConfig(config) {
-            //config = {
-            //    ...Default,
-            //    ...$(this._element).data(),
-            //    ...typeof config === 'object' && config ? config : {}
-            //};
-            const _config = langx.mixin({},Default,$(this._element).data(),typeof config === 'object' && config ? config : {});
-            Util.typeCheckConfig(NAME, config, this.constructor.DefaultType);
-            return config;
-        }
-        _setListeners() {
-            $(this._element).on(Event.CLICK_DISMISS, Selector.DATA_DISMISS, () => this.hide(true));
-        }
-        _close() {
-            const complete = () => {
-                this._element.classList.add(ClassName.HIDE);
-                $(this._element).trigger(Event.HIDDEN);
-            };
-            this._element.classList.remove(ClassName.SHOW);
-            if (this._config.animation) {
-                const transitionDuration = Util.getTransitionDurationFromElement(this._element);
-                $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
-            } else {
-                complete();
-            }
-        }
-        static _jqueryInterface(config) {
-            return this.each(function () {
-                const $element = $(this);
-                let data = $element.data(DATA_KEY);
-                const _config = typeof config === 'object' && config;
-                if (!data) {
-                    data = new Toast(this, _config);
-                    $element.data(DATA_KEY, data);
-                }
-                if (typeof config === 'string') {
-                    if (typeof data[config] === 'undefined') {
-                        throw new TypeError(`No method named "${ config }"`);
-                    }
-                    data[config](this);
-                }
-            });
-        }
-    }
-    $.fn[NAME] = Toast._jqueryInterface;
-    $.fn[NAME].Constructor = Toast;
-    $.fn[NAME].noConflict = () => {
-        $.fn[NAME] = jquery_NO_CONFLICT;
-        return Toast._jqueryInterface;
-    };
-    return Toast;
+				$spy.affix(data);
+			});
+
+
+		  	// ALERT DATA-API
+		    // =================
+  			//$(document).on('click.bs.alert.data-api', dismiss, Alert.prototype.close)
+
+  			// BUTTON DATA-API
+		    // =================
+			$(document).on('click.bs3.button.data-api', '[data-toggle^="button"]', function (e) {
+				var $btn = $(e.target).closest('.btn')
+				$btn.button('toggle');
+				if (!($(e.target).is('input[type="radio"], input[type="checkbox"]'))) {
+					// Prevent double click on radios, and the double selections (so cancellation) on checkboxes
+					e.preventDefault()
+					// The target component still receive the focus
+					if ($btn.is('input,button')) {
+						$btn.trigger('focus');
+					}else {
+						$btn.find('input:visible,button:visible').first().trigger('focus');
+					}
+				}
+			}).on('focus.bs3.button.data-api blur.bs3.button.data-api', '[data-toggle^="button"]', function (e) {
+				$(e.target).closest('.btn').toggleClass('focus', /^focus(in)?$/.test(e.type));
+			});
+
+		    // CAROUSEL DATA-API
+		    // =================
+			$('[data-ride="carousel"]').each(function () {
+				$this = $(this);
+				$this.carousel($this.data());
+			});
+
+            $(document).on("click.bs3.carousel.data-api", "[data-target][data-slide],[data-target][data-slide-to],[href][data-slide],[href][data-slide-to]", function(e) {
+	            var href
+	            var $this = $(this)
+	            var $target = $($this.attr('data-target') || (href = $this.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '')) // strip for ie7
+	            if (!$target.hasClass('carousel')) return
+	            var options = langx.mixin({}, $target.data(), $this.data());
+	            var slideIndex = $this.attr('data-slide-to')
+	            if (slideIndex) options.interval = false
+
+	            $target.carousel(options);
+
+	            if (slideIndex) {
+	                $target.plugin('bs3.carousel').to(slideIndex);
+	            }
+
+	            e.preventDefault();
+
+	        });
+ 
+			// COLLAPSE DATA-API
+			// =================
+ 		    $(document).on('click.bs3.collapse.data-api', '[data-target][data-toggle="collapse"]', function (e) {
+			    var $this   = $(this)
+
+			    if (!$this.attr('data-target')) e.preventDefault()
+
+			    var $target = getTargetFromTrigger($this)
+			    var data    = $target.plugin('bs3.collapse')
+			    var option  = data ? 'toggle' : $this.data()
+
+			    $target.collapse(option);
+		    });
+
+			    // Dropdown DATA-API
+			    // =================
+	       	$(document)
+	        .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
+	        .on('click.bs.dropdown.data-api', '[data-toggle="dropdown"]', Dropdown.prototype.toggle)
+	        .on('keydown.bs.dropdown.data-api', '[data-toggle="dropdown"]', Dropdown.prototype.keydown)
+	        .on('keydown.bs.dropdown.data-api', '.dropdown-menu', Dropdown.prototype.keydown);
+
+
+			// MODAL DATA-API
+			// ==============
+			$(document).on('click.bs3.modal.data-api', '[data-toggle="modal"]', function (e) {
+				var $this   = $(this)
+				var href    = $this.attr('href')
+				var $target = $($this.attr('data-target') || (href && href.replace(/.*(?=#[^\s]+$)/, ''))) // strip for ie7
+				var option  = $target.data('bs3.modal') ? 'toggle' : langx.mixin({ remote: !/#/.test(href) && href }, $target.data(), $this.data())
+
+				if ($this.is('a')) e.preventDefault()
+
+				$target.one('show.bs3.modal', function (showEvent) {
+			  		if (showEvent.isDefaultPrevented()) return // only register focus restorer if modal will actually get shown
+			  		$target.one('hidden.bs3.modal', function () {
+			    		$this.is(':visible') && $this.trigger('focus')
+			  		})
+				})
+				$target.modal(option, this);
+			});
+
+				// SCROLLSPY DATA-API
+				// ==================
+			$('[data-spy="scroll"]').each(function () {
+				var $spy = $(this)
+				$spy.scrollspy($spy.data());
+			});
+
+			// TAB DATA-API
+			// ============
+
+			var clickHandler = function (e) {
+			    e.preventDefault()
+			    $(this).tab('show');
+			};
+
+			$(document)
+			.on('click.bs3.tab.data-api', '[data-toggle="tab"]', clickHandler)
+			.on('click.bs3.tab.data-api', '[data-toggle="pill"]', clickHandler);
+
+		  	/**
+		   	* Initialize tagsinput behaviour on inputs and selects which have
+		   	* data-role=tagsinput
+		   	*/
+
+		    $("input[data-role=tagsinput], select[multiple][data-role=tagsinput]").tagsinput();
+
+  		});
+	};
+
+	return init;
 });
-define('skylark-bootstrap4/main',[
-    "skylark-utils-dom/query",
-    './alert',
-    './button',
-    './carousel',
-    './collapse',
-    './dropdown',
-    './modal',
-    './popover',
-    './scrollspy',
-    './tab',
-    './toast',
-    './tooltip',
-    './util'
+
+define('skylark-bootstrap3/main',[
+    "skylark-domx-query",
+    "./affix",
+    "./alert",
+    "./button",
+    "./carousel",
+    "./collapse",
+    "./dropdown",
+    "./modal",
+    "./popover",
+    "./scrollspy",
+    "./tab",
+    "./taginput",
+    "./tooltip",
+    "./transition",
+    "./loadedInit"
 ], function($) {
     return $;
 });
-define('skylark-bootstrap4', ['skylark-bootstrap4/main'], function (main) { return main; });
+define('skylark-bootstrap3', ['skylark-bootstrap3/main'], function (main) { return main; });
 
 define('skylark-vvveb/Vvveb',[
 	"skylark-langx/skylark",
-	"skylark-bootstrap4"
+	"skylark-bootstrap3"
 
 ],function(skylark){
 
@@ -15769,7 +14064,7 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 	  }
 	};
 
-	return skylark.attach("itg.Vvveb",Vvveb);
+	return skylark.attach("intg.Vvveb",Vvveb);
 });
 define('skylark-vvveb/BlocksGroup',[
 	"./Vvveb"
@@ -15795,8 +14090,2758 @@ define('skylark-vvveb/Blocks',[
 		},
 	};	
 });
+define('skylark-domx-forms/forms',[
+	"skylark-langx/skylark"
+],function(skylark){
+	return skylark.attach("domx.forms",{});
+});
+define('skylark-domx-forms/deserialize',[
+  "skylark-langx/langx",
+  "skylark-domx-query",
+  "./forms"
+],function(langx,$,forms){
+  /**
+   * Updates a key/valueArray with the given property and value. Values will always be stored as arrays.
+   *
+   * @param prop The property to add the value to.
+   * @param value The value to add.
+   * @param obj The object to update.
+   * @returns {object} Updated object.
+   */
+  function updateKeyValueArray( prop, value, obj ) {
+    var current = obj[ prop ];
+
+    if ( current === undefined ) {
+      obj[ prop ] = [ value ];
+    } else {
+      current.push( value );
+    }
+
+    return obj;
+  }
+
+  /**
+   * Get all of the fields contained within the given elements by name.
+   *
+   * @param formElm The form element.
+   * @param filter Custom filter to apply to the list of fields.
+   * @returns {object} All of the fields contained within the given elements, keyed by name.
+   */
+  function getFieldsByName(formElm, filter ) {
+    var elementsByName = {};
+
+    // Extract fields from elements
+    var fields = $(formElm)
+      .map(function convertFormToElements() {
+        return this.elements ? langx.makeArray( this.elements ) : this;
+      })
+      .filter( filter || ":input:not(:disabled)" )
+      .get();
+
+    langx.each( fields, function( index, field ) {
+      updateKeyValueArray( field.name, field, elementsByName );
+    });
+
+    return elementsByName;
+  }
+
+  /**
+   * Figure out the type of an element. Input type will be used first, falling back to nodeName.
+   *
+   * @param element DOM element to check type of.
+   * @returns {string} The element's type.
+   */
+  function getElementType( element ) {
+    return ( element.type || element.nodeName ).toLowerCase();
+  }
+
+  /**
+   * Normalize the provided data into a key/valueArray store.
+   *
+   * @param data The data provided by the user to the plugin.
+   * @returns {object} The data normalized into a key/valueArray store.
+   */
+  function normalizeData( data ) {
+    var normalized = {};
+    var rPlus = /\+/g;
+
+    // Convert data from .serializeObject() notation
+    if ( langx.isPlainObject( data ) ) {
+      langx.extend( normalized, data );
+
+      // Convert non-array values into an array
+      langx.each( normalized, function( name, value ) {
+        if ( !langx.isArray( value ) ) {
+          normalized[ name ] = [ value ];
+        }
+      });
+
+    // Convert data from .serializeArray() notation
+    } else if ( langx.isArray( data ) ) {
+      langx.each( data, function( index, field ) {
+        updateKeyValueArray( field.name, field.value, normalized );
+      });
+
+    // Convert data from .serialize() notation
+    } else if ( typeof data === "string" ) {
+      langx.each( data.split( "&" ), function( index, field ) {
+        var current = field.split( "=" );
+        var name = decodeURIComponent( current[ 0 ].replace( rPlus, "%20" ) );
+        var value = decodeURIComponent( current[ 1 ].replace( rPlus, "%20" ) );
+        updateKeyValueArray( name, value, normalized );
+      });
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Map of property name -> element types.
+   *
+   * @type {object}
+   */
+  var updateTypes = {
+    checked: [
+      "radio",
+      "checkbox"
+    ],
+    selected: [
+      "option",
+      "select-one",
+      "select-multiple"
+    ],
+    value: [
+      "button",
+      "color",
+      "date",
+      "datetime",
+      "datetime-local",
+      "email",
+      "hidden",
+      "month",
+      "number",
+      "password",
+      "range",
+      "reset",
+      "search",
+      "submit",
+      "tel",
+      "text",
+      "textarea",
+      "time",
+      "url",
+      "week"
+    ]
+  };
+
+  /**
+   * Get the property to update on an element being updated.
+   *
+   * @param element The DOM element to get the property for.
+   * @returns The name of the property to update if element is supported, otherwise `undefined`.
+   */
+  function getPropertyToUpdate( element ) {
+    var type = getElementType( element );
+    var elementProperty = undefined;
+
+    langx.each( updateTypes, function( property, types ) {
+      if ( langx.inArray( type, types ) > -1 ) {
+        elementProperty = property;
+        return false;
+      }
+    });
+
+    return elementProperty;
+  }
+
+  /**
+   * Update the element based on the provided data.
+   *
+   * @param element The DOM element to update.
+   * @param elementIndex The index of this element in the list of elements with the same name.
+   * @param value The serialized element value.
+   * @param valueIndex The index of the value in the list of values for elements with the same name.
+   * @param callback A function to call if the value of an element was updated.
+   */
+  function update( element, elementIndex, value, valueIndex, callback ) {
+    var property = getPropertyToUpdate( element );
+
+    // Handle value inputs
+    // If there are multiple value inputs with the same name, they will be populated by matching indexes.
+    if ( property == "value" && elementIndex == valueIndex ) {
+      element.value = value;
+      callback.call( element, value );
+
+    // Handle select menus, checkboxes and radio buttons
+    } else if ( property == "checked" || property == "selected" ) {
+      var fields = [];
+
+      // Extract option fields from select menus
+      if ( element.options ) {
+        langx.each( element.options, function( index, option ) {
+          fields.push( option );
+        });
+
+      } else {
+        fields.push( element );
+      }
+
+      // #37: Remove selection from multiple select menus before deserialization
+      if ( element.multiple && valueIndex == 0 ) {
+        element.selectedIndex = -1;
+      }
+
+      langx.each( fields, function( index, field ) {
+        if ( field.value == value ) {
+          field[ property ] = true;
+          callback.call( field, value );
+        }
+      });
+    }
+  }
+
+  /**
+   * Default plugin options.
+   *
+   * @type {object}
+   */
+  var defaultOptions = {
+    change: langx.noop,
+    complete: langx.noop
+  };
+
+  /**
+   * The $.deserialize function.
+   *
+   * @param data The data to deserialize.
+   * @param options Additional options.
+   * @returns {jQuery} The jQuery object that was provided to the plugin.
+   */
+  function deserialize(formElm,data, options ) {
+
+    // Backwards compatible with old arguments: data, callback
+    if ( langx.isFunction( options ) ) {
+      options = { complete: options };
+    }
+
+    options = langx.extend( defaultOptions, options || {} );
+    data = normalizeData( data );
+
+    var elementsByName = getFieldsByName( formElm, options.filter );
+
+    langx.each( data, function( name, values ) {
+      langx.each( elementsByName[ name ], function( elementIndex, element ) {
+        langx.each( values, function( valueIndex, value ) {
+          update( element, elementIndex, value, valueIndex, options.change );
+        });
+      });
+    });
+
+    options.complete.call( formElm );
+
+    return this;
+  };
+
+  return forms.deserialize = deserialize;
+});
+define('skylark-domx-forms/serializeArray',[
+  "skylark-langx/langx",
+  "skylark-domx-data",
+  "./forms"
+],function(langx,datax,forms){
+    function serializeArray(formElm) {
+        var name, type, result = [],
+            add = function(value) {
+                if (value.forEach) return value.forEach(add)
+                result.push({ name: name, value: value })
+            }
+        langx.each(formElm.elements, function(_, field) {
+            type = field.type, name = field.name
+            if (name && field.nodeName.toLowerCase() != 'fieldset' &&
+                !field.disabled && type != 'submit' && type != 'reset' && type != 'button' && type != 'file' &&
+                ((type != 'radio' && type != 'checkbox') || field.checked))
+                add(datax.val(field))
+        })
+        return result
+    };
+
+    return forms.serializeArray = serializeArray;
+});
+
+define('skylark-domx-forms/serializeObject',[
+  "skylark-langx/langx",
+  "./forms",
+  "./serializeArray"
+],function(langx,forms,serializeArray){
+
+  function serializeObject(formElm){
+    var obj = {};
+    
+    langx.each(serializeArray(formElm), function(i,o){
+      var n = o.name,
+        v = o.value;
+        
+        obj[n] = obj[n] === undefined ? v
+          : langx.isArray( obj[n] ) ? obj[n].concat( v )
+          : [ obj[n], v ];
+    });
+    
+    return obj;
+  }
+
+  return forms.serializeObject = serializeObject;
+});  
+define('skylark-domx-forms/serialize',[
+  "skylark-langx/langx",
+  "./forms",
+  "./serializeArray"
+],function(langx,forms,serializeArray){
+    function serialize(formElm) {
+        var result = []
+        serializeArray(formElm).forEach(function(elm) {
+            result.push(encodeURIComponent(elm.name) + '=' + encodeURIComponent(elm.value))
+        })
+        return result.join('&')
+    }
+
+    return forms.serialize = serialize;
+});
+define('skylark-domx-forms/main',[
+	"./forms",
+    "skylark-domx-velm",
+    "skylark-domx-query",
+    "./deserialize",
+    "./serializeArray",
+    "./serializeObject",
+    "./serialize"
+],function(forms,velm,$){
+
+    // from ./data
+    velm.delegate([
+        "deserialize",
+        "serializeArray",
+        "serializeObject",
+        "serialize"
+    ], forms);
+
+    $.fn.deserialize = $.wraps.wrapper_value(forms.deserialize, forms, forms.deserialize);
+    $.fn.serializeArray = $.wraps.wrapper_value(forms.serializeArray, forms, forms.serializeArray);
+    $.fn.serializeObject = $.wraps.wrapper_value(forms.serializeObject, forms, forms.serializeObject);
+    $.fn.serialize = $.wraps.wrapper_value(forms.serialize, forms, forms.serialize);
+
+
+	return forms;
+});
+define('skylark-domx-forms', ['skylark-domx-forms/main'], function (main) { return main; });
+
+define('skylark-domx-scripter/scripter',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-noder",
+    "skylark-domx-finder"
+], function(skylark, langx, noder, finder) {
+
+    var head = document.getElementsByTagName('head')[0],
+        scriptsByUrl = {},
+        scriptElementsById = {},
+        count = 0;
+
+    var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
+
+    function scripter() {
+        return scripter;
+    }
+
+
+    var preservedScriptAttributes = {
+        type: true,
+        src: true,
+        nonce: true,
+        noModule: true
+    };
+
+    function evaluate(code,node, doc ) {
+        doc = doc || document;
+
+        var i, val,
+            script = doc.createElement("script");
+
+        script.text = code;
+        if ( node ) {
+            for ( i in preservedScriptAttributes ) {
+
+                // Support: Firefox 64+, Edge 18+
+                // Some browsers don't support the "nonce" property on scripts.
+                // On the other hand, just using `getAttribute` is not enough as
+                // the `nonce` attribute is reset to an empty string whenever it
+                // becomes browsing-context connected.
+                // See https://github.com/whatwg/html/issues/2369
+                // See https://html.spec.whatwg.org/#nonce-attributes
+                // The `node.getAttribute` check was added for the sake of
+                // `jQuery.globalEval` so that it can fake a nonce-containing node
+                // via an object.
+                val = node[ i ] || node.getAttribute && node.getAttribute( i );
+                if ( val ) {
+                    script.setAttribute( i, val );
+                }
+            }
+        }
+        doc.head.appendChild( script ).parentNode.removeChild( script );
+
+        return this;
+    }
+
+    langx.mixin(scripter, {
+        /*
+         * Load a script from a url into the document.
+         * @param {} url
+         * @param {} loadedCallback
+         * @param {} errorCallback
+         */
+        loadJavaScript: function(url, loadedCallback, errorCallback) {
+            var script = scriptsByUrl[url];
+            if (!script) {
+                script = scriptsByUrl[url] = {
+                    state: 0, //0:unload,1:loaded,-1:loaderror
+                    loadedCallbacks: [],
+                    errorCallbacks: []
+                }
+            }
+
+            script.loadedCallbacks.push(loadedCallback);
+            script.errorCallbacks.push(errorCallback);
+
+            if (script.state === 1) {
+                script.node.onload();
+            } else if (script.state === -1) {
+                script.node.onerror();
+            } else {
+                var node = script.node = document.createElement("script"),
+                    id = script.id = (count++);
+
+                node.type = "text/javascript";
+                node.async = false;
+                node.defer = false;
+                startTime = new Date().getTime();
+                head.appendChild(node);
+
+                node.onload = function() {
+                        script.state = 1;
+
+                        var callbacks = script.loadedCallbacks,
+                            i = callbacks.length;
+
+                        while (i--) {
+                            callbacks[i]();
+                        }
+                        script.loadedCallbacks = [];
+                        script.errorCallbacks = [];
+                    },
+                    node.onerror = function() {
+                        script.state = -1;
+                        var callbacks = script.errorCallbacks,
+                            i = callbacks.length;
+
+                        while (i--) {
+                            callbacks[i]();
+                        }
+                        script.loadedCallbacks = [];
+                        script.errorCallbacks = [];
+                    };
+                node.src = url;
+
+                scriptElementsById[id] = node;
+            }
+            return script.id;
+        },
+        /*
+         * Remove the specified script from the document.
+         * @param {Number} id
+         */
+        deleteJavaScript: function(id) {
+            var node = scriptElementsById[id];
+            if (node) {
+                var url = node.src;
+                noder.remove(node);
+                delete scriptElementsById[id];
+                delete scriptsByUrl[url];
+            }
+        },
+
+        evaluate : evaluate,
+
+        html : function(node,value) {
+
+            var result = noder.html(node,value);
+
+            if (value !== undefined) {
+                var scripts = node.querySelectorAll('script');
+
+                for (var i =0; i<scripts.length; i++) {
+                    var node1 = scripts[i];
+                    if (rscriptType.test( node1.type || "" ) ) {
+                      evaluate(node1.textContent,node1);
+                    }
+                }       
+                return this;         
+            } else {
+                return result;
+            }
+
+
+
+        }
+    });
+
+    return skylark.attach("domx.scripter", scripter);
+});
+define('skylark-domx-scripter/main',[
+	"./scripter",
+	"skylark-domx-query"
+],function(scripter,$){
+
+    $.fn.html = $.wraps.wrapper_value(scripter.html, scripter, scripter.html);
+
+	return scripter;
+});
+define('skylark-domx-scripter', ['skylark-domx-scripter/main'], function (main) { return main; });
+
+define('skylark-jquery/core',[
+	"skylark-langx/skylark",
+	"skylark-langx/langx",
+	"skylark-domx-browser",
+	"skylark-domx-noder",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-finder",
+	"skylark-domx-forms",
+	"skylark-domx-fx",
+	"skylark-domx-styler",
+	"skylark-domx-query",
+	"skylark-domx-scripter"
+],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query,scripter){
+	var filter = Array.prototype.filter,
+		slice = Array.prototype.slice;
+
+    (function($){
+	    $.fn.jquery = '2.2.0';
+
+	    $.browser = browser;
+	    
+	    $.camelCase = langx.camelCase;
+
+		$.cleanData = function( elems ) {
+			var elem,
+				i = 0;
+
+			for ( ; ( elem = elems[ i ] ) !== undefined; i++ ) {
+				datax.cleanData(elem);
+			}
+		};
+
+		$.removeData = function(elm,name) {
+			datax.removeData(elm,name);
+		}
+	
+	    $.each = langx.each;
+
+	    $.extend = langx.extend;
+
+	    $.grep = function(elements, callback) {
+	        return filter.call(elements, callback)
+	    };
+
+	    $.attr = function(elm,name) {
+	    	return datax.attr(elm,name);
+	    };
+
+	    $.isArray = langx.isArray;
+	    $.isEmptyObject = langx.isEmptyObject;
+	    $.isFunction = langx.isFunction;
+	    $.isWindow = langx.isWindow;
+	    $.isPlainObject = langx.isPlainObject;
+        $.isNumeric = langx.isNumber;
+
+	    $.inArray = langx.inArray;
+
+	    $.makeArray = langx.makeArray;
+	    $.map = langx.map;  // The behavior is somewhat different from the original jquery.
+
+	    $.noop = function() {
+	    };
+
+	    $.parseJSON = window.JSON.parse;
+
+	    $.proxy = langx.proxy;
+
+	    $.trim = langx.trim;
+	    $.type = langx.type;
+
+	    $.fn.extend = function(props) {
+	        langx.mixin($.fn, props);
+	    };
+
+
+    })(query);
+
+    (function($){
+        $.Event = function Event(src, props) {
+            if (langx.isString(src)) {
+            	var type = src;
+            	return eventer.create(type, props);
+	        }
+            return eventer.proxy(src, props);
+        };
+
+        $.event = {};
+
+	    $.event.special = eventer.special;
+
+	    $.fn.submit = function(callback) {
+	        if (0 in arguments) this.bind('submit', callback)
+	        else if (this.length) {
+	            var event = $.Event('submit')
+	            this.eq(0).trigger(event)
+	            if (!event.isDefaultPrevented()) this.get(0).submit()
+	        }
+	        return this
+	    };
+
+	    // event
+	    $.fn.triggerHandler = $.fn.trigger;
+
+	    $.fn.delegate = function(selector, event, callback) {
+	        return this.on(event, selector, callback)
+	    };
+
+	    $.fn.undelegate = function(selector, event, callback) {
+	        return this.off(event, selector, callback)
+	    };
+
+	    $.fn.live = function(event, callback) {
+	        $(document.body).delegate(this.selector, event, callback)
+	        return this
+	    };
+
+	    $.fn.die = function(event, callback) {
+	        $(document.body).undelegate(this.selector, event, callback)
+	        return this
+	    };
+
+	    $.fn.bind = function(event, selector, data, callback) {
+	        return this.on(event, selector, data, callback)
+	    };
+
+	    $.fn.unbind = function(event, callback) {
+	        return this.off(event, callback)
+	    };
+
+	    $.fn.ready = function(callback) {
+	        eventer.ready(callback);
+	        return this;
+	    };
+
+	    $.fn.stop = function() {
+	        // todo
+	        return this;
+	    };
+
+	    $.fn.moveto = function(x, y) {
+	        return this.animate({
+	            left: x + "px",
+	            top: y + "px"
+	        }, 0.4);
+
+	    };
+
+	    $.ready = eventer.ready;
+
+	    $.on = eventer.on;
+
+	    $.off = eventer.off;
+    })(query);
+
+    (function($){
+	    // plugin compatibility
+	    $.uuid = 0;
+	    $.support = browser.support;
+	    $.expr = {};
+
+	    $.expr[":"] = $.expr.pseudos = $.expr.filters = finder.pseudos;
+
+	    $.expr.createPseudo = function(fn) {
+	    	return fn;
+	    };
+
+	    $.cssHooks = styler.cssHooks;
+
+	    $.contains = noder.contains;
+
+	    $.css = styler.css;
+
+	    $.data = datax.data;
+
+	    $.fx = fx;
+	    $.fx.step = {
+
+        };
+
+        $.speed = function( speed, easing, fn ) {
+            var opt = speed && typeof speed === "object" ? $.extend( {}, speed ) : {
+                complete: fn || !fn && easing ||
+                    $.isFunction( speed ) && speed,
+                duration: speed,
+                easing: fn && easing || easing && !$.isFunction( easing ) && easing
+            };
+
+            // Go to the end state if fx are off
+            if ( $.fx.off ) {
+                opt.duration = 0;
+
+            } else {
+                if ( typeof opt.duration !== "number" ) {
+                    if ( opt.duration in $.fx.speeds ) {
+                        opt.duration = $.fx.speeds[ opt.duration ];
+
+                    } else {
+                        opt.duration = $.fx.speeds._default;
+                    }
+                }
+            }
+
+            // Normalize opt.queue - true/undefined/null -> "fx"
+            if ( opt.queue == null || opt.queue === true ) {
+                opt.queue = "fx";
+            }
+
+            // Queueing
+            opt.old = opt.complete;
+
+            opt.complete = function() {
+                if ( $.isFunction( opt.old ) ) {
+                    opt.old.call( this );
+                }
+
+                if ( opt.queue ) {
+                    $.dequeue( this, opt.queue );
+                }
+            };
+
+            return opt;
+        };
+
+        $.easing = {};
+
+	    $.offset = {};
+	    $.offset.setOffset = function(elem, options, i) {
+	        var position = $.css(elem, "position");
+
+	        // set position first, in-case top/left are set even on static elem
+	        if (position === "static") {
+	            elem.style.position = "relative";
+	        }
+
+	        var curElem = $(elem),
+	            curOffset = curElem.offset(),
+	            curCSSTop = $.css(elem, "top"),
+	            curCSSLeft = $.css(elem, "left"),
+	            calculatePosition = (position === "absolute" || position === "fixed") && $.inArray("auto", [curCSSTop, curCSSLeft]) > -1,
+	            props = {},
+	            curPosition = {},
+	            curTop, curLeft;
+
+	        // need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+	        if (calculatePosition) {
+	            curPosition = curElem.position();
+	            curTop = curPosition.top;
+	            curLeft = curPosition.left;
+	        } else {
+	            curTop = parseFloat(curCSSTop) || 0;
+	            curLeft = parseFloat(curCSSLeft) || 0;
+	        }
+
+	        if ($.isFunction(options)) {
+	            options = options.call(elem, i, curOffset);
+	        }
+
+	        if (options.top != null) {
+	            props.top = (options.top - curOffset.top) + curTop;
+	        }
+	        if (options.left != null) {
+	            props.left = (options.left - curOffset.left) + curLeft;
+	        }
+
+	        if ("using" in options) {
+	            options.using.call(elem, props);
+	        } else {
+	            curElem.css(props);
+	        }
+	    };
+
+        $._data = function(elm,propName) {
+            if (elm.hasAttribute) {
+                return datax.data(elm,propName);
+            } else {
+                return {};
+            }
+        };
+
+     	var t = $.fn.text;  
+	    $.fn.text = function(v) {
+	        var r = t.apply(this,arguments);
+	        if (r === undefined) {
+	            r = "";
+	        }  
+	        return r;
+	    };       
+
+	    $.fn.pos = $.fn.position;
+        	    
+    })(query);
+
+    query.parseHTML = function(html) {
+        return  noder.createFragment(html);
+    };
+
+    query.uniqueSort = query.unique = langx.uniq;
+
+    query.skylark = skylark;
+
+    return window.jQuery = window.$ = query;
+});
+
+define('skylark-net-http/http',[
+  "skylark-langx-ns/ns",
+],function(skylark){
+	return skylark.attach("net.http",{});
+});
+define('skylark-net-http/Xhr',[
+  "skylark-langx-ns/ns",
+  "skylark-langx-types",
+  "skylark-langx-objects",
+  "skylark-langx-arrays",
+  "skylark-langx-funcs",
+  "skylark-langx-async/Deferred",
+  "skylark-langx-emitter/Evented",
+  "./http"
+],function(skylark,types,objects,arrays,funcs,Deferred,Evented,http){
+
+    var each = objects.each,
+        mixin = objects.mixin,
+        noop = funcs.noop,
+        isArray = types.isArray,
+        isFunction = types.isFunction,
+        isPlainObject = types.isPlainObject,
+        type = types.type;
+ 
+     var getAbsoluteUrl = (function() {
+        var a;
+
+        return function(url) {
+            if (!a) a = document.createElement('a');
+            a.href = url;
+
+            return a.href;
+        };
+    })();
+   
+    var Xhr = (function(){
+        var jsonpID = 0,
+            key,
+            name,
+            rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+            scriptTypeRE = /^(?:text|application)\/javascript/i,
+            xmlTypeRE = /^(?:text|application)\/xml/i,
+            jsonType = 'application/json',
+            htmlType = 'text/html',
+            blankRE = /^\s*$/;
+
+        var XhrDefaultOptions = {
+            async: true,
+
+            // Default type of request
+            type: 'GET',
+            // Callback that is executed before request
+            beforeSend: noop,
+            // Callback that is executed if the request succeeds
+            success: noop,
+            // Callback that is executed the the server drops error
+            error: noop,
+            // Callback that is executed on request complete (both: error and success)
+            complete: noop,
+            // The context for the callbacks
+            context: null,
+            // Whether to trigger "global" Ajax events
+            global: true,
+
+            // MIME types mapping
+            // IIS returns Javascript as "application/x-javascript"
+            accepts: {
+                script: 'text/javascript, application/javascript, application/x-javascript',
+                json: 'application/json',
+                xml: 'application/xml, text/xml',
+                html: 'text/html',
+                text: 'text/plain'
+            },
+            // Whether the request is to another domain
+            crossDomain: false,
+            // Default timeout
+            timeout: 0,
+            // Whether data should be serialized to string
+            processData: false,
+            // Whether the browser should be allowed to cache GET responses
+            cache: true,
+
+            traditional : false,
+            
+            xhrFields : {
+                withCredentials : false
+            }
+        };
+
+        function mimeToDataType(mime) {
+            if (mime) {
+                mime = mime.split(';', 2)[0];
+            }
+            if (mime) {
+                if (mime == htmlType) {
+                    return "html";
+                } else if (mime == jsonType) {
+                    return "json";
+                } else if (scriptTypeRE.test(mime)) {
+                    return "script";
+                } else if (xmlTypeRE.test(mime)) {
+                    return "xml";
+                }
+            }
+            return "text";
+        }
+
+        function appendQuery(url, query) {
+            if (query == '') return url
+            return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+        }
+
+        // serialize payload and append it to the URL for GET requests
+        function serializeData(options) {
+            options.data = options.data || options.query;
+            if (options.processData && options.data && type(options.data) != "string") {
+                options.data = param(options.data, options.traditional);
+            }
+            if (options.data && (!options.type || options.type.toUpperCase() == 'GET')) {
+                options.url = appendQuery(options.url, options.data);
+                options.data = undefined;
+            }
+        }
+
+        function serialize(params, obj, traditional, scope) {
+            var t, array = isArray(obj),
+                hash = isPlainObject(obj)
+            each(obj, function(key, value) {
+                t =type(value);
+                if (scope) key = traditional ? scope :
+                    scope + '[' + (hash || t == 'object' || t == 'array' ? key : '') + ']'
+                // handle data in serializeArray() format
+                if (!scope && array) params.add(value.name, value.value)
+                // recurse into nested objects
+                else if (t == "array" || (!traditional && t == "object"))
+                    serialize(params, value, traditional, key)
+                else params.add(key, value)
+            })
+        }
+
+        var param = function(obj, traditional) {
+            var params = []
+            params.add = function(key, value) {
+                if (isFunction(value)) {
+                  value = value();
+                }
+                if (value == null) {
+                  value = "";
+                }
+                this.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+            };
+            serialize(params, obj, traditional)
+            return params.join('&').replace(/%20/g, '+')
+        };
+
+        var Xhr = Evented.inherit({
+            klassName : "Xhr",
+
+            _request  : function(args) {
+                var _ = this._,
+                    self = this,
+                    options = mixin({},XhrDefaultOptions,_.options,args),
+                    xhr = _.xhr = new XMLHttpRequest();
+
+                serializeData(options)
+
+                if (options.beforeSend) {
+                    options.beforeSend.call(this, xhr, options);
+                }                
+
+                var dataType = options.dataType || options.handleAs,
+                    mime = options.mimeType || options.accepts[dataType],
+                    headers = options.headers,
+                    xhrFields = options.xhrFields,
+                    isFormData = options.data && options.data instanceof FormData,
+                    basicAuthorizationToken = options.basicAuthorizationToken,
+                    type = options.type,
+                    url = options.url,
+                    async = options.async,
+                    user = options.user , 
+                    password = options.password,
+                    deferred = new Deferred(),
+                    contentType = options.contentType || (isFormData ? false : 'application/x-www-form-urlencoded');
+
+                if (xhrFields) {
+                    for (name in xhrFields) {
+                        xhr[name] = xhrFields[name];
+                    }
+                }
+
+                if (mime && mime.indexOf(',') > -1) {
+                    mime = mime.split(',', 2)[0];
+                }
+                if (mime && xhr.overrideMimeType) {
+                    xhr.overrideMimeType(mime);
+                }
+
+                //if (dataType) {
+                //    xhr.responseType = dataType;
+                //}
+
+                var finish = function() {
+                    xhr.onloadend = noop;
+                    xhr.onabort = noop;
+                    xhr.onprogress = noop;
+                    xhr.ontimeout = noop;
+                    xhr = null;
+                }
+                var onloadend = function() {
+                    var result, error = false
+                    if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && getAbsoluteUrl(url).startsWith('file:'))) {
+                        dataType = dataType || mimeToDataType(options.mimeType || xhr.getResponseHeader('content-type'));
+
+                        result = xhr.responseText;
+                        try {
+                            if (dataType == 'script') {
+                                eval(result);
+                            } else if (dataType == 'xml') {
+                                result = xhr.responseXML;
+                            } else if (dataType == 'json') {
+                                result = blankRE.test(result) ? null : JSON.parse(result);
+                            } else if (dataType == "blob") {
+                                result = Blob([xhrObj.response]);
+                            } else if (dataType == "arraybuffer") {
+                                result = xhr.reponse;
+                            }
+                        } catch (e) { 
+                            error = e;
+                        }
+
+                        if (error) {
+                            deferred.reject(error,xhr.status,xhr);
+                        } else {
+                            deferred.resolve(result,xhr.status,xhr);
+                        }
+                    } else {
+                        deferred.reject(new Error(xhr.statusText),xhr.status,xhr);
+                    }
+                    finish();
+                };
+
+                var onabort = function() {
+                    if (deferred) {
+                        deferred.reject(new Error("abort"),xhr.status,xhr);
+                    }
+                    finish();                 
+                }
+ 
+                var ontimeout = function() {
+                    if (deferred) {
+                        deferred.reject(new Error("timeout"),xhr.status,xhr);
+                    }
+                    finish();                 
+                }
+
+                var onprogress = function(evt) {
+                    if (deferred) {
+                        deferred.notify(evt,xhr.status,xhr);
+                    }
+                }
+
+                xhr.onloadend = onloadend;
+                xhr.onabort = onabort;
+                xhr.ontimeout = ontimeout;
+                xhr.onprogress = onprogress;
+
+                xhr.open(type, url, async, user, password);
+               
+                if (headers) {
+                    for ( var key in headers) {
+                        var value = headers[key];
+ 
+                        if(key.toLowerCase() === 'content-type'){
+                            contentType = value;
+                        } else {
+                           xhr.setRequestHeader(key, value);
+                        }
+                    }
+                }   
+
+                if  (contentType && contentType !== false){
+                    xhr.setRequestHeader('Content-Type', contentType);
+                }
+
+                if(!headers || !('X-Requested-With' in headers)){
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                }
+
+
+                //If basicAuthorizationToken is defined set its value into "Authorization" header
+                if (basicAuthorizationToken) {
+                    xhr.setRequestHeader("Authorization", basicAuthorizationToken);
+                }
+
+                xhr.send(options.data ? options.data : null);
+
+                return deferred.promise;
+
+            },
+
+            "abort": function() {
+                var _ = this._,
+                    xhr = _.xhr;
+
+                if (xhr) {
+                    xhr.abort();
+                }    
+            },
+
+
+            "request": function(args) {
+                return this._request(args);
+            },
+
+            get : function(args) {
+                args = args || {};
+                args.type = "GET";
+                return this._request(args);
+            },
+
+            post : function(args) {
+                args = args || {};
+                args.type = "POST";
+                return this._request(args);
+            },
+
+            patch : function(args) {
+                args = args || {};
+                args.type = "PATCH";
+                return this._request(args);
+            },
+
+            put : function(args) {
+                args = args || {};
+                args.type = "PUT";
+                return this._request(args);
+            },
+
+            del : function(args) {
+                args = args || {};
+                args.type = "DELETE";
+                return this._request(args);
+            },
+
+            "init": function(options) {
+                this._ = {
+                    options : options || {}
+                };
+            }
+        });
+
+        ["request","get","post","put","del","patch"].forEach(function(name){
+            Xhr[name] = function(url,args) {
+                var xhr = new Xhr({"url" : url});
+                return xhr[name](args);
+            };
+        });
+
+        Xhr.defaultOptions = XhrDefaultOptions;
+        Xhr.param = param;
+
+        return Xhr;
+    })();
+
+	return http.Xhr = Xhr;	
+});
+define('skylark-jquery/ajax',[
+    "skylark-langx/langx",
+    "skylark-net-http/Xhr",
+    "./core",
+], function(langx,Xhr,$) {
+    var jsonpID = 0;
+
+     // Attach a bunch of functions for handling common AJAX events
+    $.each( [
+        "ajaxStart",
+        "ajaxStop",
+        "ajaxComplete",
+        "ajaxError",
+        "ajaxSuccess",
+        "ajaxSend"
+    ], function( i, type ) {
+        $.fn[ type ] = function( fn ) {
+            return this.on( type, fn );
+        };
+    } );
+   
+
+    function appendQuery(url, query) {
+        if (query == '') return url
+        return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+    }
+    
+    $.ajaxJSONP = function(options) {
+        var deferred = new langx.Deferred();
+        var _callbackName = options.jsonpCallback,
+            callbackName = ($.isFunction(_callbackName) ?
+                _callbackName() : _callbackName) || ('jsonp' + (++jsonpID)),
+            script = document.createElement('script'),
+            originalCallback = window[callbackName],
+            responseData,
+            abort = function(errorType) {
+                $(script).triggerHandler('error', errorType || 'abort')
+            },
+            xhr = { abort: abort },
+            abortTimeout;
+
+        for (var key in options.data) {
+            options.url = appendQuery(options.url, key + "=" + options.data[key]);
+        }
+         
+//        if (deferred) deferred.promise(xhr)
+
+        $(script).on('load error', function(e, errorType) {
+            clearTimeout(abortTimeout)
+            $(script).off().remove()
+
+            if (e.type == 'error' || !responseData) {
+                deferred.reject(e);
+            } else {
+                deferred.resolve(responseData[0],200,xhr);
+            }
+
+            window[callbackName] = originalCallback
+            if (responseData && $.isFunction(originalCallback))
+                originalCallback(responseData[0])
+
+            originalCallback = responseData = undefined
+        })
+
+        window[callbackName] = function() {
+            responseData = arguments
+        }
+
+        script.src = options.url.replace(/\?(.+)=\?/, '?$1=' + callbackName)
+        document.head.appendChild(script)
+
+        if (options.timeout > 0) abortTimeout = setTimeout(function() {
+            abort('timeout')
+        }, options.timeout)
+
+        return deferred;
+    }
+
+    //$.ajaxSettings = Xhr.defaultOptions;
+    //$.ajaxSettings.xhr = function() {
+    //    return new window.XMLHttpRequest()
+    //};
+
+    $.ajaxSettings = {
+        processData : true
+    };
+
+
+    $.ajax = function(url,options) {
+        if (!url) {
+            options = {
+                url :  "./"
+            };
+        } else if (!options) {
+            if (langx.isString(url)) {
+                options = {
+                    url :  url
+                };
+            } else {
+                options = url;
+            }
+        } else {
+            options.url = url;
+        }
+
+        options = langx.mixin({},$.ajaxSettings,options);
+
+        if ('jsonp' == options.dataType) {
+            var hasPlaceholder = /\?.+=\?/.test(options.url);
+
+            if (!hasPlaceholder)
+                options.url = appendQuery(options.url,
+                    options.jsonp ? (options.jsonp + '=?') : options.jsonp === false ? '' : 'callback=?')
+            return $.ajaxJSONP(options);
+        }
+
+        function ajaxSuccess(data,status,xhr) {
+            $(document).trigger("ajaxSucess");
+            if (options.success) {
+                options.success.apply(this,arguments);
+            }
+            if (options.complete) {
+                options.complete.apply(this,arguments);
+            }
+            return data;
+        }
+
+        function ajaxError() {
+            $(document).trigger("ajaxError");
+            if (options.error) {
+                options.error.apply(this,arguments);
+            }
+        }
+
+        var p = Xhr.request(options.url,options);
+        p = p.then(ajaxSuccess,ajaxError);
+        p.success = p.done;
+        p.error = p.fail;
+        p.complete = p.always;
+        
+        return p;
+    };
+
+    // handle optional data/success arguments
+    function parseArguments(url, data, success, dataType) {
+        if ($.isFunction(url)) {
+            dataType = data, success = url, data = undefined,url = undefined;
+        } else if ($.isFunction(data)) {
+            dataType = success, success = data, data = undefined;
+        } 
+        if (!$.isFunction(success)) dataType = success, success = undefined
+        return {
+            url: url,
+            data: data,
+            success: success,
+            dataType: dataType
+        }
+    }
+
+    $.get = function( /* url, data, success, dataType */ ) {
+        return $.ajax(parseArguments.apply(null, arguments))
+    }
+
+    $.post = function( /* url, data, success, dataType */ ) {
+        var options = parseArguments.apply(null, arguments)
+        options.type = 'POST'
+        return $.ajax(options)
+    }
+
+    $.getJSON = function( /* url, data, success */ ) {
+        var options = parseArguments.apply(null, arguments)
+        options.dataType = 'json'
+        return $.ajax(options)
+    }
+
+    var originalLoad = $.fn.load;
+
+    $.fn.load = function(url, data, success) {
+        if ("string" != typeof url && originalLoad) {
+            return originalLoad.apply(this, arguments);
+        }
+        if (!this.length) return this
+        var self = this,
+            options = parseArguments(url, data, success),
+            parts = options.url && options.url.split(/\s/),
+            selector,
+            callback = options.success
+        if (parts && parts.length > 1) options.url = parts[0], selector = parts[1]
+
+        if (options.data && typeof options.data === "object") {
+            options.type = "POST";
+        }
+        options.success = function(response) {
+            self.html(selector ?
+                $('<div>').html(response.replace(rscript, "")).find(selector) : response)
+            callback && callback.apply(self, arguments)
+        }
+        $.ajax(options)
+        return this
+    }
+
+    $.param = Xhr.param;
+
+
+    // Base "constructor" for jQuery.ajaxPrefilter and jQuery.ajaxTransport
+    function addToPrefiltersOrTransports(structure) {
+
+        // dataTypeExpression is optional and defaults to "*"
+        return function(dataTypeExpression, func) {
+
+            if (typeof dataTypeExpression !== "string") {
+                func = dataTypeExpression;
+                dataTypeExpression = "*";
+            }
+
+            var dataType,
+                i = 0,
+                dataTypes = dataTypeExpression.toLowerCase().match(rnotwhite) || [];
+
+            if (jQuery.isFunction(func)) {
+
+                // For each dataType in the dataTypeExpression
+                while ((dataType = dataTypes[i++])) {
+
+                    // Prepend if requested
+                    if (dataType[0] === "+") {
+                        dataType = dataType.slice(1) || "*";
+                        (structure[dataType] = structure[dataType] || []).unshift(func);
+
+                        // Otherwise append
+                    } else {
+                        (structure[dataType] = structure[dataType] || []).push(func);
+                    }
+                }
+            }
+        };
+    }
+
+    var
+        prefilters = {},
+        transports = {},
+        rnotwhite = (/\S+/g);
+
+    $.ajaxPrefilter = addToPrefiltersOrTransports(prefilters);
+    $.ajaxTransport = addToPrefiltersOrTransports(transports);
+    $.ajaxSetup = function(target, settings) {
+        langx.mixin(Xhr.defaultOptions,target,settings);
+    };
+
+    $.getScript = function( url, callback ) {
+        return $.get( url, undefined, callback, "script" );
+    };
+
+    return $;
+
+});
+
+define('skylark-jquery/callbacks',[
+    "./core"
+], function($) {
+
+    //     This module is borrow from zepto.callback.js
+    //     (c) 2010-2014 Thomas Fuchs
+    //     Zepto.js may be freely distributed under the MIT license.
+
+    // Create a collection of callbacks to be fired in a sequence, with configurable behaviour
+    // Option flags:
+    //   - once: Callbacks fired at most one time.
+    //   - memory: Remember the most recent context and arguments
+    //   - stopOnFalse: Cease iterating over callback list
+    //   - unique: Permit adding at most one instance of the same callback
+    $.Callbacks = function(options) {
+        options = $.extend({}, options)
+
+        var memory, // Last fire value (for non-forgettable lists)
+            fired, // Flag to know if list was already fired
+            firing, // Flag to know if list is currently firing
+            firingStart, // First callback to fire (used internally by add and fireWith)
+            firingLength, // End of the loop when firing
+            firingIndex, // Index of currently firing callback (modified by remove if needed)
+            list = [], // Actual callback list
+            stack = !options.once && [], // Stack of fire calls for repeatable lists
+            fire = function(data) {
+                memory = options.memory && data
+                fired = true
+                firingIndex = firingStart || 0
+                firingStart = 0
+                firingLength = list.length
+                firing = true
+                for (; list && firingIndex < firingLength; ++firingIndex) {
+                    if (list[firingIndex].apply(data[0], data[1]) === false && options.stopOnFalse) {
+                        memory = false
+                        break
+                    }
+                }
+                firing = false
+                if (list) {
+                    if (stack) stack.length && fire(stack.shift())
+                    else if (memory) list.length = 0
+                    else Callbacks.disable()
+                }
+            },
+
+            Callbacks = {
+                add: function() {
+                    if (list) {
+                        var start = list.length,
+                            add = function(args) {
+                                $.each(args, function(_, arg) {
+                                    if (typeof arg === "function") {
+                                        if (!options.unique || !Callbacks.has(arg)) list.push(arg)
+                                    } else if (arg && arg.length && typeof arg !== 'string') add(arg)
+                                })
+                            }
+                        add(arguments)
+                        if (firing) firingLength = list.length
+                        else if (memory) {
+                            firingStart = start
+                            fire(memory)
+                        }
+                    }
+                    return this
+                },
+                remove: function() {
+                    if (list) {
+                        $.each(arguments, function(_, arg) {
+                            var index
+                            while ((index = $.inArray(arg, list, index)) > -1) {
+                                list.splice(index, 1)
+                                // Handle firing indexes
+                                if (firing) {
+                                    if (index <= firingLength) --firingLength
+                                    if (index <= firingIndex) --firingIndex
+                                }
+                            }
+                        })
+                    }
+                    return this
+                },
+                has: function(fn) {
+                    return !!(list && (fn ? $.inArray(fn, list) > -1 : list.length))
+                },
+                empty: function() {
+                    firingLength = list.length = 0
+                    return this
+                },
+                disable: function() {
+                    list = stack = memory = undefined
+                    return this
+                },
+                disabled: function() {
+                    return !list
+                },
+                lock: function() {
+                    stack = undefined;
+                    if (!memory) Callbacks.disable()
+                    return this
+                },
+                locked: function() {
+                    return !stack
+                },
+                fireWith: function(context, args) {
+                    if (list && (!fired || stack)) {
+                        args = args || []
+                        args = [context, args.slice ? args.slice() : args]
+                        if (firing) stack.push(args)
+                        else fire(args)
+                    }
+                    return this
+                },
+                fire: function() {
+                    return Callbacks.fireWith(this, arguments)
+                },
+                fired: function() {
+                    return !!fired
+                }
+            }
+
+        return Callbacks
+    };
+
+    return $;
+
+});
+
+define('skylark-jquery/deferred',[
+    "./core",
+    "skylark-langx/langx"
+], function($,langx) {
+
+    $.Deferred = function() {
+        var d = new langx.Deferred(),
+            ret = {
+                promise : function() {
+                    return d.promise;
+                }
+            };
+
+        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress"].forEach(function(name){
+            ret[name] = function() {
+              var ret2 =   d[name].apply(d,arguments);
+              if (ret2 == d) {
+                ret2 = ret;
+              }
+              return ret2;
+            }
+        });
+
+        return ret;
+    };
+    
+    $.when = function(){
+        var p = langx.Deferred.all(langx.makeArray(arguments)),
+            originThen = p.then;
+        p.then = function(onResolved,onRejected) {
+            var handler = function(results) {
+                //results = results.map(function(result){
+                //    return [result];
+                //});
+                return onResolved && onResolved.apply(null,results);
+            };
+            return originThen.call(p,handler,onRejected);
+        };
+        return p;
+    };
+
+    return $;
+
+});
+
+define('skylark-jquery/queue',[
+    "skylark-langx/langx",
+    "./core",
+    "./callbacks"
+], function(langx, $) {
+
+ // jQuery Data object
+  var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
+      rmultiDash = /([A-Z])/g,
+      expando = "Sky" + ( '1.0' + Math.random() ).replace( /\D/g, ""),
+      optionsCache = {},
+      core_rnotwhite = /\S+/g,
+      core_deletedIds = [],
+      core_push = core_deletedIds.push;
+
+// Convert String-formatted options into Object-formatted ones and store in cache
+  function createOptions( options ) {
+    var object = optionsCache[ options ] = {};
+    $.each( options.match( core_rnotwhite ) || [], function( _, flag ) {
+      object[ flag ] = true;
+    });
+    return object;
+  }
+
+  function isArraylike( obj ) {
+    var length = obj.length,
+        type = $.type( obj );
+
+    if ( $.isWindow( obj ) ) {
+      return false;
+    }
+
+    if ( obj.nodeType === 1 && length ) {
+      return true;
+    }
+
+    return type === "array" || type !== "function" &&
+        ( length === 0 ||
+            typeof length === "number" && length > 0 && ( length - 1 ) in obj );
+  }
+
+  
+
+  function Data() {
+    // Support: Android < 4,
+    // Old WebKit does not have Object.preventExtensions/freeze method,
+    // return new empty object instead with no [[set]] accessor
+    Object.defineProperty( this.cache = {}, 0, {
+      get: function() {
+        return {};
+      }
+    });
+
+    this.expando = expando + Math.random();
+  }
+
+  Data.uid = 1;
+
+  Data.accepts = function( owner ) {
+    // Accepts only:
+    //  - Node
+    //    - Node.ELEMENT_NODE
+    //    - Node.DOCUMENT_NODE
+    //  - Object
+    //    - Any
+    return owner.nodeType ?
+        owner.nodeType === 1 || owner.nodeType === 9 : true;
+  };
+
+  Data.prototype = {
+    key: function( owner ) {
+      // We can accept data for non-element nodes in modern browsers,
+      // but we should not, see #8335.
+      // Always return the key for a frozen object.
+      if ( !Data.accepts( owner ) ) {
+        return 0;
+      }
+
+      var descriptor = {},
+      // Check if the owner object already has a cache key
+          unlock = owner[ this.expando ];
+
+      // If not, create one
+      if ( !unlock ) {
+        unlock = Data.uid++;
+
+        // Secure it in a non-enumerable, non-writable property
+        try {
+          descriptor[ this.expando ] = { value: unlock };
+          Object.defineProperties( owner, descriptor );
+
+          // Support: Android < 4
+          // Fallback to a less secure definition
+        } catch ( e ) {
+          descriptor[ this.expando ] = unlock;
+          $.extend( owner, descriptor );
+        }
+      }
+
+      // Ensure the cache object
+      if ( !this.cache[ unlock ] ) {
+        this.cache[ unlock ] = {};
+      }
+
+      return unlock;
+    },
+    set: function( owner, data, value ) {
+      var prop,
+      // There may be an unlock assigned to this node,
+      // if there is no entry for this "owner", create one inline
+      // and set the unlock as though an owner entry had always existed
+          unlock = this.key( owner ),
+          cache = this.cache[ unlock ];
+
+      // Handle: [ owner, key, value ] args
+      if ( typeof data === "string" ) {
+        cache[ data ] = value;
+
+        // Handle: [ owner, { properties } ] args
+      } else {
+        // Fresh assignments by object are shallow copied
+        if ( $.isEmptyObject( cache ) ) {
+          $.extend( this.cache[ unlock ], data );
+          // Otherwise, copy the properties one-by-one to the cache object
+        } else {
+          for ( prop in data ) {
+            cache[ prop ] = data[ prop ];
+          }
+        }
+      }
+      return cache;
+    },
+    get: function( owner, key ) {
+      // Either a valid cache is found, or will be created.
+      // New caches will be created and the unlock returned,
+      // allowing direct access to the newly created
+      // empty data object. A valid owner object must be provided.
+      var cache = this.cache[ this.key( owner ) ];
+
+      return key === undefined ?
+          cache : cache[ key ];
+    },
+    access: function( owner, key, value ) {
+      var stored;
+      // In cases where either:
+      //
+      //   1. No key was specified
+      //   2. A string key was specified, but no value provided
+      //
+      // Take the "read" path and allow the get method to determine
+      // which value to return, respectively either:
+      //
+      //   1. The entire cache object
+      //   2. The data stored at the key
+      //
+      if ( key === undefined ||
+          ((key && typeof key === "string") && value === undefined) ) {
+
+        stored = this.get( owner, key );
+
+        return stored !== undefined ?
+            stored : this.get( owner, $.camelCase(key) );
+      }
+
+      // [*]When the key is not a string, or both a key and value
+      // are specified, set or extend (existing objects) with either:
+      //
+      //   1. An object of properties
+      //   2. A key and value
+      //
+      this.set( owner, key, value );
+
+      // Since the "set" path can have two possible entry points
+      // return the expected data based on which path was taken[*]
+      return value !== undefined ? value : key;
+    },
+    remove: function( owner, key ) {
+      var i, name, camel,
+          unlock = this.key( owner ),
+          cache = this.cache[ unlock ];
+
+      if ( key === undefined ) {
+        this.cache[ unlock ] = {};
+
+      } else {
+        // Support array or space separated string of keys
+        if ( $.isArray( key ) ) {
+          // If "name" is an array of keys...
+          // When data is initially created, via ("key", "val") signature,
+          // keys will be converted to camelCase.
+          // Since there is no way to tell _how_ a key was added, remove
+          // both plain key and camelCase key. #12786
+          // This will only penalize the array argument path.
+          name = key.concat( key.map( $.camelCase ) );
+        } else {
+          camel = $.camelCase( key );
+          // Try the string as a key before any manipulation
+          if ( key in cache ) {
+            name = [ key, camel ];
+          } else {
+            // If a key with the spaces exists, use it.
+            // Otherwise, create an array by matching non-whitespace
+            name = camel;
+            name = name in cache ?
+                [ name ] : ( name.match( core_rnotwhite ) || [] );
+          }
+        }
+
+        i = name.length;
+        while ( i-- ) {
+          delete cache[ name[ i ] ];
+        }
+      }
+    },
+    hasData: function( owner ) {
+      return !$.isEmptyObject(
+          this.cache[ owner[ this.expando ] ] || {}
+      );
+    },
+    discard: function( owner ) {
+      if ( owner[ this.expando ] ) {
+        delete this.cache[ owner[ this.expando ] ];
+      }
+    }
+  };
+
+  var data_priv = new Data();
+
+  $.extend($, {
+    queue: function( elem, type, data ) {
+      var queue;
+
+      if ( elem ) {
+        type = ( type || "fx" ) + "queue";
+        queue = data_priv.get( elem, type );
+
+        // Speed up dequeue by getting out quickly if this is just a lookup
+        if ( data ) {
+          if ( !queue || $.isArray( data ) ) {
+            queue = data_priv.access( elem, type, $.makeArray(data) );
+          } else {
+            queue.push( data );
+          }
+        }
+        return queue || [];
+      }
+    },
+
+    dequeue: function( elem, type ) {
+      type = type || "fx";
+
+      var queue = $.queue( elem, type ),
+          startLength = queue.length,
+          fn = queue.shift(),
+          hooks = $._queueHooks( elem, type ),
+          next = function() {
+            $.dequeue( elem, type );
+          };
+
+      // If the fx queue is dequeued, always remove the progress sentinel
+      if ( fn === "inprogress" ) {
+        fn = queue.shift();
+        startLength--;
+      }
+
+      if ( fn ) {
+
+        // Add a progress sentinel to prevent the fx queue from being
+        // automatically dequeued
+        if ( type === "fx" ) {
+          queue.unshift( "inprogress" );
+        }
+
+        // clear up the last queue stop function
+        delete hooks.stop;
+        fn.call( elem, next, hooks );
+      }
+
+      if ( !startLength && hooks ) {
+        hooks.empty.fire();
+      }
+    },
+
+    // not intended for public consumption - generates a queueHooks object, or returns the current one
+    _queueHooks: function( elem, type ) {
+      var key = type + "queueHooks";
+      return data_priv.get( elem, key ) || data_priv.access( elem, key, {
+        empty: $.Callbacks("once memory").add(function() {
+          data_priv.remove( elem, [ type + "queue", key ] );
+        })
+      });
+    },
+
+    // array operations
+    makeArray: function( arr, results ) {
+      var ret = results || [];
+
+      if ( arr != null ) {
+        if ( isArraylike( Object(arr) ) ) {
+          $.merge( ret,
+              typeof arr === "string" ?
+                  [ arr ] : arr
+          );
+        } else {
+          core_push.call( ret, arr );
+        }
+      }
+
+      return ret;
+    },
+    merge: function( first, second ) {
+      var l = second.length,
+          i = first.length,
+          j = 0;
+
+      if ( typeof l === "number" ) {
+        for ( ; j < l; j++ ) {
+          first[ i++ ] = second[ j ];
+        }
+      } else {
+        while ( second[j] !== undefined ) {
+          first[ i++ ] = second[ j++ ];
+        }
+      }
+
+      first.length = i;
+
+      return first;
+    }
+  });
+
+  $.extend($.fn, {
+    queue: function( type, data ) {
+      var setter = 2;
+
+      if ( typeof type !== "string" ) {
+        data = type;
+        type = "fx";
+        setter--;
+      }
+
+      if ( arguments.length < setter ) {
+        return $.queue( this[0], type );
+      }
+
+      return data === undefined ?
+          this :
+          this.each(function() {
+            var queue = $.queue( this, type, data );
+
+            // ensure a hooks for this queue
+            $._queueHooks( this, type );
+
+            if ( type === "fx" && queue[0] !== "inprogress" ) {
+              $.dequeue( this, type );
+            }
+          });
+    },
+    dequeue: function( type ) {
+      return this.each(function() {
+        $.dequeue( this, type );
+      });
+    },
+    // Based off of the plugin by Clint Helfers, with permission.
+    // http://blindsignals.com/index.php/2009/07/jquery-delay/
+    delay: function( time, type ) {
+      time = $.fx ? $.fx.speeds[ time ] || time : time;
+      type = type || "fx";
+
+      return this.queue( type, function( next, hooks ) {
+        var timeout = setTimeout( next, time );
+        hooks.stop = function() {
+          clearTimeout( timeout );
+        };
+      });
+    },
+    clearQueue: function( type ) {
+      return this.queue( type || "fx", [] );
+    },
+    // Get a promise resolved when queues of a certain type
+    // are emptied (fx is the type by default)
+    promise: function( type, obj ) {
+      var tmp,
+          count = 1,
+          defer = $.Deferred(),
+          elements = this,
+          i = this.length,
+          resolve = function() {
+            if ( !( --count ) ) {
+              defer.resolveWith( elements, [ elements ] );
+            }
+          };
+
+      if ( typeof type !== "string" ) {
+        obj = type;
+        type = undefined;
+      }
+      type = type || "fx";
+
+      while( i-- ) {
+        tmp = data_priv.get( elements[ i ], type + "queueHooks" );
+        if ( tmp && tmp.empty ) {
+          count++;
+          tmp.empty.add( resolve );
+        }
+      }
+      resolve();
+      return defer.promise( obj );
+    }
+  });
+
+  return $;
+
+});
+
+define('skylark-jquery/JqueryPlugin',[
+	"skylark-langx-types",
+	"skylark-langx-objects",
+	"skylark-langx-arrays",
+	"skylark-langx/langx",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-plugins",
+	"skylark-domx-query",
+],function(types, objects, arrays, langx, datax, eventer, plugins, $){
+
+    var pluginUuid = 0;
+
+	var JqPlugin = plugins.Plugin.inherit({
+		klassName : "JqPlugin",
+
+        pluginEventPrefix: "",
+
+        options: {
+            // Callbacks
+            create: null
+        },
+
+        destroy: function() {
+            this.overrided();
+
+            // We can probably remove the unbind calls in 2.0
+            // all event bindings should go through this._on()
+            this.element
+                .off( this.eventNamespace );
+
+            // Clean up events and states
+            this.bindings.off( this.eventNamespace );
+        },
+
+        _construct : function(element,options) {
+            //this.options = langx.mixin( {}, this.options );
+
+            element = $( element || this.defaultElement || this )[ 0 ];
+            this.element = $( element );
+            this.uuid = pluginUuid++;
+            this.eventNamespace = "." + this.pluginName + this.uuid;
+
+            this.bindings = $();
+            this.classesElementLookup = {};
+
+			this.hoverable = $();
+			this.focusable = $();
+
+            if ( element !== this ) {
+                datax.data( element, this.pluginName, this );
+                this._on( true, this.element, {
+                    remove: function( event ) {
+                        if ( event.target === element ) {
+                            this.destroy();
+                        }
+                    }
+                } );
+                this.document = $( element.style ?
+
+                    // Element within the document
+                    element.ownerDocument :
+
+                    // Element is window or document
+                    element.document || element );
+                this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
+            }
+
+            this.overrided(element,options);
+
+//            this.options = langx.mixin( {},
+//                this.options,
+//                this._getCreateOptions(),
+//                options );
+
+            this._create();
+
+            this._trigger( "create", null, this._getCreateEventData() );
+
+            this._init();
+        },
+
+
+	     _initOptions : function(options) {
+	     	options = langx.mixin(this._getCreateOptions(),options);
+
+			this.overrided(options);
+		},
+
+        _getCreateOptions: function() {
+            return {};
+        },
+
+        _getCreateEventData: langx.noop,
+
+		_super : function() {
+			if (this.overrided) {
+				return this.overrided.apply(this,arguments);
+			}
+		},
+
+		_superApply : function ( args ) {
+			if (this.overrided) {
+				return this.overrided.apply(this,args);
+			}
+		},
+
+        _create: langx.noop,
+
+        _init: langx.noop,
+
+		_classes: function( options ) {
+			var full = [];
+			var that = this;
+
+			options = objects.mixin( {
+				element: this.element,
+				classes: this.options.classes || {}
+			}, options );
+
+
+			function bindRemoveEvent() {
+				options.element.each( function( _, element ) {
+					var isTracked = langx.map( that.classesElementLookup, function( elements ) {
+						return elements;
+					} )
+						.some( function(elements ) {
+							return $(elements).is( element );
+						} );
+
+					if ( !isTracked ) {
+						that._on( $( element ), {
+							remove: "_untrackClassesElement"
+						} );
+					}
+				} );
+			}
+
+			function processClassString( classes, checkOption ) {
+				var current, i;
+				for ( i = 0; i < classes.length; i++ ) {
+					current = that.classesElementLookup[ classes[ i ] ] || $();
+					if ( options.add ) {
+						bindRemoveEvent();
+						current = $( langx.uniq( current.get().concat( options.element.get() ) ) );
+					} else {
+						current = $( current.not( options.element ).get() );
+					}
+					that.classesElementLookup[ classes[ i ] ] = current;
+					full.push( classes[ i ] );
+					if ( checkOption && options.classes[ classes[ i ] ] ) {
+						full.push( options.classes[ classes[ i ] ] );
+					}
+				}
+			}
+
+			if ( options.keys ) {
+				processClassString( options.keys.match( /\S+/g ) || [], true );
+			}
+			if ( options.extra ) {
+				processClassString( options.extra.match( /\S+/g ) || [] );
+			}
+
+			return full.join( " " );
+		},
+
+		_untrackClassesElement: function( event ) {
+			var that = this;
+			langx.each( that.classesElementLookup, function( key, value ) {
+				if ( arrays.inArray( event.target, value ) !== -1 ) {
+					that.classesElementLookup[ key ] = $( value.not( event.target ).get() );
+				}
+			} );
+
+			this._off( $( event.target ) );
+		},
+
+		_removeClass: function( element, keys, extra ) {
+			return this._toggleClass( element, keys, extra, false );
+		},
+
+		_addClass: function( element, keys, extra ) {
+			return this._toggleClass( element, keys, extra, true );
+		},
+
+		_toggleClass: function( element, keys, extra, add ) {
+			add = ( typeof add === "boolean" ) ? add : extra;
+			var shift = ( typeof element === "string" || element === null ),
+				options = {
+					extra: shift ? keys : extra,
+					keys: shift ? element : keys,
+					element: shift ? this.element : element,
+					add: add
+				};
+			options.element.toggleClass( this._classes( options ), add );
+			return this;
+		},
+
+		_on: function( suppressDisabledCheck, element, handlers ) {
+			var delegateElement;
+			var instance = this;
+
+			// No suppressDisabledCheck flag, shuffle arguments
+			if ( typeof suppressDisabledCheck !== "boolean" ) {
+				handlers = element;
+				element = suppressDisabledCheck;
+				suppressDisabledCheck = false;
+			}
+
+			// No element argument, shuffle and use this.element
+			if ( !handlers ) {
+				handlers = element;
+				element = this.element;
+				delegateElement = this.widget();
+			} else {
+				element = delegateElement = $( element );
+				this.bindings = this.bindings.add( element );
+			}
+
+			objects.each( handlers, function( event, handler ) {
+				function handlerProxy() {
+
+					// Allow widgets to customize the disabled handling
+					// - disabled as an array instead of boolean
+					// - disabled class as method for disabling individual parts
+					if ( !suppressDisabledCheck &&
+							( instance.options.disabled === true ||
+							$( this ).hasClass( "ui-state-disabled" ) ) ) {
+						return;
+					}
+					return ( typeof handler === "string" ? instance[ handler ] : handler )
+						.apply( instance, arguments );
+				}
+
+				// Copy the guid so direct unbinding works
+				if ( typeof handler !== "string" ) {
+					handlerProxy.guid = handler.guid =
+						handler.guid || handlerProxy.guid || $.guid++;
+				}
+
+				var match = event.match( /^([\w:-]*)\s*(.*)$/ );
+				var eventName = match[ 1 ] + instance.eventNamespace;
+				var selector = match[ 2 ];
+
+				if ( selector ) {
+					delegateElement.on( eventName, selector, handlerProxy );
+				} else {
+					element.on( eventName, handlerProxy );
+				}
+			} );
+		},
+
+		_off: function( element, eventName ) {
+			eventName = ( eventName || "" ).split( " " ).join( this.eventNamespace + " " ) +
+				this.eventNamespace;
+			element.off( eventName );
+
+			// Clear the stack to avoid memory leaks (#10056)
+			this.bindings = $( this.bindings.not( element ).get() );
+			this.focusable = $( this.focusable.not( element ).get() );
+			this.hoverable = $( this.hoverable.not( element ).get() );
+		},
+
+		_trigger: function( type, event, data ) {
+			var prop, orig;
+			var callback = this.options[ type ];
+
+			data = data || {};
+			event = eventer.proxy( event );
+			event.type = ( type === this.widgetEventPrefix ?
+				type :
+				this.widgetEventPrefix + type ).toLowerCase();
+
+			// The original event may come from any element
+			// so we need to reset the target on the new event
+			event.target = this.element[ 0 ];
+
+			// Copy original event properties over to the new event
+			orig = event.originalEvent;
+			if ( orig ) {
+				for ( prop in orig ) {
+					if ( !( prop in event ) ) {
+						event[ prop ] = orig[ prop ];
+					}
+				}
+			}
+
+			this.element.trigger( event, data );
+			return !( types.isFunction( callback ) &&
+				callback.apply( this.element[ 0 ], [ event ].concat( data ) ) === false ||
+				event.isDefaultPrevented() );
+		}
+
+	});
+
+	return JqPlugin;
+});
+/*!
+ * jQuery UI Widget @VERSION
+ * http://jqueryui.com
+ *
+ * Copyright jQuery Foundation and other contributors
+ * Released under the MIT license.
+ * http://jquery.org/license
+ */
+
+//>>label: Widget
+//>>group: Core
+//>>description: Provides a factory for creating stateful widgets with a common API.
+//>>docs: http://api.jqueryui.com/jQuery.widget/
+//>>demos: http://jqueryui.com/widget/
+
+define( 'skylark-jquery/widget',[ 
+	"skylark-langx/langx",
+	"skylark-domx-plugins",
+	"./core",
+	"./JqueryPlugin"
+],  function(langx,splugins, $,JqPlugin ) {
+
+	var widgetUuid = 0;
+	var widgetHasOwnProperty = Array.prototype.hasOwnProperty;
+	var widgetSlice = Array.prototype.slice;
+
+	$.cleanData = ( function( orig ) {
+		return function( elems ) {
+			var events, elem, i;
+			for ( i = 0; ( elem = elems[ i ] ) != null; i++ ) {
+
+				// Only trigger remove when necessary to save time
+				events = $._data( elem, "events" );
+				if ( events && events.remove ) {
+					$( elem ).triggerHandler( "remove" );
+				}
+			}
+			orig( elems );
+		};
+	} )( $.cleanData );
+	
+	$.widget = function( name, base, prototype ) {
+		var existingConstructor, constructor, basePrototype;
+
+		// ProxiedPrototype allows the provided prototype to remain unmodified
+		// so that it can be used as a mixin for multiple widgets (#8876)
+		var proxiedPrototype = {};
+
+		var namespace = name.split( "." )[ 0 ];
+		name = name.split( "." )[ 1 ];
+		var fullName = namespace + "-" + name;
+
+		if ( !prototype ) {
+			prototype = base;
+			base = $.Widget;
+		}
+
+		if ( $.isArray( prototype ) ) {
+			prototype = $.extend.apply( null, [ {} ].concat( prototype ) );
+		}
+
+		// Create selector for plugin
+		$.expr.pseudos[ fullName.toLowerCase() ] = function( elem ) {
+			return !!$.data( elem, fullName );
+		};
+
+		$[ namespace ] = $[ namespace ] || {};
+
+		existingConstructor = $[ namespace ][ name ];
+
+		var basePrototype = base.prototype,
+			newPrototype = {};
+
+		for (var key in prototype) {
+			var value = prototype[key];
+
+			if ( $.isPlainObject( value ) ) {
+				newPrototype[ key ] = $.isPlainObject( basePrototype[ key ] ) ?
+					$.widget.extend( {}, basePrototype[ key ], value ) :
+
+					// Don't extend strings, arrays, etc. with objects
+					$.widget.extend( {}, value );
+			} else {
+				newPrototype[key] = value;
+			}
+		}
+
+		var _proto = $.widget.extend({
+
+			// TODO: remove support for widgetEventPrefix
+			// always use the name + a colon as the prefix, e.g., draggable:start
+			// don't prefix for widgets that aren't DOM-based
+			widgetEventPrefix: existingConstructor ? ( base.prototype.widgetEventPrefix || name ) : name
+		}, {
+			options : base.prototype.options
+		},newPrototype, {
+			name : fullName,
+			namespace: namespace,
+			widgetName: name,
+			pluginName : "jqueryui." + (namespace ? namespace + "." : "") + name,
+			widgetFullName: fullName
+		} );
+
+		constructor = $[ namespace ][ name ] = base.inherit(_proto);
+		/*
+
+		constructor = $[ namespace ][ name ] = function( options, element ) {
+
+			// Allow instantiation without "new" keyword
+			if ( !this._createWidget ) {
+				return new constructor( options, element );
+			}
+
+			// Allow instantiation without initializing for simple inheritance
+			// must use "new" keyword (the code above always passes args)
+			if ( arguments.length ) {
+				this._createWidget( options, element );
+			}
+		};
+		*/
+		// Extend with the existing constructor to carry over any static properties
+		$.extend( constructor, existingConstructor, {
+			version: prototype.version,
+
+			// Copy the object used to create the prototype in case we need to
+			// redefine the widget later
+			_proto: _proto,
+
+			// Track widgets that inherit from this widget in case this widget is
+			// redefined after a widget inherits from it
+			_childConstructors: []
+		} );
+
+		/*
+		basePrototype = new base();
+
+		// We need to make the options hash a property directly on the new instance
+		// otherwise we'll modify the options hash on the prototype that we're
+		// inheriting from
+		basePrototype.options = $.widget.extend( {}, basePrototype.options );
+		$.each( prototype, function( prop, value ) {
+			if ( !$.isFunction( value ) ) {
+				proxiedPrototype[ prop ] = value;
+				return;
+			}
+			proxiedPrototype[ prop ] = ( function() {
+				function _super() {
+					return base.prototype[ prop ].apply( this, arguments );
+				}
+
+				function _superApply( args ) {
+					return base.prototype[ prop ].apply( this, args );
+				}
+
+				return function() {
+					var __super = this._super;
+					var __superApply = this._superApply;
+					var returnValue;
+
+					this._super = _super;
+					this._superApply = _superApply;
+
+					returnValue = value.apply( this, arguments );
+
+					this._super = __super;
+					this._superApply = __superApply;
+
+					return returnValue;
+				};
+			} )();
+		} );
+		constructor.prototype = $.widget.extend( basePrototype, {
+
+			// TODO: remove support for widgetEventPrefix
+			// always use the name + a colon as the prefix, e.g., draggable:start
+			// don't prefix for widgets that aren't DOM-based
+			widgetEventPrefix: existingConstructor ? ( basePrototype.widgetEventPrefix || name ) : name
+		}, proxiedPrototype, {
+			constructor: constructor,
+			namespace: namespace,
+			widgetName: name,
+			widgetFullName: fullName
+		} );
+		*/
+		// If this widget is being redefined then we need to find all widgets that
+		// are inheriting from it and redefine all of them so that they inherit from
+		// the new version of this widget. We're essentially trying to replace one
+		// level in the prototype chain.
+		if ( existingConstructor ) {
+			$.each( existingConstructor._childConstructors, function( i, child ) {
+				var childPrototype = child.prototype;
+
+				// Redefine the child widget using the same prototype that was
+				// originally used, but inherit from the new version of the base
+				$.widget( childPrototype.namespace + "." + childPrototype.widgetName, constructor,
+					child._proto );
+			} );
+
+			// Remove the list of existing child constructors from the old constructor
+			// so the old child constructors can be garbage collected
+			delete existingConstructor._childConstructors;
+		} else {
+			if (base._childConstructors) {
+				base._childConstructors.push( constructor );
+			}
+		}
+
+		//$.widget.bridge( name, constructor );
+
+		splugins.register(constructor,name,fullName);
+
+		return constructor;
+	};
+
+	$.widget.extend = function( target ) {
+		var input = widgetSlice.call( arguments, 1 );
+		var inputIndex = 0;
+		var inputLength = input.length;
+		var key;
+		var value;
+
+		for ( ; inputIndex < inputLength; inputIndex++ ) {
+			for ( key in input[ inputIndex ] ) {
+				value = input[ inputIndex ][ key ];
+				if ( widgetHasOwnProperty.call( input[ inputIndex ], key ) && value !== undefined ) {
+
+					// Clone objects
+					if ( $.isPlainObject( value ) ) {
+						target[ key ] = $.isPlainObject( target[ key ] ) ?
+							$.widget.extend( {}, target[ key ], value ) :
+
+							// Don't extend strings, arrays, etc. with objects
+							$.widget.extend( {}, value );
+
+					// Copy everything else by reference
+					} else {
+						target[ key ] = value;
+					}
+				}
+			}
+		}
+		return target;
+	};
+
+
+	$.Widget = 	 JqPlugin.inherit({
+		widgetName: "widget",
+		widgetEventPrefix: "",
+		defaultElement: "<div>",
+
+		options: {
+			classes: {},
+			disabled: false,
+
+			// Callbacks
+			create: null
+		},
+
+		widget: function() {
+			return this.element;
+		},
+
+		_setOption: function( key, value ) {
+			if ( key === "classes" ) {
+				this._setOptionClasses( value );
+			}
+
+			this.options[ key ] = value;
+
+			if ( key === "disabled" ) {
+				this._setOptionDisabled( value );
+			}
+
+			return this;
+		},
+
+		_setOptionClasses: function( value ) {
+			var classKey, elements, currentElements;
+
+			for ( classKey in value ) {
+				currentElements = this.classesElementLookup[ classKey ];
+				if ( value[ classKey ] === this.options.classes[ classKey ] ||
+						!currentElements ||
+						!currentElements.length ) {
+					continue;
+				}
+
+				// We are doing this to create a new jQuery object because the _removeClass() call
+				// on the next line is going to destroy the reference to the current elements being
+				// tracked. We need to save a copy of this collection so that we can add the new classes
+				// below.
+				elements = $( currentElements.get() );
+				this._removeClass( currentElements, classKey );
+
+				// We don't use _addClass() here, because that uses this.options.classes
+				// for generating the string of classes. We want to use the value passed in from
+				// _setOption(), this is the new value of the classes option which was passed to
+				// _setOption(). We pass this value directly to _classes().
+				elements.addClass( this._classes( {
+					element: elements,
+					keys: classKey,
+					classes: value,
+					add: true
+				} ));
+			}
+		},
+
+		_setOptionDisabled: function( value ) {
+			this._toggleClass( this.widget(), this.widgetFullName + "-disabled", null, !!value );
+
+			// If the widget is becoming disabled, then nothing is interactive
+			if ( value ) {
+				this._removeClass( this.hoverable, null, "ui-state-hover" );
+				this._removeClass( this.focusable, null, "ui-state-focus" );
+			}
+		},
+
+		enable: function() {
+			return this._setOptions( { disabled: false } );
+		},
+
+		disable: function() {
+			return this._setOptions( { disabled: true } );
+		},
+
+
+		_delay: function( handler, delay ) {
+			function handlerProxy() {
+				return ( typeof handler === "string" ? instance[ handler ] : handler )
+					.apply( instance, arguments );
+			}
+			var instance = this;
+			return setTimeout( handlerProxy, delay || 0 );
+		},
+
+		_hoverable: function( element ) {
+			this.hoverable = this.hoverable.add( element );
+			this._on( element, {
+				mouseenter: function( event ) {
+					this._addClass( $( event.currentTarget ), null, "ui-state-hover" );
+				},
+				mouseleave: function( event ) {
+					this._removeClass( $( event.currentTarget ), null, "ui-state-hover" );
+				}
+			} );
+		},
+
+		_focusable: function( element ) {
+			this.focusable = this.focusable.add( element );
+			this._on( element, {
+				focusin: function( event ) {
+					this._addClass( $( event.currentTarget ), null, "ui-state-focus" );
+				},
+				focusout: function( event ) {
+					this._removeClass( $( event.currentTarget ), null, "ui-state-focus" );
+				}
+			} );
+		}
+
+	});
+
+	$.Widget._childConstructors = [];
+
+	$.each( { show: "fadeIn", hide: "fadeOut" }, function( method, defaultEffect ) {
+		$.Widget.prototype[ "_" + method ] = function( element, options, callback ) {
+			if ( typeof options === "string" ) {
+				options = { effect: options };
+			}
+
+			var hasOptions;
+			var effectName = !options ?
+				method :
+				options === true || typeof options === "number" ?
+					defaultEffect :
+					options.effect || defaultEffect;
+
+			options = options || {};
+			if ( typeof options === "number" ) {
+				options = { duration: options };
+			}
+
+			hasOptions = !$.isEmptyObject( options );
+			options.complete = callback;
+
+			if ( options.delay ) {
+				element.delay( options.delay );
+			}
+
+			if ( hasOptions && $.effects && $.effects.effect[ effectName ] ) {
+				element[ method ]( options );
+			} else if ( effectName !== method && element[ effectName ] ) {
+				element[ effectName ]( options.duration, options.easing, callback );
+			} else {
+				element.queue( function( next ) {
+					$( this )[ method ]();
+					if ( callback ) {
+						callback.call( element[ 0 ] );
+					}
+					next();
+				} );
+			}
+		};
+	} );
+
+	return $.widget;
+
+});
+
+define('skylark-jquery/main',[
+    "./core",
+    "./ajax",
+    "./callbacks",
+    "./deferred",
+    "./queue",
+    "./JqueryPlugin",
+    "./widget"
+], function($) {
+    return $;
+});
+
+define('skylark-jquery', ['skylark-jquery/main'], function (main) { return main; });
+
 define('skylark-vvveb/Builder',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	var jQuery = $;
@@ -15832,21 +16877,24 @@ define('skylark-vvveb/Builder',[
 			self.dragElement = null;
 		},
 		
+	/* controls */    	
 		loadControlGroups : function() {	
 
 			var componentsList = $(".components-list");
 			componentsList.empty();
 			var item = {}, component = {};
+			var count = 0;
 			
 			componentsList.each(function ()
 			{
 				var list = $(this);
 				var type = this.dataset.type;
+				count ++;
 				
 				for (group in Vvveb.ComponentsGroup)	
 				{
-					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + '">' + group + '  <div class="header-arrow"></div>\
-										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + '">  <ol></ol></li>');
+					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + count + '">' + group + '  <div class="header-arrow"></div>\
+										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + count + '">  <ol></ol></li>');
 
 					var componentsSubList = list.find('li[data-section="' + group + '"]  ol');
 					
@@ -15864,7 +16912,7 @@ define('skylark-vvveb/Builder',[
 							if (component.image) {
 
 								item.css({
-									backgroundImage: "url(" + component.image + ")", //backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
+									backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
 									backgroundRepeat: "no-repeat"
 								})
 							}
@@ -15921,12 +16969,15 @@ define('skylark-vvveb/Builder',[
 		 },
 		
 		loadUrl : function(url, callback) {	
+			var self = this;
 			jQuery("#select-box").hide();
 			
 			self.initCallback = callback;
 			if (Vvveb.Builder.iframe.src != url) Vvveb.Builder.iframe.src = url;
-		},		
-		_loadIframe : function(url) {	// iframe 
+		},
+		
+	/* iframe */
+		_loadIframe : function(url) {	
 
 			var self = this;
 			self.iframe = this.documentFrame.get(0);
@@ -15936,6 +16987,9 @@ define('skylark-vvveb/Builder',[
 	        {
 					window.FrameWindow = self.iframe.contentWindow;
 					window.FrameDocument = self.iframe.contentWindow.document;
+					var addSectionBox = jQuery("#add-section-box"); 
+					var highlightBox = jQuery("#highlight-box").hide(); 
+					
 
 					$(window.FrameWindow).on( "beforeunload", function(event) {
 						if (Vvveb.Undo.undoIndex <= 0)
@@ -15966,14 +17020,18 @@ define('skylark-vvveb/Builder',[
 							{
 								var offset = self.highlightEl.offset();
 								
-								jQuery("#highlight-box").css(
+								highlightBox.css(
 									{"top": offset.top - self.frameDoc.scrollTop() , 
 									 "left": offset.left - self.frameDoc.scrollLeft() , 
 									 "width" : self.highlightEl.outerWidth(), 
 									 "height": self.highlightEl.outerHeight(),
 									 //"display": "block"
-									 });			
+									 });		
+									 
+								
+								addSectionBox.hide();
 							}
+							
 					});
 				
 					Vvveb.WysiwygEditor.init(window.FrameDocument);
@@ -15997,6 +17055,8 @@ define('skylark-vvveb/Builder',[
 			self.frameHead.append('<link data-vvveb-helpers href="' + Vvveb.baseUrl + '../../css/vvvebjs-editor-helpers.css" rel="stylesheet">');
 
 			self._initHighlight();
+			
+			$(window).triggerHandler("vvveb.iframe.loaded", self.frameDoc);
 	    },	
 	    
 	    _getElementType: function(el) {
@@ -16073,14 +17133,14 @@ define('skylark-vvveb/Builder',[
 			
 		},
 
-	 
-	    _initHighlight: function() { // iframe highlight
+	/* iframe highlight */    
+	    _initHighlight: function() {
 			
 			var self = Vvveb.Builder;
 			
 			self.frameHtml.on("mousemove touchmove", function(event) {
 				
-				if (event.target && Vvveb.isElement(event.target) && event.originalEvent)
+				if (event.target && isElement(event.target) && event.originalEvent)
 				{
 					self.highlightEl = target = jQuery(event.target);
 					var offset = target.offset();
@@ -16101,13 +17161,13 @@ define('skylark-vvveb/Builder',[
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (Vvveb.isIE11) 
+									 if (isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (Vvveb.isIE11) 
+									if (isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);
@@ -16142,7 +17202,14 @@ define('skylark-vvveb/Builder',[
 							  "display" : event.target.hasAttribute('contenteditable')?"none":"block",
 							  "border":self.isDragging?"1px dashed aqua":"",//when dragging highlight parent with green
 							 });
-							 
+
+						if (height < 50) 
+						{
+							jQuery("#section-actions").addClass("outside");	 
+						} else
+						{
+							jQuery("#section-actions").removeClass("outside");	
+						}
 						jQuery("#highlight-name").html(self._getElementType(event.target));
 						if (self.isDragging) jQuery("#highlight-name").hide(); else jQuery("#highlight-name").show();//hide tag name when dragging
 					}
@@ -16156,14 +17223,17 @@ define('skylark-vvveb/Builder',[
 					self.isDragging = false;
 					if (self.iconDrag) self.iconDrag.remove();
 					$("#component-clone").remove();
-					
-					if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
-					{
-						newElement = $(self.component.html);
-						self.dragElement.replaceWith(newElement);
-						self.dragElement = newElement;
+
+					if (self.dragMoveMutation === false)
+					{				
+						if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
+						{
+							newElement = $(self.component.html);
+							self.dragElement.replaceWith(newElement);
+							self.dragElement = newElement;
+						}
+						if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					}
-					if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					
 					self.dragElement.css("border", "");
 					
@@ -16368,11 +17438,21 @@ define('skylark-vvveb/Builder',[
 				
 				addSectionElement = self.highlightEl; 
 
-				var offset = jQuery(this).offset();			
+				var offset = jQuery(addSectionElement).offset();			
+				var top = (offset.top - self.frameDoc.scrollTop()) + addSectionElement.outerHeight();
+				var left = (offset.left - self.frameDoc.scrollLeft()) + (addSectionElement.outerWidth() / 2) - (addSectionBox.outerWidth() / 2);
+				var outerHeight = $(window.FrameWindow).height() + self.frameDoc.scrollTop();
+
+				//check if box is out of viewport and move inside
+				if (left < 0) left = 0;
+				if (top < 0) top = 0;
+				if ((left + addSectionBox.outerWidth()) > self.frameDoc.outerWidth()) left = self.frameDoc.outerWidth() - addSectionBox.outerWidth();
+				if (((top + addSectionBox.outerHeight()) + self.frameDoc.scrollTop()) > outerHeight) top = top - addSectionBox.outerHeight();
+				
 				
 				addSectionBox.css(
-					{"top": offset.top - self.frameDoc.scrollTop() - $(this).outerHeight(), 
-					 "left": offset.left - (addSectionBox.outerWidth() / 2) - (275) - self.frameDoc.scrollLeft(), 
+					{"top": top, 
+					 "left": left, 
 					 "display": "block",
 					 });
 				
@@ -16422,8 +17502,8 @@ define('skylark-vvveb/Builder',[
 			
 		},	
 
-	
-		_initDragdrop : function() {//drag and drop
+	/* drag and drop */
+		_initDragdrop : function() {
 
 			var self = this;
 			self.isDragging = false;	
@@ -16527,6 +17607,8 @@ define('skylark-vvveb/Builder',[
 			var hasDoctpe = (doc.doctype !== null);
 			var html = "";
 			
+			$(window).triggerHandler("vvveb.getHtml.before", doc);
+			
 			if (hasDoctpe) html =
 			"<!DOCTYPE "
 	         + doc.doctype.name
@@ -16537,7 +17619,12 @@ define('skylark-vvveb/Builder',[
 	          
 	         html +=  doc.documentElement.innerHTML + "\n</html>";
 	         
-	         return this.removeHelpers(html, keepHelperAttributes);
+	         html = this.removeHelpers(html, keepHelperAttributes);
+	         
+	         var filter = $(window).triggerHandler("vvveb.getHtml.after", html);
+	         if (filter) return filter;
+	         
+	         return html;
 		},
 		
 		setHtml: function(html) 
@@ -16602,7 +17689,7 @@ define('skylark-vvveb/Builder',[
 
 
 define('skylark-vvveb/CodeEditor',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	return Vvveb.CodeEditor = {
@@ -16616,7 +17703,7 @@ define('skylark-vvveb/CodeEditor',[
 
 			$("#vvveb-code-editor textarea").keyup(function () 
 			{
-				Vvveb.delay(Vvveb.Builder.setHtml(this.value), 1000);
+				delay(Vvveb.Builder.setHtml(this.value), 1000);
 			});
 
 			//load code on document changes
@@ -16647,6 +17734,7 @@ define('skylark-vvveb/CodeEditor',[
 			this.isActive = false;
 			this.destroy();
 		}
+
 	}
 
 });
@@ -16701,11 +17789,11 @@ define('skylark-vvveb/tmpl',[
 
 });
 define('skylark-vvveb/inputs',[
-	"skylark-utils-dom/langx",
-	"skylark-utils-dom/query",
+	"skylark-langx/langx",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
-	"skylark-bootstrap4/button",
+	"skylark-bootstrap3/button",
 ],function(langx, $,Vvveb,tmpl) {
 	var Input = {
 		
@@ -17268,7 +18356,7 @@ define('skylark-vvveb/inputs',[
 
 define('skylark-vvveb/Components',[
 	"skylark-langx/langx",
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl",
 	"./inputs"
@@ -17290,6 +18378,8 @@ define('skylark-vvveb/Components',[
 		_classesRegexLookup: {},
 		
 		componentPropertiesElement: "#right-panel .component-properties",
+
+		componentPropertiesDefaultSection: "content",
 
 		get: function(type) {
 			return this._components[type];
@@ -17358,8 +18448,8 @@ define('skylark-vvveb/Components',[
 			 
 			 if (inheritData = this._components[inheritType])
 			 {
-				newData = langx.extend(true,{}, inheritData, data);
-				newData.properties = langx.merge( langx.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
+				newData = $.extend(true,{}, inheritData, data);
+				newData.properties = $.merge( $.merge([], inheritData.properties?inheritData.properties:[]), data.properties?data.properties:[]);
 			 }
 			 
 			 //sort by order
@@ -17475,17 +18565,27 @@ define('skylark-vvveb/Components',[
 		render: function(type) {
 
 			var component = this._components[type];
+
+			var componentsPanel = jQuery(this.componentPropertiesElement);
+			var defaultSection = this.componentPropertiesDefaultSection;
+			var componentsPanelSections = {};
+
+			jQuery(this.componentPropertiesElement + " .tab-pane").each(function ()
+			{
+				var sectionName = this.dataset.section;
+				componentsPanelSections[sectionName] = $(this);
+				
+			});
 			
-			var rightPanel = jQuery(this.componentPropertiesElement);
-			var section = rightPanel.find('.section[data-section="default"]');
+			var section = componentsPanelSections[defaultSection].find('.section[data-section="default"]');
 			
 			if (!(Vvveb.preservePropertySections && section.length))
 			{
-				rightPanel.html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
-				section = rightPanel.find(".section");
+				componentsPanelSections[defaultSection].html('').append(tmpl("vvveb-input-sectioninput", {key:"default", header:component.name}));
+				section = componentsPanelSections[defaultSection].find(".section");
 			}
 
-			rightPanel.find('[data-header="default"] span').html(component.name);
+			componentsPanelSections[defaultSection].find('[data-header="default"] span').html(component.name);
 			section.html("")	
 		
 			if (component.beforeInit) component.beforeInit(Vvveb.Builder.selectedEl.get(0));
@@ -17515,7 +18615,11 @@ define('skylark-vvveb/Components',[
 							}
 							else if (property.htmlAttr == "style") 
 							{
-								element = element.css(property.key, value);
+								element = Vvveb.StyleManager.setStyle(element, property.key, value);
+							}
+							else if (property.htmlAttr == "innerHTML") 
+							{
+								element = Vvveb.ContentManager.setHtml(element, value);
 							}
 							else
 							{
@@ -17570,7 +18674,11 @@ define('skylark-vvveb/Components',[
 					if (property.htmlAttr == "style")
 					{
 						//value = element.css(property.key);//jquery css returns computed style
-						var value =  Vvveb.getStyle(element.get(0), property.key);//getStyle returns declared style
+						var value = Vvveb.StyleManager.getStyle(element, property.key);//getStyle returns declared style
+					} else
+					if (property.htmlAttr == "innerHTML")
+					{
+						var value = Vvveb.ContentManager.getHtml(element);
 					} else
 					{
 						var value = element.attr(property.htmlAttr);
@@ -17588,18 +18696,25 @@ define('skylark-vvveb/Components',[
 				}
 				
 				fn(component, property);
-
-				if (property.inputtype == inputs.SectionInput)
+				
+				var propertySection = defaultSection;
+				if (property.section)
 				{
-					section = rightPanel.find('.section[data-section="' + property.key + '"]');
+					propertySection = property.section;
+				}
+				
+
+				if (property.inputtype == SectionInput)
+				{
+					section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					
 					if (Vvveb.preservePropertySections && section.length)
 					{
 						section.html("");
 					} else 
 					{
-						rightPanel.append(property.input);
-						section = rightPanel.find('.section[data-section="' + property.key + '"]');
+						componentsPanelSections[propertySection].append(property.input);
+						section = componentsPanelSections[propertySection].find('.section[data-section="' + property.key + '"]');
 					}
 				}
 				else
@@ -17620,8 +18735,31 @@ define('skylark-vvveb/Components',[
 		}
 	};	
 });
+define('skylark-vvveb/ContentManager',[
+	"skylark-jquery",
+	"./Vvveb"
+],function($,Vvveb){
+	return Vvveb.ContentManager = {
+		getAttr: function(element, attrName) {
+			return element.attr(attrName);
+		},
+		
+		setAttr: function(element, attrName, value) {
+			return element.attr(attrName, value);
+		},
+		
+		setHtml: function(element, html) {
+			return element.html(html);
+		},
+		
+		getHtml: function(element) {
+			return element.html();
+		}
+	}
+
+});
 define('skylark-vvveb/FileManager',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./tmpl"
 ],function($,Vvveb,tmpl){
@@ -17665,18 +18803,19 @@ define('skylark-vvveb/FileManager',[
 			});
 		},
 		
-		addPage: function(name, title, url) {
+		addPage: function(name, data) {
 			
-			this.pages[name] = {title:title, url:url};
+			this.pages[name] = data;
+			data['name'] = name;
 			
 			this.tree.append(
-				tmpl("vvveb-filemanager-page", {name:name, title:title, url:url}));
+				tmpl("vvveb-filemanager-page", data));
 		},
 		
 		addPages: function(pages) {
 			for (page in pages)
 			{
-				this.addPage(pages[page]['name'], pages[page]['title'], pages[page]['url']);
+				this.addPage(pages[page]['name'], pages[page]);
 			}
 		},
 		
@@ -17685,7 +18824,7 @@ define('skylark-vvveb/FileManager',[
 				tmpl("vvveb-filemanager-component", {name:name, url:url, title:title}));
 		},
 		
-		getComponents: function() {
+		getComponents: function(allowedComponents = {}) {
 
 				var tree = [];
 				function getNodeTree (node, parent) {
@@ -17696,6 +18835,10 @@ define('skylark-vvveb/FileManager',[
 							if (child && child["attributes"] != undefined && 
 								(matchChild = Vvveb.Components.matchNode(child))) 
 							{
+								if (Array.isArray(allowedComponents)
+									&& allowedComponents.indexOf(matchChild.type) == -1)
+								continue;
+							
 								element = {
 									name: matchChild.name,
 									image: matchChild.image,
@@ -17721,10 +18864,11 @@ define('skylark-vvveb/FileManager',[
 			return tree;
 		},
 		
-		loadComponents: function() {
+		loadComponents: function(allowedComponents = {}) {
 
-			tree = this.getComponents();
-			html = drawComponentsTree(tree);
+			var tree = this.getComponents(allowedComponents);
+			var html = drawComponentsTree(tree);
+			var j = 0;
 
 			function drawComponentsTree(tree)
 			{
@@ -17770,7 +18914,7 @@ define('skylark-vvveb/FileManager',[
 			return this.loadPage(this.currentPage);
 		},
 		
-		loadPage: function(name, disableCache = true) {
+		loadPage: function(name, allowedComponents = false, disableCache = true) {
 			$("[data-page]", this.tree).removeClass("active");
 			$("[data-page='" + name + "']", this.tree).addClass("active");
 			
@@ -17779,7 +18923,7 @@ define('skylark-vvveb/FileManager',[
 			
 			Vvveb.Builder.loadUrl(url + (disableCache ? (url.indexOf('?') > -1?'&':'?') + Math.random():''), 
 				function () { 
-					Vvveb.FileManager.loadComponents(); 
+					Vvveb.FileManager.loadComponents(allowedComponents); 
 				});
 		},
 
@@ -17790,6 +18934,40 @@ define('skylark-vvveb/FileManager',[
 	}
 });
 
+define('skylark-vvveb/StyleManager',[
+	"skylark-jquery",
+	"./Vvveb"
+],function($,Vvveb){
+	return Vvveb.StyleManager = {
+		setStyle: function(element, styleProp, value) {
+			return element.css(styleProp, value);
+		},
+		
+		
+		_getCssStyle: function(element, styleProp){
+			var value = "";
+			var el = element.get(0);
+			
+			if (el.style && el.style.length > 0 && el.style[styleProp])//check inline
+				var value = el.style[styleProp];
+			else
+			if (el.currentStyle)	//check defined css
+				var value = el.currentStyle[styleProp];
+			else if (window.getComputedStyle)
+			{
+				var value = document.defaultView.getDefaultComputedStyle ? 
+								document.defaultView.getDefaultComputedStyle(el,null).getPropertyValue(styleProp) : 
+								window.getComputedStyle(el,null).getPropertyValue(styleProp);
+			}
+			
+			return value;
+		},
+		
+		getStyle: function(element,styleProp){
+			return this._getCssStyle(element, styleProp);
+		}
+	}	
+});
 define('skylark-vvveb/Undo',[
 	"./Vvveb"
 ],function(Vvveb){
@@ -17902,7 +19080,7 @@ define('skylark-vvveb/Undo',[
 });
 
 define('skylark-vvveb/WysiwygEditor',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Undo"
 ],function($,Vvveb){
@@ -17980,11 +19158,11 @@ define('skylark-vvveb/WysiwygEditor',[
 });
 	
 define('skylark-vvveb/Gui',[
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb",
 	"./Builder",
 	"./WysiwygEditor",
-	"skylark-bootstrap4/modal"
+	"skylark-bootstrap3/modal"
 ],function($,Vvveb){
 	var Gui = {
 		
@@ -17996,8 +19174,8 @@ define('skylark-vvveb/Gui',[
 				$(this).on(on, Vvveb.Gui[this.dataset.vvvebAction]);
 				if (this.dataset.vvvebShortcut)
 				{
-					$(document).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
-					$(window.FrameDocument, window.FrameWindow).on('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(document).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
+					$(window.FrameDocument, window.FrameWindow).bind('keydown', this.dataset.vvvebShortcut, Vvveb.Gui[this.dataset.vvvebAction]);
 				}
 			});
 		},
@@ -18047,7 +19225,7 @@ define('skylark-vvveb/Gui',[
 			var link = document.createElement('a');
 			if ('download' in link)
 			{
-				link.download = filename;
+				link.dataset.download = filename;
 				link.href = uriContent;
 				link.target = "_blank";
 				
@@ -18083,7 +19261,7 @@ define('skylark-vvveb/Gui',[
 		},
 		
 		fullscreen : function () {
-			Vvveb.launchFullScreen(document); // the whole page
+			launchFullScreen(document); // the whole page
 		},
 		
 		componentSearch : function () {
@@ -18139,8 +19317,8 @@ define('skylark-vvveb/Gui',[
 			});
 		},
 
-	
-		newPage : function () { //Pages, file/components tree 
+	//Pages, file/components tree 
+		newPage : function () {
 			
 			var newPageModal = $('#new-page-modal');
 			
@@ -18179,7 +19357,45 @@ define('skylark-vvveb/Gui',[
 			//aria-pressed attribute is updated after action is called and we check for false instead of true
 			var designerMode = this.attributes["aria-pressed"].value != "true";
 			Vvveb.Builder.setDesignerMode(designerMode);
-		}
+		},
+	//layout
+		togglePanel: function (panel, cssVar) {
+			var panel = $(panel);
+			var body = $("body");
+			var prevValue = body.css(cssVar);
+			if (prevValue !== "0px") 
+			{
+				panel.data("layout-toggle", prevValue);
+				body.css(cssVar, "0px");
+				panel.hide();
+			} else
+			{
+				prevValue= panel.data("layout-toggle");
+				body.css(cssVar, '');
+				panel.show();
+				
+			}
+		},
+
+		toggleFileManager: function () {
+			Vvveb.Gui.togglePanel("#filemanager", "--builder-filemanager-height");
+		},
+		
+		toggleLeftColumn: function () {
+			Vvveb.Gui.togglePanel("#left-panel", "--builder-left-panel-width");
+		},
+		
+		toggleRightColumn: function () {
+			Vvveb.Gui.togglePanel("#right-panel", "--builder-right-panel-width");
+			var rightColumnEnabled = this.attributes["aria-pressed"].value == "true";
+
+			$("#vvveb-builder").toggleClass("no-right-panel");
+			$(".component-properties-tab").toggle();
+			
+			Vvveb.Components.componentPropertiesElement = (rightColumnEnabled ? "#right-panel" :"#left-panel") +" .component-properties";
+			if ($("#properties").is(":visible")) $('.component-tab a').show().tab('show'); 
+
+		},
 		
 	}
 
@@ -19082,21 +20298,29 @@ define('skylark-vvveb/blocks/bootstrap4',[
 
 });
 define('skylark-vvveb/components/bootstrap4',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
     "../inputs"
 ],function($,Vvveb,ComponentsGroup,Components,inputs){
 
-    bgcolorClasses = ["bg-primary", "bg-secondary", "bg-success", "bg-danger", "bg-warning", "bg-info", "bg-light", "bg-dark", "bg-white"]
+    var bgcolorClasses = [
+        "bg-primary", 
+        "bg-secondary", 
+        "bg-success", 
+        "bg-danger", 
+        "bg-warning", 
+        "bg-info", 
+        "bg-light", 
+        "bg-dark", 
+        "bg-white"
+    ],
 
-    bgcolorSelectOptions = 
-    [{
-    	value: "Default",
-    	text: ""
-    }, 
-    {
+    bgcolorSelectOptions = [{
+	   value: "Default",
+	   text: ""
+    }, {
     	value: "bg-primary",
     	text: "Primary"
     }, {
@@ -19141,10 +20365,35 @@ define('skylark-vvveb/components/bootstrap4',[
     	return newNode;
     }
 
-    ComponentsGroup['Bootstrap 4'] =
-    ["html/container", "html/gridrow", "html/button", "html/buttongroup", "html/buttontoolbar", "html/heading", "html/image", "html/jumbotron", "html/alert", "html/card", "html/listgroup", "html/hr", "html/taglabel", "html/badge", "html/progress", "html/navbar", "html/breadcrumbs", "html/pagination", "html/form", "html/textinput", "html/textareainput", "html/selectinput", "html/fileinput", "html/checkbox", "html/radiobutton", "html/table", "html/paragraph"];
-
-
+    ComponentsGroup['Bootstrap 4'] = [
+        "html/container", 
+        "html/gridrow", 
+        "html/button", 
+        "html/buttongroup", 
+        "html/buttontoolbar", 
+        "html/heading", 
+        "html/image", 
+        "html/jumbotron", 
+        "html/alert", 
+        "html/card", 
+        "html/listgroup", 
+        "html/hr", 
+        "html/taglabel", 
+        "html/badge", 
+        "html/progress", 
+        "html/navbar", 
+        "html/breadcrumbs", 
+        "html/pagination", 
+        "html/form", 
+        "html/textinput", 
+        "html/textareainput", 
+        "html/selectinput", 
+        "html/fileinput", 
+        "html/checkbox", 
+        "html/radiobutton", 
+        "html/table", 
+        "html/paragraph"
+    ];
 
     Components.add("_base", {
         name: "Element",
@@ -19176,16 +20425,15 @@ define('skylark-vvveb/components/bootstrap4',[
 
     //display
     Components.extend("_base", "_base", {
-    	 properties: [
-         {
+    	 properties: [{
             key: "display_header",
             inputtype: inputs.SectionInput,
             name:false,
             sort: Components.base_sort++,
             data: {header:"Display"},
         }, {
-            name: "Display",
             key: "display",
+            name: "Display",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -19208,8 +20456,8 @@ define('skylark-vvveb/components/bootstrap4',[
                 }]
             }
         }, {
-            name: "Position",
             key: "position",
+            name: "Position",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -19232,8 +20480,8 @@ define('skylark-vvveb/components/bootstrap4',[
                 }]
             }
         }, {
-            name: "Top",
             key: "top",
+            name: "Top",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -19241,8 +20489,8 @@ define('skylark-vvveb/components/bootstrap4',[
             parent:"",
             inputtype: inputs.CssUnitInput
     	}, {
-            name: "Left",
             key: "left",
+            name: "Left",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -20060,7 +21308,24 @@ define('skylark-vvveb/components/bootstrap4',[
             key: "type",
             htmlAttr: "class",
             inputtype: inputs.SelectInput,
-            validValues: ["btn-default", "btn-primary", "btn-info", "btn-success", "btn-warning", "btn-info", "btn-light", "btn-dark", "btn-outline-primary", "btn-outline-info", "btn-outline-success", "btn-outline-warning", "btn-outline-info", "btn-outline-light", "btn-outline-dark", "btn-link"],
+            validValues: [
+                "btn-default", 
+                "btn-primary", 
+                "btn-info", 
+                "btn-success", 
+                "btn-warning", 
+                "btn-info", 
+                "btn-light", 
+                "btn-dark", 
+                "btn-outline-primary", 
+                "btn-outline-info", 
+                "btn-outline-success", 
+                "btn-outline-warning", 
+                "btn-outline-info", 
+                "btn-outline-light", 
+                "btn-outline-dark", 
+                "btn-link"
+            ],
             data: {
                 options: [{
                     value: "btn-default",
@@ -21186,7 +22451,7 @@ define('skylark-vvveb/components/bootstrap4',[
 
 });
 define('skylark-vvveb/components/server',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
@@ -21618,7 +22883,7 @@ define('skylark-vvveb/components/server',[
     });
 });
 define('skylark-vvveb/components/widgets',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
@@ -21627,7 +22892,14 @@ define('skylark-vvveb/components/widgets',[
     var jQuery = $;
 
 
-    ComponentsGroup['Widgets'] = ["widgets/googlemaps", "widgets/video", "widgets/chartjs", "widgets/facebookpage", "widgets/paypal", "widgets/instagram", "widgets/twitter"/*, "widgets/facebookcomments"*/];
+    ComponentsGroup['Widgets'] = [
+        "widgets/googlemaps", 
+        "widgets/video", 
+        "widgets/chartjs", 
+        "widgets/facebookpage", 
+        "widgets/paypal", 
+        "widgets/instagram", 
+        "widgets/twitter"/*, "widgets/facebookcomments"*/];
 
     Components.extend("_base", "widgets/googlemaps", {
         name: "Google Maps",
@@ -21702,16 +22974,14 @@ define('skylark-vvveb/components/widgets',[
         controls: true,
         loop: false,
 
-    	init: function (node)
-    	{
+    	init: function (node) {
     		iframe = jQuery('iframe', node);
     		video = jQuery('video', node);
     		
     		$("#right-panel [data-key=url]").hide();
     		
     		//check if html5
-    		if (video.length) 
-    		{
+    		if (video.length) {
     			this.url = video.src;
     		} else if (iframe.length) //vimeo or youtube
     		{
@@ -21730,8 +23000,7 @@ define('skylark-vvveb/components/widgets',[
     		$("#right-panel input[name=url]").val(this.url);
     	},
     	
-    	onChange: function (node, property, value)
-    	{
+    	onChange: function (node, property, value)	{
     		this[property.key] = value;
 
     		//if (property.key == "t")
@@ -22159,10 +23428,8 @@ define('skylark-vvveb/components/widgets',[
 define('skylark-codemirror/cm',[
 	"skylark-langx/skylark"
 ],function(skylark){
-	var itg = skylark.itg = skylark.itg || {};
 
-	return itg.cm = {};
-
+	return skylark.attach("intg.cm", {});
 });
 define('skylark-codemirror/primitives/util/browser',[],function () {
     'use strict';
@@ -22513,50 +23780,50 @@ define('skylark-codemirror/primitives/display/Display',[
     '../util/browser',
     '../util/dom',
     '../util/misc'
-], function (a, b, c) {
+], function (browser, dom, misc) {
     'use strict';
     function Display(place, doc, input) {
         let d = this;
         this.input = input;
-        d.scrollbarFiller = b.elt('div', null, 'CodeMirror-scrollbar-filler');
+        d.scrollbarFiller = dom.elt('div', null, 'CodeMirror-scrollbar-filler');
         d.scrollbarFiller.setAttribute('cm-not-content', 'true');
-        d.gutterFiller = b.elt('div', null, 'CodeMirror-gutter-filler');
+        d.gutterFiller = dom.elt('div', null, 'CodeMirror-gutter-filler');
         d.gutterFiller.setAttribute('cm-not-content', 'true');
-        d.lineDiv = b.eltP('div', null, 'CodeMirror-code');
-        d.selectionDiv = b.elt('div', null, null, 'position: relative; z-index: 1');
-        d.cursorDiv = b.elt('div', null, 'CodeMirror-cursors');
-        d.measure = b.elt('div', null, 'CodeMirror-measure');
-        d.lineMeasure = b.elt('div', null, 'CodeMirror-measure');
-        d.lineSpace = b.eltP('div', [
+        d.lineDiv = dom.eltP('div', null, 'CodeMirror-code');
+        d.selectionDiv = dom.elt('div', null, null, 'position: relative; z-index: 1');
+        d.cursorDiv = dom.elt('div', null, 'CodeMirror-cursors');
+        d.measure = dom.elt('div', null, 'CodeMirror-measure');
+        d.lineMeasure = dom.elt('div', null, 'CodeMirror-measure');
+        d.lineSpace = dom.eltP('div', [
             d.measure,
             d.lineMeasure,
             d.selectionDiv,
             d.cursorDiv,
             d.lineDiv
         ], null, 'position: relative; outline: none');
-        let lines = b.eltP('div', [d.lineSpace], 'CodeMirror-lines');
-        d.mover = b.elt('div', [lines], null, 'position: relative');
-        d.sizer = b.elt('div', [d.mover], 'CodeMirror-sizer');
+        let lines = dom.eltP('div', [d.lineSpace], 'CodeMirror-lines');
+        d.mover = dom.elt('div', [lines], null, 'position: relative');
+        d.sizer = dom.elt('div', [d.mover], 'CodeMirror-sizer');
         d.sizerWidth = null;
-        d.heightForcer = b.elt('div', null, null, 'position: absolute; height: ' + c.scrollerGap + 'px; width: 1px;');
-        d.gutters = b.elt('div', null, 'CodeMirror-gutters');
+        d.heightForcer = dom.elt('div', null, null, 'position: absolute; height: ' + misc.scrollerGap + 'px; width: 1px;');
+        d.gutters = dom.elt('div', null, 'CodeMirror-gutters');
         d.lineGutter = null;
-        d.scroller = b.elt('div', [
+        d.scroller = dom.elt('div', [
             d.sizer,
             d.heightForcer,
             d.gutters
         ], 'CodeMirror-scroll');
         d.scroller.setAttribute('tabIndex', '-1');
-        d.wrapper = b.elt('div', [
+        d.wrapper = dom.elt('div', [
             d.scrollbarFiller,
             d.gutterFiller,
             d.scroller
         ], 'CodeMirror');
-        if (a.ie && a.ie_version < 8) {
+        if (browser.ie && browser.ie_version < 8) {
             d.gutters.style.zIndex = -1;
             d.scroller.style.paddingRight = 0;
         }
-        if (!a.webkit && !(a.gecko && a.mobile))
+        if (!browser.webkit && !(browser.gecko && browser.mobile))
             d.scroller.draggable = true;
         if (place) {
             if (place.appendChild)
@@ -22687,7 +23954,7 @@ define('skylark-codemirror/primitives/line/utils_line',['../util/misc'], functio
         lineNumberFor: lineNumberFor
     };
 });
-define('skylark-codemirror/primitives/line/pos',['./utils_line'], function (a) {
+define('skylark-codemirror/primitives/line/pos',['./utils_line'], function (utils_line) {
     'use strict';
     function Pos(line, ch, sticky = null) {
         if (!(this instanceof Pos))
@@ -22719,8 +23986,8 @@ define('skylark-codemirror/primitives/line/pos',['./utils_line'], function (a) {
             return Pos(doc.first, 0);
         let last = doc.first + doc.size - 1;
         if (pos.line > last)
-            return Pos(last, a.getLine(doc, last).text.length);
-        return clipToLen(pos, a.getLine(doc, pos.line).text.length);
+            return Pos(last, utils_line.getLine(doc, last).text.length);
+        return clipToLen(pos, utils_line.getLine(doc, pos.line).text.length);
     }
     function clipToLen(pos, linelen) {
         let ch = pos.ch;
@@ -22770,7 +24037,7 @@ define('skylark-codemirror/primitives/line/spans',[
     './pos',
     './saw_special_spans',
     './utils_line'
-], function (a, b, c, d) {
+], function (misc, pos, saw_special_spans, utils_line) {
     'use strict';
     function MarkedSpan(marker, from, to) {
         this.marker = marker;
@@ -22825,14 +24092,14 @@ define('skylark-codemirror/primitives/line/spans',[
     function stretchSpansOverChange(doc, change) {
         if (change.full)
             return null;
-        let oldFirst = d.isLine(doc, change.from.line) && d.getLine(doc, change.from.line).markedSpans;
-        let oldLast = d.isLine(doc, change.to.line) && d.getLine(doc, change.to.line).markedSpans;
+        let oldFirst = utils_line.isLine(doc, change.from.line) && utils_line.getLine(doc, change.from.line).markedSpans;
+        let oldLast = utils_line.isLine(doc, change.to.line) && utils_line.getLine(doc, change.to.line).markedSpans;
         if (!oldFirst && !oldLast)
             return null;
-        let startCh = change.from.ch, endCh = change.to.ch, isInsert = b.cmp(change.from, change.to) == 0;
+        let startCh = change.from.ch, endCh = change.to.ch, isInsert = pos.cmp(change.from, change.to) == 0;
         let first = markedSpansBefore(oldFirst, startCh, isInsert);
         let last = markedSpansAfter(oldLast, endCh, isInsert);
-        let sameLine = change.text.length == 1, offset = a.lst(change.text).length + (sameLine ? startCh : 0);
+        let sameLine = change.text.length == 1, offset = misc.lst(change.text).length + (sameLine ? startCh : 0);
         if (first) {
             for (let i = 0; i < first.length; ++i) {
                 let span = first[i];
@@ -22897,7 +24164,7 @@ define('skylark-codemirror/primitives/line/spans',[
             if (line.markedSpans)
                 for (let i = 0; i < line.markedSpans.length; ++i) {
                     let mark = line.markedSpans[i].marker;
-                    if (mark.readOnly && (!markers || a.indexOf(markers, mark) == -1))
+                    if (mark.readOnly && (!markers || misc.indexOf(markers, mark) == -1))
                         (markers || (markers = [])).push(mark);
                 }
         });
@@ -22911,12 +24178,12 @@ define('skylark-codemirror/primitives/line/spans',[
             let mk = markers[i], m = mk.find(0);
             for (let j = 0; j < parts.length; ++j) {
                 let p = parts[j];
-                if (b.cmp(p.to, m.from) < 0 || b.cmp(p.from, m.to) > 0)
+                if (pos.cmp(p.to, m.from) < 0 || pos.cmp(p.from, m.to) > 0)
                     continue;
                 let newParts = [
                         j,
                         1
-                    ], dfrom = b.cmp(p.from, m.from), dto = b.cmp(p.to, m.to);
+                    ], dfrom = pos.cmp(p.from, m.from), dto = pos.cmp(p.to, m.to);
                 if (dfrom < 0 || !mk.inclusiveLeft && !dfrom)
                     newParts.push({
                         from: p.from,
@@ -22959,16 +24226,16 @@ define('skylark-codemirror/primitives/line/spans',[
         if (lenDiff != 0)
             return lenDiff;
         let aPos = a.find(), bPos = b.find();
-        let fromCmp = b.cmp(aPos.from, bPos.from) || extraLeft(a) - extraLeft(b);
+        let fromCmp = pos.cmp(aPos.from, bPos.from) || extraLeft(a) - extraLeft(b);
         if (fromCmp)
             return -fromCmp;
-        let toCmp = b.cmp(aPos.to, bPos.to) || extraRight(a) - extraRight(b);
+        let toCmp = pos.cmp(aPos.to, bPos.to) || extraRight(a) - extraRight(b);
         if (toCmp)
             return toCmp;
         return b.id - a.id;
     }
     function collapsedSpanAtSide(line, start) {
-        let sps = c.sawCollapsedSpans && line.markedSpans, found;
+        let sps = saw_special_spans.sawCollapsedSpans && line.markedSpans, found;
         if (sps)
             for (let sp, i = 0; i < sps.length; ++i) {
                 sp = sps[i];
@@ -22984,7 +24251,7 @@ define('skylark-codemirror/primitives/line/spans',[
         return collapsedSpanAtSide(line, false);
     }
     function collapsedSpanAround(line, ch) {
-        let sps = c.sawCollapsedSpans && line.markedSpans, found;
+        let sps = saw_special_spans.sawCollapsedSpans && line.markedSpans, found;
         if (sps)
             for (let i = 0; i < sps.length; ++i) {
                 let sp = sps[i];
@@ -22994,19 +24261,19 @@ define('skylark-codemirror/primitives/line/spans',[
         return found;
     }
     function conflictingCollapsedRange(doc, lineNo, from, to, marker) {
-        let line = d.getLine(doc, d.lineNo);
-        let sps = c.sawCollapsedSpans && line.markedSpans;
+        let line = utils_line.getLine(doc, utils_line.lineNo);
+        let sps = saw_special_spans.sawCollapsedSpans && line.markedSpans;
         if (sps)
             for (let i = 0; i < sps.length; ++i) {
                 let sp = sps[i];
                 if (!sp.marker.collapsed)
                     continue;
                 let found = sp.marker.find(0);
-                let fromCmp = b.cmp(found.from, from) || extraLeft(sp.marker) - extraLeft(marker);
-                let toCmp = b.cmp(found.to, to) || extraRight(sp.marker) - extraRight(marker);
+                let fromCmp = pos.cmp(found.from, from) || extraLeft(sp.marker) - extraLeft(marker);
+                let toCmp = pos.cmp(found.to, to) || extraRight(sp.marker) - extraRight(marker);
                 if (fromCmp >= 0 && toCmp <= 0 || fromCmp <= 0 && toCmp >= 0)
                     continue;
-                if (fromCmp <= 0 && (sp.marker.inclusiveRight && marker.inclusiveLeft ? b.cmp(found.to, from) >= 0 : b.cmp(found.to, from) > 0) || fromCmp >= 0 && (sp.marker.inclusiveRight && marker.inclusiveLeft ? b.cmp(found.from, to) <= 0 : b.cmp(found.from, to) < 0))
+                if (fromCmp <= 0 && (sp.marker.inclusiveRight && marker.inclusiveLeft ? pos.cmp(found.to, from) >= 0 : pos.cmp(found.to, from) > 0) || fromCmp >= 0 && (sp.marker.inclusiveRight && marker.inclusiveLeft ? pos.cmp(found.from, to) <= 0 : pos.cmp(found.from, to) < 0))
                     return true;
             }
     }
@@ -23031,23 +24298,23 @@ define('skylark-codemirror/primitives/line/spans',[
         return lines;
     }
     function visualLineNo(doc, lineN) {
-        let line = d.getLine(doc, lineN), vis = visualLine(line);
+        let line = utils_line.getLine(doc, lineN), vis = visualLine(line);
         if (line == vis)
             return lineN;
-        return d.lineNo(vis);
+        return utils_line.lineNo(vis);
     }
     function visualLineEndNo(doc, lineN) {
         if (lineN > doc.lastLine())
             return lineN;
-        let line = d.getLine(doc, lineN), merged;
+        let line = utils_line.getLine(doc, lineN), merged;
         if (!lineIsHidden(doc, line))
             return lineN;
         while (merged = collapsedSpanAtEnd(line))
             line = merged.find(1, true).line;
-        return d.lineNo(line) + 1;
+        return utils_line.lineNo(line) + 1;
     }
     function lineIsHidden(doc, line) {
-        let sps = c.sawCollapsedSpans && line.markedSpans;
+        let sps = saw_special_spans.sawCollapsedSpans && line.markedSpans;
         if (sps)
             for (let sp, i = 0; i < sps.length; ++i) {
                 sp = sps[i];
@@ -23115,7 +24382,7 @@ define('skylark-codemirror/primitives/line/spans',[
     }
     function findMaxLine(cm) {
         let d = cm.display, doc = cm.doc;
-        d.maxLine = d.getLine(doc, doc.first);
+        d.maxLine = utils_line.getLine(doc, doc.first);
         d.maxLineLength = lineLength(d.maxLine);
         d.maxLineChanged = true;
         doc.iter(line => {
@@ -23558,7 +24825,7 @@ define('skylark-codemirror/primitives/util/feature_detection',[
         hasBadZoomedRects: hasBadZoomedRects
     };
 });
-define('skylark-codemirror/primitives/modes',['./util/misc'], function (a) {
+define('skylark-codemirror/primitives/modes',['./util/misc'], function (misc) {
     'use strict';
     let modes = {}, mimeModes = {};
     function defineMode(name, mode) {
@@ -23576,7 +24843,7 @@ define('skylark-codemirror/primitives/modes',['./util/misc'], function (a) {
             let found = mimeModes[spec.name];
             if (typeof found == 'string')
                 found = { name: found };
-            spec = a.createObj(found, spec);
+            spec = misc.createObj(found, spec);
             spec.name = found.name;
         } else if (typeof spec == 'string' && /^[\w\-]+\/[\w\-]+\+xml$/.test(spec)) {
             return resolveMode('application/xml');
@@ -23615,7 +24882,7 @@ define('skylark-codemirror/primitives/modes',['./util/misc'], function (a) {
     let modeExtensions = {};
     function extendMode(mode, properties) {
         let exts = modeExtensions.hasOwnProperty(mode) ? modeExtensions[mode] : modeExtensions[mode] = {};
-        a.copyObj(properties, exts);
+        misc.copyObj(properties, exts);
     }
     function copyState(mode, state) {
         if (state === true)
@@ -23779,7 +25046,7 @@ define('skylark-codemirror/primitives/line/highlight',[
     '../util/StringStream',
     './utils_line',
     './pos'
-], function (a, b, StringStream, c, d) {
+], function (misc, modes, StringStream, utils_line, line_pos) {
     'use strict';
     class SavedContext {
         constructor(state, lookAhead) {
@@ -23820,12 +25087,12 @@ define('skylark-codemirror/primitives/line/highlight',[
         }
         static fromSaved(doc, saved, line) {
             if (saved instanceof SavedContext)
-                return new Context(doc, b.copyState(doc.mode, saved.state), line, saved.lookAhead);
+                return new Context(doc, modes.copyState(doc.mode, saved.state), line, saved.lookAhead);
             else
-                return new Context(doc, b.copyState(doc.mode, saved), line);
+                return new Context(doc, modes.copyState(doc.mode, saved), line);
         }
         save(copy) {
-            let state = copy !== false ? b.copyState(this.doc.mode, this.state) : this.state;
+            let state = copy !== false ? modes.copyState(this.doc.mode, this.state) : this.state;
             return this.maxLookAhead > 0 ? new SavedContext(state, this.maxLookAhead) : state;
         }
     }
@@ -23869,8 +25136,8 @@ define('skylark-codemirror/primitives/line/highlight',[
     }
     function getLineStyles(cm, line, updateFrontier) {
         if (!line.styles || line.styles[0] != cm.state.modeGen) {
-            let context = getContextBefore(cm, c.lineNo(line));
-            let resetState = line.text.length > cm.options.maxHighlightLength && b.copyState(cm.doc.mode, context.state);
+            let context = getContextBefore(cm, utils_line.lineNo(line));
+            let resetState = line.text.length > cm.options.maxHighlightLength && modes.copyState(cm.doc.mode, context.state);
             let result = highlightLine(cm, line, context);
             if (resetState)
                 context.state = resetState;
@@ -23890,8 +25157,8 @@ define('skylark-codemirror/primitives/line/highlight',[
         if (!doc.mode.startState)
             return new Context(doc, true, n);
         let start = findStartLine(cm, n, precise);
-        let saved = start > doc.first && c.getLine(doc, start - 1).stateAfter;
-        let context = saved ? Context.fromSaved(doc, saved, start) : new Context(doc, b.startState(doc.mode), start);
+        let saved = start > doc.first && utils_line.getLine(doc, start - 1).stateAfter;
+        let context = saved ? Context.fromSaved(doc, saved, start) : new Context(doc, modes.startState(doc.mode), start);
         doc.iter(start, n, line => {
             processLine(cm, line.text, context);
             let pos = context.line;
@@ -23918,14 +25185,14 @@ define('skylark-codemirror/primitives/line/highlight',[
             return mode.blankLine(state);
         if (!mode.innerMode)
             return;
-        let inner = b.innerMode(mode, state);
+        let inner = modes.innerMode(mode, state);
         if (inner.mode.blankLine)
             return inner.mode.blankLine(inner.state);
     }
     function readToken(mode, stream, state, inner) {
         for (let i = 0; i < 10; i++) {
             if (inner)
-                inner[0] = b.innerMode(mode, state).mode;
+                inner[0] = modes.innerMode(mode, state).mode;
             let style = mode.token(stream, state);
             if (stream.pos > stream.start)
                 return style;
@@ -23943,8 +25210,8 @@ define('skylark-codemirror/primitives/line/highlight',[
     }
     function takeToken(cm, pos, precise, asArray) {
         let doc = cm.doc, mode = doc.mode, style;
-        pos = d.clipPos(doc, pos);
-        let line = c.getLine(doc, pos.line), context = getContextBefore(cm, pos.line, precise);
+        pos = line_pos.clipPos(doc, pos);
+        let line = utils_line.getLine(doc, pos.line), context = getContextBefore(cm, pos.line, precise);
         let stream = new StringStream(line.text, cm.options.tabSize, context), tokens;
         if (asArray)
             tokens = [];
@@ -23952,7 +25219,7 @@ define('skylark-codemirror/primitives/line/highlight',[
             stream.start = stream.pos;
             style = readToken(mode, stream, context.state);
             if (asArray)
-                tokens.push(new Token(stream, style, b.copyState(doc.mode, context.state)));
+                tokens.push(new Token(stream, style, modes.copyState(doc.mode, context.state)));
         }
         return asArray ? tokens : new Token(stream, style, context.state);
     }
@@ -24016,10 +25283,10 @@ define('skylark-codemirror/primitives/line/highlight',[
         for (let search = n; search > lim; --search) {
             if (search <= doc.first)
                 return doc.first;
-            let line = c.getLine(doc, search - 1), after = line.stateAfter;
+            let line = utils_line.getLine(doc, search - 1), after = line.stateAfter;
             if (after && (!precise || search + (after instanceof SavedContext ? after.lookAhead : 0) <= doc.modeFrontier))
                 return search;
-            let indented = a.countColumn(line.text, null, cm.options.tabSize);
+            let indented = misc.countColumn(line.text, null, cm.options.tabSize);
             if (minline == null || minindent > indented) {
                 minline = search - 1;
                 minindent = indented;
@@ -24033,7 +25300,7 @@ define('skylark-codemirror/primitives/line/highlight',[
             return;
         let start = doc.first;
         for (let line = n - 1; line > start; line--) {
-            let saved = c.getLine(doc, line).stateAfter;
+            let saved = utils_line.getLine(doc, line).stateAfter;
             if (saved && (!(saved instanceof SavedContext) || line + saved.lookAhead < n)) {
                 start = line + 1;
                 break;
@@ -24060,19 +25327,19 @@ define('skylark-codemirror/primitives/line/line_data',[
     './highlight',
     './spans',
     './utils_line'
-], function (a, b, c, d, e, f, g, h, m_utils_line) {
+], function (bidi, browser, dom, events, feature_detection, misc, highlight, spans, m_utils_line) {
     'use strict';
     class Line {
         constructor(text, markedSpans, estimateHeight) {
             this.text = text;
-            h.attachMarkedSpans(this, markedSpans);
+            spans.attachMarkedSpans(this, markedSpans);
             this.height = estimateHeight ? estimateHeight(this) : 1;
         }
         lineNo() {
             return m_utils_line.lineNo(this);
         }
     }
-    d.eventMixin(Line);
+    events.eventMixin(Line);
     function updateLine(line, text, markedSpans, estimateHeight) {
         line.text = text;
         if (line.stateAfter)
@@ -24081,15 +25348,15 @@ define('skylark-codemirror/primitives/line/line_data',[
             line.styles = null;
         if (line.order != null)
             line.order = null;
-        h.detachMarkedSpans(line);
-        h.attachMarkedSpans(line, markedSpans);
+        spans.detachMarkedSpans(line);
+        spans.attachMarkedSpans(line, markedSpans);
         let estHeight = estimateHeight ? estimateHeight(line) : 1;
         if (estHeight != line.height)
             m_utils_line.updateLineHeight(line, estHeight);
     }
     function cleanUpLine(line) {
         line.parent = null;
-        h.detachMarkedSpans(line);
+        spans.detachMarkedSpans(line);
     }
     let styleToClassCache = {}, styleToClassCacheWithMode = {};
     function interpretTokenStyle(style, options) {
@@ -24099,9 +25366,9 @@ define('skylark-codemirror/primitives/line/line_data',[
         return cache[style] || (cache[style] = style.replace(/\S+/g, 'cm-$&'));
     }
     function buildLineContent(cm, lineView) {
-        let content = c.eltP('span', null, null, b.webkit ? 'padding-right: .1px' : null);
+        let content = dom.eltP('span', null, null, browser.webkit ? 'padding-right: .1px' : null);
         let builder = {
-            pre: c.eltP('pre', [content], 'CodeMirror-line'),
+            pre: dom.eltP('pre', [content], 'CodeMirror-line'),
             content: content,
             col: 0,
             pos: 0,
@@ -24114,19 +25381,19 @@ define('skylark-codemirror/primitives/line/line_data',[
             let line = i ? lineView.rest[i - 1] : lineView.line, order;
             builder.pos = 0;
             builder.addToken = buildToken;
-            if (e.hasBadBidiRects(cm.display.measure) && (order = a.getOrder(line, cm.doc.direction)))
+            if (feature_detection.hasBadBidiRects(cm.display.measure) && (order = bidi.getOrder(line, cm.doc.direction)))
                 builder.addToken = buildTokenBadBidi(builder.addToken, order);
             builder.map = [];
             let allowFrontierUpdate = lineView != cm.display.externalMeasured && m_utils_line.lineNo(line);
-            insertLineContent(line, builder, g.getLineStyles(cm, line, allowFrontierUpdate));
+            insertLineContent(line, builder, highlight.getLineStyles(cm, line, allowFrontierUpdate));
             if (line.styleClasses) {
                 if (line.styleClasses.bgClass)
-                    builder.bgClass = c.joinClasses(line.styleClasses.bgClass, builder.bgClass || '');
+                    builder.bgClass = dom.joinClasses(line.styleClasses.bgClass, builder.bgClass || '');
                 if (line.styleClasses.textClass)
-                    builder.textClass = c.joinClasses(line.styleClasses.textClass, builder.textClass || '');
+                    builder.textClass = dom.joinClasses(line.styleClasses.textClass, builder.textClass || '');
             }
             if (builder.map.length == 0)
-                builder.map.push(0, 0, builder.content.appendChild(e.zeroWidthElement(cm.display.measure)));
+                builder.map.push(0, 0, builder.content.appendChild(feature_detection.zeroWidthElement(cm.display.measure)));
             if (i == 0) {
                 lineView.measure.map = builder.map;
                 lineView.measure.cache = {};
@@ -24136,18 +25403,18 @@ define('skylark-codemirror/primitives/line/line_data',[
                 (lineView.measure.caches || (lineView.measure.caches = [])).push({});
             }
         }
-        if (b.webkit) {
+        if (browser.webkit) {
             let last = builder.content.lastChild;
             if (/\bcm-tab\b/.test(last.className) || last.querySelector && last.querySelector('.cm-tab'))
                 builder.content.className = 'cm-tab-wrap-hack';
         }
-        d.signal(cm, 'renderLine', cm, lineView.line, builder.pre);
+        events.signal(cm, 'renderLine', cm, lineView.line, builder.pre);
         if (builder.pre.className)
-            builder.textClass = c.joinClasses(builder.pre.className, builder.textClass || '');
+            builder.textClass = dom.joinClasses(builder.pre.className, builder.textClass || '');
         return builder;
     }
     function defaultSpecialCharPlaceholder(ch) {
-        let token = c.elt('span', '\u2022', 'cm-invalidchar');
+        let token = dom.elt('span', '\u2022', 'cm-invalidchar');
         token.title = '\\u' + ch.charCodeAt(0).toString(16);
         token.setAttribute('aria-label', token.title);
         return token;
@@ -24162,7 +25429,7 @@ define('skylark-codemirror/primitives/line/line_data',[
             builder.col += text.length;
             content = document.createTextNode(displayText);
             builder.map.push(builder.pos, builder.pos + text.length, content);
-            if (b.ie && b.ie_version < 9)
+            if (browser.ie && browser.ie_version < 9)
                 mustWrap = true;
             builder.pos += text.length;
         } else {
@@ -24174,8 +25441,8 @@ define('skylark-codemirror/primitives/line/line_data',[
                 let skipped = m ? m.index - pos : text.length - pos;
                 if (skipped) {
                     let txt = document.createTextNode(displayText.slice(pos, pos + skipped));
-                    if (b.ie && b.ie_version < 9)
-                        content.appendChild(c.elt('span', [txt]));
+                    if (browser.ie && browser.ie_version < 9)
+                        content.appendChild(dom.elt('span', [txt]));
                     else
                         content.appendChild(txt);
                     builder.map.push(builder.pos, builder.pos + skipped, txt);
@@ -24188,19 +25455,19 @@ define('skylark-codemirror/primitives/line/line_data',[
                 let txt;
                 if (m[0] == '\t') {
                     let tabSize = builder.cm.options.tabSize, tabWidth = tabSize - builder.col % tabSize;
-                    txt = content.appendChild(c.elt('span', f.spaceStr(tabWidth), 'cm-tab'));
+                    txt = content.appendChild(dom.elt('span', misc.spaceStr(tabWidth), 'cm-tab'));
                     txt.setAttribute('role', 'presentation');
                     txt.setAttribute('cm-text', '\t');
                     builder.col += tabWidth;
                 } else if (m[0] == '\r' || m[0] == '\n') {
-                    txt = content.appendChild(c.elt('span', m[0] == '\r' ? '\u240D' : '\u2424', 'cm-invalidchar'));
+                    txt = content.appendChild(dom.elt('span', m[0] == '\r' ? '\u240D' : '\u2424', 'cm-invalidchar'));
                     txt.setAttribute('cm-text', m[0]);
                     builder.col += 1;
                 } else {
                     txt = builder.cm.options.specialCharPlaceholder(m[0]);
                     txt.setAttribute('cm-text', m[0]);
-                    if (b.ie && b.ie_version < 9)
-                        content.appendChild(c.elt('span', [txt]));
+                    if (browser.ie && browser.ie_version < 9)
+                        content.appendChild(dom.elt('span', [txt]));
                     else
                         content.appendChild(txt);
                     builder.col += 1;
@@ -24216,7 +25483,7 @@ define('skylark-codemirror/primitives/line/line_data',[
                 fullStyle += startStyle;
             if (endStyle)
                 fullStyle += endStyle;
-            let token = c.elt('span', [content], fullStyle, css);
+            let token = dom.elt('span', [content], fullStyle, css);
             if (attributes) {
                 for (let attr in attributes)
                     if (attributes.hasOwnProperty(attr) && attr != 'style' && attr != 'class')
@@ -24314,7 +25581,7 @@ define('skylark-codemirror/primitives/line/line_data',[
                             for (let attr in m.attributes)
                                 (attributes || (attributes = {}))[attr] = m.attributes[attr];
                         }
-                        if (m.collapsed && (!collapsed || h.compareCollapsedMarkers(collapsed.marker, m) < 0))
+                        if (m.collapsed && (!collapsed || spans.compareCollapsedMarkers(collapsed.marker, m) < 0))
                             collapsed = sp;
                     } else if (sp.from > pos && nextChange > sp.from) {
                         nextChange = sp.from;
@@ -24360,10 +25627,10 @@ define('skylark-codemirror/primitives/line/line_data',[
     }
     function LineView(doc, line, lineN) {
         this.line = line;
-        this.rest = h.visualLineContinued(line);
-        this.size = this.rest ? m_utils_line.lineNo(f.lst(this.rest)) - lineN + 1 : 1;
+        this.rest = spans.visualLineContinued(line);
+        this.size = this.rest ? m_utils_line.lineNo(misc.lst(this.rest)) - lineN + 1 : 1;
         this.node = this.text = null;
-        this.hidden = h.lineIsHidden(doc, line);
+        this.hidden = spans.lineIsHidden(doc, line);
     }
     function buildViewArray(cm, from, to) {
         let array = [], nextPos;
@@ -24638,7 +25905,7 @@ define('skylark-codemirror/primitives/display/update_line',[
 define('skylark-codemirror/primitives/measurement/widgets',[
     '../util/dom',
     '../util/event'
-], function (a, b) {
+], function (dom, events) {
     'use strict';
     function widgetHeight(widget) {
         if (widget.height != null)
@@ -24646,18 +25913,18 @@ define('skylark-codemirror/primitives/measurement/widgets',[
         let cm = widget.doc.cm;
         if (!cm)
             return 0;
-        if (!a.contains(document.body, widget.node)) {
+        if (!dom.contains(document.body, widget.node)) {
             let parentStyle = 'position: relative;';
             if (widget.coverGutter)
                 parentStyle += 'margin-left: -' + cm.display.gutters.offsetWidth + 'px;';
             if (widget.noHScroll)
                 parentStyle += 'width: ' + cm.display.wrapper.clientWidth + 'px;';
-            a.removeChildrenAndAdd(cm.display.measure, a.elt('div', [widget.node], null, parentStyle));
+            dom.removeChildrenAndAdd(cm.display.measure, dom.elt('div', [widget.node], null, parentStyle));
         }
         return widget.height = widget.node.parentNode.offsetHeight;
     }
     function eventInWidget(display, e) {
-        for (let n = b.e_target(e); n != display.wrapper; n = n.parentNode) {
+        for (let n = events.e_target(e); n != display.wrapper; n = n.parentNode) {
             if (!n || n.nodeType == 1 && n.getAttribute('cm-ignore-events') == 'true' || n.parentNode == display.sizer && n != display.mover)
                 return true;
         }
@@ -24680,7 +25947,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
     '../util/misc',
     '../display/update_line',
     './widgets'
-], function (a, b, c, d, e, f, g, h, i, j, k, l) {
+], function (line_data, line_pos, spans, utils_line, bidi, browser, dom, events, feature_detection, misc, update_line, widgets) {
     'use strict';
     function paddingTop(display) {
         return display.lineSpace.offsetTop;
@@ -24691,7 +25958,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
     function paddingH(display) {
         if (display.cachedPaddingH)
             return display.cachedPaddingH;
-        let e = g.removeChildrenAndAdd(display.measure, g.elt('pre', 'x'));
+        let e = dom.removeChildrenAndAdd(display.measure, dom.elt('pre', 'x'));
         let style = window.getComputedStyle ? window.getComputedStyle(e) : e.currentStyle;
         let data = {
             left: parseInt(style.paddingLeft),
@@ -24702,7 +25969,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         return data;
     }
     function scrollGap(cm) {
-        return j.scrollerGap - cm.display.nativeBarWidth;
+        return misc.scrollerGap - cm.display.nativeBarWidth;
     }
     function displayWidth(cm) {
         return cm.display.scroller.clientWidth - scrollGap(cm) - cm.display.barWidth;
@@ -24740,7 +26007,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
                     cache: lineView.measure.caches[i]
                 };
         for (let i = 0; i < lineView.rest.length; i++)
-            if (d.lineNo(lineView.rest[i]) > lineN)
+            if (utils_line.lineNo(lineView.rest[i]) > lineN)
                 return {
                     map: lineView.measure.maps[i],
                     cache: lineView.measure.caches[i],
@@ -24748,13 +26015,13 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
                 };
     }
     function updateExternalMeasurement(cm, line) {
-        line = c.visualLine(line);
-        let lineN = d.lineNo(line);
-        let view = cm.display.externalMeasured = new a.LineView(cm.doc, line, lineN);
+        line = spans.visualLine(line);
+        let lineN = utils_line.lineNo(line);
+        let view = cm.display.externalMeasured = new line_data.LineView(cm.doc, line, lineN);
         view.lineN = lineN;
-        let built = view.built = a.buildLineContent(cm, view);
+        let built = view.built = line_data.buildLineContent(cm, view);
         view.text = built.pre;
-        g.removeChildrenAndAdd(cm.display.lineMeasure, built.pre);
+        dom.removeChildrenAndAdd(cm.display.lineMeasure, built.pre);
         return view;
     }
     function measureChar(cm, line, ch, bias) {
@@ -24768,12 +26035,12 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             return ext;
     }
     function prepareMeasureForLine(cm, line) {
-        let lineN = d.lineNo(line);
+        let lineN = utils_line.lineNo(line);
         let view = findViewForLine(cm, lineN);
         if (view && !view.text) {
             view = null;
         } else if (view && view.changes) {
-            k.updateLineForChanges(cm, view, lineN, getDimensions(cm));
+            update_line.updateLineForChanges(cm, view, lineN, getDimensions(cm));
             cm.curOp.forceUpdate = true;
         }
         if (!view)
@@ -24883,21 +26150,21 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         let rect;
         if (node.nodeType == 3) {
             for (let i = 0; i < 4; i++) {
-                while (start && j.isExtendingChar(prepared.line.text.charAt(place.coverStart + start)))
+                while (start && misc.isExtendingChar(prepared.line.text.charAt(place.coverStart + start)))
                     --start;
-                while (place.coverStart + end < place.coverEnd && j.isExtendingChar(prepared.line.text.charAt(place.coverStart + end)))
+                while (place.coverStart + end < place.coverEnd && misc.isExtendingChar(prepared.line.text.charAt(place.coverStart + end)))
                     ++end;
-                if (f.ie && f.ie_version < 9 && start == 0 && end == place.coverEnd - place.coverStart)
+                if (browser.ie && browser.ie_version < 9 && start == 0 && end == place.coverEnd - place.coverStart)
                     rect = node.parentNode.getBoundingClientRect();
                 else
-                    rect = getUsefulRect(g.range(node, start, end).getClientRects(), bias);
+                    rect = getUsefulRect(dom.range(node, start, end).getClientRects(), bias);
                 if (rect.left || rect.right || start == 0)
                     break;
                 end = start;
                 start = start - 1;
                 collapse = 'right';
             }
-            if (f.ie && f.ie_version < 11)
+            if (browser.ie && browser.ie_version < 11)
                 rect = maybeUpdateRectForZooming(cm.display.measure, rect);
         } else {
             if (start > 0)
@@ -24908,7 +26175,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             else
                 rect = node.getBoundingClientRect();
         }
-        if (f.ie && f.ie_version < 9 && !start && (!rect || !rect.left && !rect.right)) {
+        if (browser.ie && browser.ie_version < 9 && !start && (!rect || !rect.left && !rect.right)) {
             let rSpan = node.parentNode.getClientRects()[0];
             if (rSpan)
                 rect = {
@@ -24943,7 +26210,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         return result;
     }
     function maybeUpdateRectForZooming(measure, rect) {
-        if (!window.screen || screen.logicalXDPI == null || screen.logicalXDPI == screen.deviceXDPI || !i.hasBadZoomedRects(measure))
+        if (!window.screen || screen.logicalXDPI == null || screen.logicalXDPI == screen.deviceXDPI || !feature_detection.hasBadZoomedRects(measure))
             return rect;
         let scaleX = screen.logicalXDPI / screen.deviceXDPI;
         let scaleY = screen.logicalYDPI / screen.deviceYDPI;
@@ -24965,7 +26232,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
     }
     function clearLineMeasurementCache(cm) {
         cm.display.externalMeasure = null;
-        g.removeChildren(cm.display.lineMeasure);
+        dom.removeChildren(cm.display.lineMeasure);
         for (let i = 0; i < cm.display.view.length; i++)
             clearLineMeasurementCacheFor(cm.display.view[i]);
     }
@@ -24977,12 +26244,12 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         cm.display.lineNumChars = null;
     }
     function pageScrollX() {
-        if (f.chrome && f.android)
+        if (browser.chrome && browser.android)
             return -(document.body.getBoundingClientRect().left - parseInt(getComputedStyle(document.body).marginLeft));
         return window.pageXOffset || (document.documentElement || document.body).scrollLeft;
     }
     function pageScrollY() {
-        if (f.chrome && f.android)
+        if (browser.chrome && browser.android)
             return -(document.body.getBoundingClientRect().top - parseInt(getComputedStyle(document.body).marginTop));
         return window.pageYOffset || (document.documentElement || document.body).scrollTop;
     }
@@ -24991,7 +26258,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         if (lineObj.widgets)
             for (let i = 0; i < lineObj.widgets.length; ++i)
                 if (lineObj.widgets[i].above)
-                    height += l.widgetHeight(lineObj.widgets[i]);
+                    height += widgets.widgetHeight(lineObj.widgets[i]);
         return height;
     }
     function intoCoordSystem(cm, lineObj, rect, context, includeWidgets) {
@@ -25004,7 +26271,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             return rect;
         if (!context)
             context = 'local';
-        let yOff = c.heightAtLine(lineObj);
+        let yOff = spans.heightAtLine(lineObj);
         if (context == 'local')
             yOff += paddingTop(cm.display);
         else
@@ -25040,11 +26307,11 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
     }
     function charCoords(cm, pos, context, lineObj, bias) {
         if (!lineObj)
-            lineObj = d.getLine(cm.doc, pos.line);
+            lineObj = utils_line.getLine(cm.doc, pos.line);
         return intoCoordSystem(cm, lineObj, measureChar(cm, lineObj, pos.ch, bias), context);
     }
     function cursorCoords(cm, pos, context, lineObj, preparedMeasure, varHeight) {
-        lineObj = lineObj || d.getLine(cm.doc, pos.line);
+        lineObj = lineObj || utils_line.getLine(cm.doc, pos.line);
         if (!preparedMeasure)
             preparedMeasure = prepareMeasureForLine(cm, lineObj);
         function get(ch, right) {
@@ -25055,7 +26322,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
                 m.right = m.left;
             return intoCoordSystem(cm, lineObj, m, context);
         }
-        let order = e.getOrder(lineObj, cm.doc.direction), ch = pos.ch, sticky = pos.sticky;
+        let order = bidi.getOrder(lineObj, cm.doc.direction), ch = pos.ch, sticky = pos.sticky;
         if (ch >= lineObj.text.length) {
             ch = lineObj.text.length;
             sticky = 'before';
@@ -25069,8 +26336,8 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             let part = order[partPos], right = part.level == 1;
             return get(invert ? ch - 1 : ch, right != invert);
         }
-        let partPos = e.getBidiPartAt(order, ch, sticky);
-        let other = e.bidiOther;
+        let partPos = bidi.getBidiPartAt(order, ch, sticky);
+        let other = bidi.bidiOther;
         let val = getBidi(ch, partPos, sticky == 'before');
         if (other != null)
             val.other = getBidi(ch, other, sticky != 'before');
@@ -25078,11 +26345,11 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
     }
     function estimateCoords(cm, pos) {
         let left = 0;
-        pos = b.clipPos(cm.doc, pos);
+        pos = line_pos.clipPos(cm.doc, pos);
         if (!cm.options.lineWrapping)
             left = charWidth(cm.display) * pos.ch;
-        let lineObj = d.getLine(cm.doc, pos.line);
-        let top = c.heightAtLine(lineObj) + paddingTop(cm.display);
+        let lineObj = utils_line.getLine(cm.doc, pos.line);
+        let top = spans.heightAtLine(lineObj) + paddingTop(cm.display);
         return {
             left: left,
             right: left,
@@ -25091,7 +26358,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         };
     }
     function PosWithInfo(line, ch, sticky, outside, xRel) {
-        let pos = b.Pos(line, ch, sticky);
+        let pos = line_pos.Pos(line, ch, sticky);
         pos.xRel = xRel;
         if (outside)
             pos.outside = true;
@@ -25102,28 +26369,28 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         y += cm.display.viewOffset;
         if (y < 0)
             return PosWithInfo(doc.first, 0, null, true, -1);
-        let lineN = d.lineAtHeight(doc, y), last = doc.first + doc.size - 1;
+        let lineN = utils_line.lineAtHeight(doc, y), last = doc.first + doc.size - 1;
         if (lineN > last)
-            return PosWithInfo(doc.first + doc.size - 1, d.getLine(doc, last).text.length, null, true, 1);
+            return PosWithInfo(doc.first + doc.size - 1, utils_line.getLine(doc, last).text.length, null, true, 1);
         if (x < 0)
             x = 0;
-        let lineObj = d.getLine(doc, lineN);
+        let lineObj = utils_line.getLine(doc, lineN);
         for (;;) {
             let found = coordsCharInner(cm, lineObj, lineN, x, y);
-            let collapsed = c.collapsedSpanAround(lineObj, found.ch + (found.xRel > 0 ? 1 : 0));
+            let collapsed = spans.collapsedSpanAround(lineObj, found.ch + (found.xRel > 0 ? 1 : 0));
             if (!collapsed)
                 return found;
             let rangeEnd = collapsed.find(1);
             if (rangeEnd.line == lineN)
                 return rangeEnd;
-            lineObj = d.getLine(doc, lineN = rangeEnd.line);
+            lineObj = utils_line.getLine(doc, lineN = rangeEnd.line);
         }
     }
     function wrappedLineExtent(cm, lineObj, preparedMeasure, y) {
         y -= widgetTopHeight(lineObj);
         let end = lineObj.text.length;
-        let begin = j.findFirst(ch => measureCharPrepared(cm, preparedMeasure, ch - 1).bottom <= y, end, 0);
-        end = j.findFirst(ch => measureCharPrepared(cm, preparedMeasure, ch).top > y, begin, end);
+        let begin = misc.findFirst(ch => measureCharPrepared(cm, preparedMeasure, ch - 1).bottom <= y, end, 0);
+        end = misc.findFirst(ch => measureCharPrepared(cm, preparedMeasure, ch).top > y, begin, end);
         return {
             begin,
             end
@@ -25139,11 +26406,11 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         return box.bottom <= y ? false : box.top > y ? true : (left ? box.left : box.right) > x;
     }
     function coordsCharInner(cm, lineObj, lineNo, x, y) {
-        y -= c.heightAtLine(lineObj);
+        y -= spans.heightAtLine(lineObj);
         let preparedMeasure = prepareMeasureForLine(cm, lineObj);
         let widgetHeight = widgetTopHeight(lineObj);
         let begin = 0, end = lineObj.text.length, ltr = true;
-        let order = e.getOrder(lineObj, cm.doc.direction);
+        let order = bidi.getOrder(lineObj, cm.doc.direction);
         if (order) {
             let part = (cm.options.lineWrapping ? coordsBidiPartWrapped : coordsBidiPart)(cm, lineObj, lineNo, preparedMeasure, order, x, y);
             ltr = part.level != 1;
@@ -25151,10 +26418,10 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             end = ltr ? part.to : part.from - 1;
         }
         let chAround = null, boxAround = null;
-        let ch = j.findFirst(ch => {
+        let ch = misc.findFirst(ch => {
             let box = measureCharPrepared(cm, preparedMeasure, ch);
-            box.top += l.widgetHeight;
-            box.bottom += l.widgetHeight;
+            box.top += widgetHeight;
+            box.bottom += widgetHeight;
             if (!boxIsAfter(box, x, y, false))
                 return false;
             if (box.top <= y && box.left <= x) {
@@ -25172,23 +26439,23 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         } else {
             if (!ltr && (ch == end || ch == begin))
                 ch++;
-            sticky = ch == 0 ? 'after' : ch == lineObj.text.length ? 'before' : measureCharPrepared(cm, preparedMeasure, ch - (ltr ? 1 : 0)).bottom + l.widgetHeight <= y == ltr ? 'after' : 'before';
-            let coords = cursorCoords(cm, b.Pos(lineNo, ch, sticky), 'line', lineObj, preparedMeasure);
+            sticky = ch == 0 ? 'after' : ch == lineObj.text.length ? 'before' : measureCharPrepared(cm, preparedMeasure, ch - (ltr ? 1 : 0)).bottom + widgets.widgetHeight <= y == ltr ? 'after' : 'before';
+            let coords = cursorCoords(cm, line_pos.Pos(lineNo, ch, sticky), 'line', lineObj, preparedMeasure);
             baseX = coords.left;
             outside = y < coords.top || y >= coords.bottom;
         }
-        ch = j.skipExtendingChars(lineObj.text, ch, 1);
+        ch = misc.skipExtendingChars(lineObj.text, ch, 1);
         return PosWithInfo(lineNo, ch, sticky, outside, x - baseX);
     }
     function coordsBidiPart(cm, lineObj, lineNo, preparedMeasure, order, x, y) {
-        let index = j.findFirst(i => {
+        let index = misc.findFirst(i => {
             let part = order[i], ltr = part.level != 1;
-            return boxIsAfter(cursorCoords(cm, b.Pos(lineNo, ltr ? part.to : part.from, ltr ? 'before' : 'after'), 'line', lineObj, preparedMeasure), x, y, true);
+            return boxIsAfter(cursorCoords(cm, line_pos.Pos(lineNo, ltr ? part.to : part.from, ltr ? 'before' : 'after'), 'line', lineObj, preparedMeasure), x, y, true);
         }, 0, order.length - 1);
         let part = order[index];
         if (index > 0) {
             let ltr = part.level != 1;
-            let start = cursorCoords(cm, b.Pos(lineNo, ltr ? part.from : part.to, ltr ? 'after' : 'before'), 'line', lineObj, preparedMeasure);
+            let start = cursorCoords(cm, line_pos.Pos(lineNo, ltr ? part.from : part.to, ltr ? 'after' : 'before'), 'line', lineObj, preparedMeasure);
             if (boxIsAfter(start, x, y, true) && start.top > y)
                 part = order[index - 1];
         }
@@ -25232,44 +26499,44 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         if (display.cachedTextHeight != null)
             return display.cachedTextHeight;
         if (measureText == null) {
-            measureText = g.elt('pre');
+            measureText = dom.elt('pre');
             for (let i = 0; i < 49; ++i) {
                 measureText.appendChild(document.createTextNode('x'));
-                measureText.appendChild(g.elt('br'));
+                measureText.appendChild(dom.elt('br'));
             }
             measureText.appendChild(document.createTextNode('x'));
         }
-        g.removeChildrenAndAdd(display.measure, measureText);
+        dom.removeChildrenAndAdd(display.measure, measureText);
         let height = measureText.offsetHeight / 50;
         if (height > 3)
             display.cachedTextHeight = height;
-        g.removeChildren(display.measure);
+        dom.removeChildren(display.measure);
         return height || 1;
     }
     function charWidth(display) {
         if (display.cachedCharWidth != null)
             return display.cachedCharWidth;
-        let anchor = g.elt('span', 'xxxxxxxxxx');
-        let pre = g.elt('pre', [anchor]);
-        g.removeChildrenAndAdd(display.measure, pre);
+        let anchor = dom.elt('span', 'xxxxxxxxxx');
+        let pre = dom.elt('pre', [anchor]);
+        dom.removeChildrenAndAdd(display.measure, pre);
         let rect = anchor.getBoundingClientRect(), width = (rect.right - rect.left) / 10;
         if (width > 2)
             display.cachedCharWidth = width;
         return width || 10;
     }
     function getDimensions(cm) {
-        let d = cm.display, left = {}, width = {};
-        let gutterLeft = d.gutters.clientLeft;
-        for (let n = d.gutters.firstChild, i = 0; n; n = n.nextSibling, ++i) {
+        let utils_line = cm.display, left = {}, width = {};
+        let gutterLeft = utils_line.gutters.clientLeft;
+        for (let n = utils_line.gutters.firstChild, i = 0; n; n = n.nextSibling, ++i) {
             left[cm.options.gutters[i]] = n.offsetLeft + n.clientLeft + gutterLeft;
             width[cm.options.gutters[i]] = n.clientWidth;
         }
         return {
-            fixedPos: compensateForHScroll(d),
-            gutterTotalWidth: d.gutters.offsetWidth,
+            fixedPos: compensateForHScroll(utils_line),
+            gutterTotalWidth: utils_line.gutters.offsetWidth,
             gutterLeft: left,
             gutterWidth: width,
-            wrapperWidth: d.wrapper.clientWidth
+            wrapperWidth: utils_line.wrapper.clientWidth
         };
     }
     function compensateForHScroll(display) {
@@ -25279,7 +26546,7 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         let th = textHeight(cm.display), wrapping = cm.options.lineWrapping;
         let perLine = wrapping && Math.max(5, cm.display.scroller.clientWidth / charWidth(cm.display) - 3);
         return line => {
-            if (c.lineIsHidden(cm.doc, line))
+            if (spans.lineIsHidden(cm.doc, line))
                 return 0;
             let widgetsHeight = 0;
             if (line.widgets)
@@ -25298,12 +26565,12 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
         doc.iter(line => {
             let estHeight = est(line);
             if (estHeight != line.height)
-                d.updateLineHeight(line, estHeight);
+                utils_line.updateLineHeight(line, estHeight);
         });
     }
     function posFromMouse(cm, e, liberal, forRect) {
         let display = cm.display;
-        if (!liberal && h.e_target(e).getAttribute('cm-not-content') == 'true')
+        if (!liberal && events.e_target(e).getAttribute('cm-not-content') == 'true')
             return null;
         let x, y, space = display.lineSpace.getBoundingClientRect();
         try {
@@ -25313,9 +26580,9 @@ define('skylark-codemirror/primitives/measurement/position_measurement',[
             return null;
         }
         let coords = coordsChar(cm, x, y), line;
-        if (forRect && coords.xRel == 1 && (line = d.getLine(cm.doc, coords.line).text).length == coords.ch) {
-            let colDiff = j.countColumn(line, line.length, cm.options.tabSize) - line.length;
-            coords = b.Pos(coords.line, Math.max(0, Math.round((x - paddingH(cm.display).left) / charWidth(cm.display)) - colDiff));
+        if (forRect && coords.xRel == 1 && (line = utils_line.getLine(cm.doc, coords.line).text).length == coords.ch) {
+            let colDiff = misc.countColumn(line, line.length, cm.options.tabSize) - line.length;
+            coords = line_pos.Pos(coords.line, Math.max(0, Math.round((x - paddingH(cm.display).left) / charWidth(cm.display)) - colDiff));
         }
         return coords;
     }
@@ -25530,7 +26797,7 @@ define('skylark-codemirror/primitives/display/focus',[
     '../util/browser',
     '../util/dom',
     '../util/event'
-], function (a, b, c, d) {
+], function (selection, browser, dom, event) {
     'use strict';
     function ensureFocus(cm) {
         if (!cm.state.focused) {
@@ -25553,25 +26820,25 @@ define('skylark-codemirror/primitives/display/focus',[
         if (cm.options.readOnly == 'nocursor')
             return;
         if (!cm.state.focused) {
-            d.signal(cm, 'focus', cm, e);
+            event.signal(cm, 'focus', cm, e);
             cm.state.focused = true;
-            c.addClass(cm.display.wrapper, 'CodeMirror-focused');
+            dom.addClass(cm.display.wrapper, 'CodeMirror-focused');
             if (!cm.curOp && cm.display.selForContextMenu != cm.doc.sel) {
                 cm.display.input.reset();
-                if (b.webkit)
+                if (browser.webkit)
                     setTimeout(() => cm.display.input.reset(true), 20);
             }
             cm.display.input.receivedFocus();
         }
-        a.restartBlink(cm);
+        selection.restartBlink(cm);
     }
     function onBlur(cm, e) {
         if (cm.state.delayingBlurEvent)
             return;
         if (cm.state.focused) {
-            d.signal(cm, 'blur', cm, e);
+            event.signal(cm, 'blur', cm, e);
             cm.state.focused = false;
-            c.rmClass(cm.display.wrapper, 'CodeMirror-focused');
+            dom.rmClass(cm.display.wrapper, 'CodeMirror-focused');
         }
         clearInterval(cm.display.blinker);
         setTimeout(() => {
@@ -25992,9 +27259,9 @@ define('skylark-codemirror/primitives/display/update_display',[
         if (updateDisplayIfNeeded(cm, update)) {
             n.updateHeightsInViewport(cm);
             postUpdateDisplay(cm, update);
-            let barMeasure = l.measureForScrollbars(cm);
+            let barMeasure = cm.measureForScrollbars(); //l.measureForScrollbars(cm);
             m.updateSelection(cm);
-            l.updateScrollbars(cm, barMeasure);
+            cm.updateScrollbars(barMeasure); // l.updateScrollbars(cm, barMeasure);
             setDocumentHeight(cm, barMeasure);
             update.finish();
         }
@@ -26060,25 +27327,25 @@ define('skylark-codemirror/primitives/display/gutters',[
     '../util/dom',
     '../util/misc',
     './update_display'
-], function (a, b, c) {
+], function (dom, misc, update_display) {
     'use strict';
     function updateGutters(cm) {
         let gutters = cm.display.gutters, specs = cm.options.gutters;
-        a.removeChildren(gutters);
+        dom.removeChildren(gutters);
         let i = 0;
         for (; i < specs.length; ++i) {
             let gutterClass = specs[i];
-            let gElt = gutters.appendChild(a.elt('div', null, 'CodeMirror-gutter ' + gutterClass));
+            let gElt = gutters.appendChild(dom.elt('div', null, 'CodeMirror-gutter ' + gutterClass));
             if (gutterClass == 'CodeMirror-linenumbers') {
                 cm.display.lineGutter = gElt;
                 gElt.style.width = (cm.display.lineNumWidth || 1) + 'px';
             }
         }
         gutters.style.display = i ? '' : 'none';
-        c.updateGutterSpace(cm);
+        update_display.updateGutterSpace(cm);
     }
     function setGuttersForLineNumbers(options) {
-        let found = b.indexOf(options.gutters, 'CodeMirror-linenumbers');
+        let found = misc.indexOf(options.gutters, 'CodeMirror-linenumbers');
         if (found == -1 && options.lineNumbers) {
             options.gutters = options.gutters.concat(['CodeMirror-linenumbers']);
         } else if (found > -1 && !options.lineNumbers) {
@@ -26096,13 +27363,13 @@ define('skylark-codemirror/primitives/display/line_numbers',[
     '../measurement/position_measurement',
     '../util/dom',
     './update_display'
-], function (a, b, c, d) {
+], function (utils_line, position_measurement, dom, update_display) {
     'use strict';
     function alignHorizontally(cm) {
         let display = cm.display, view = display.view;
         if (!display.alignWidgets && (!display.gutters.firstChild || !cm.options.fixedGutter))
             return;
-        let comp = b.compensateForHScroll(display) - display.scroller.scrollLeft + cm.doc.scrollLeft;
+        let comp = position_measurement.compensateForHScroll(display) - display.scroller.scrollLeft + cm.doc.scrollLeft;
         let gutterW = display.gutters.offsetWidth, left = comp + 'px';
         for (let i = 0; i < view.length; i++)
             if (!view[i].hidden) {
@@ -26123,16 +27390,16 @@ define('skylark-codemirror/primitives/display/line_numbers',[
     function maybeUpdateLineNumberWidth(cm) {
         if (!cm.options.lineNumbers)
             return false;
-        let doc = cm.doc, last = a.lineNumberFor(cm.options, doc.first + doc.size - 1), display = cm.display;
+        let doc = cm.doc, last = utils_line.lineNumberFor(cm.options, doc.first + doc.size - 1), display = cm.display;
         if (last.length != display.lineNumChars) {
-            let test = display.measure.appendChild(c.elt('div', [c.elt('div', last)], 'CodeMirror-linenumber CodeMirror-gutter-elt'));
+            let test = display.measure.appendChild(dom.elt('div', [dom.elt('div', last)], 'CodeMirror-linenumber CodeMirror-gutter-elt'));
             let innerW = test.firstChild.offsetWidth, padding = test.offsetWidth - innerW;
             display.lineGutter.style.width = '';
             display.lineNumInnerWidth = Math.max(innerW, display.lineGutter.offsetWidth - padding) + 1;
             display.lineNumWidth = display.lineNumInnerWidth + padding;
             display.lineNumChars = display.lineNumInnerWidth ? last.length : -1;
             display.lineGutter.style.width = display.lineNumWidth + 'px';
-            d.updateGutterSpace(cm);
+            update_display.updateGutterSpace(cm);
             return true;
         }
         return false;
@@ -26142,76 +27409,25 @@ define('skylark-codemirror/primitives/display/line_numbers',[
         maybeUpdateLineNumberWidth: maybeUpdateLineNumberWidth
     };
 });
-define('skylark-codemirror/primitives/display/highlight_worker',[
-    '../line/highlight',
-    '../modes',
-    '../util/misc',
-    './operations',
-    './view_tracking'
-], function (a, b, c, d, e) {
-    'use strict';
-    function startWorker(cm, time) {
-        if (cm.doc.highlightFrontier < cm.display.viewTo)
-            cm.state.highlight.set(time, c.bind(highlightWorker, cm));
-    }
-    function highlightWorker(cm) {
-        let doc = cm.doc;
-        if (doc.highlightFrontier >= cm.display.viewTo)
-            return;
-        let end = +new Date() + cm.options.workTime;
-        let context = a.getContextBefore(cm, doc.highlightFrontier);
-        let changedLines = [];
-        doc.iter(context.line, Math.min(doc.first + doc.size, cm.display.viewTo + 500), line => {
-            if (context.line >= cm.display.viewFrom) {
-                let oldStyles = line.styles;
-                let resetState = line.text.length > cm.options.maxHighlightLength ? b.copyState(doc.mode, context.state) : null;
-                let highlighted = a.highlightLine(cm, line, context, true);
-                if (resetState)
-                    context.state = resetState;
-                line.styles = highlighted.styles;
-                let oldCls = line.styleClasses, newCls = highlighted.classes;
-                if (newCls)
-                    line.styleClasses = newCls;
-                else if (oldCls)
-                    line.styleClasses = null;
-                let ischange = !oldStyles || oldStyles.length != line.styles.length || oldCls != newCls && (!oldCls || !newCls || oldCls.bgClass != newCls.bgClass || oldCls.textClass != newCls.textClass);
-                for (let i = 0; !ischange && i < oldStyles.length; ++i)
-                    ischange = oldStyles[i] != line.styles[i];
-                if (ischange)
-                    changedLines.push(context.line);
-                line.stateAfter = context.save();
-                context.nextLine();
-            } else {
-                if (line.text.length <= cm.options.maxHighlightLength)
-                    a.processLine(cm, line.text, context);
-                line.stateAfter = context.line % 5 == 0 ? context.save() : null;
-                context.nextLine();
-            }
-            if (+new Date() > end) {
-                startWorker(cm, cm.options.workDelay);
-                return true;
-            }
-        });
-        doc.highlightFrontier = context.line;
-        doc.modeFrontier = Math.max(doc.modeFrontier, context.line);
-        if (changedLines.length)
-            d.runInOp(cm, () => {
-                for (let i = 0; i < changedLines.length; i++)
-                    e.regLineChange(cm, changedLines[i], 'text');
-            });
-    }
-    return { startWorker: startWorker };
-});
 define('skylark-codemirror/primitives/display/scrolling',[
     '../line/pos',
     '../measurement/position_measurement',
     '../util/browser',
     '../util/dom',
     '../util/event',
-    './highlight_worker',
+    //'./highlight_worker',// dependence cycle 
     './line_numbers',
     './update_display'
-], function (a, b, c, d, e, f, g, h) {
+], function (
+    a, 
+    b, 
+    c, 
+    d, 
+    e, 
+//    highlight_worker, 
+    g, 
+    h
+) {
     'use strict';
     function maybeScrollWindow(cm, rect) {
         if (e.signalDOMEvent(cm, 'scrollCursorIntoView'))
@@ -26355,7 +27571,7 @@ define('skylark-codemirror/primitives/display/scrolling',[
         setScrollTop(cm, val, true);
         if (c.gecko)
             h.updateDisplaySimple(cm);
-        f.startWorker(cm, 100);
+        cm.startWorker(cm, 100); // highlight_worker.startWorker(cm, 100);
     }
     function setScrollTop(cm, val, forceScroll) {
         val = Math.min(cm.display.scroller.scrollHeight - cm.display.scroller.clientHeight, val);
@@ -26398,11 +27614,11 @@ define('skylark-codemirror/primitives/display/scrollbars',[
     './update_lines',
     '../util/misc',
     './scrolling'
-], function (a, b, c, d, e, f, g) {
+], function (dom, event, position_measurement, browser, update_lines, misc, scrolling) {
     'use strict';
     function measureForScrollbars(cm) {
         let d = cm.display, gutterW = d.gutters.offsetWidth;
-        let docH = Math.round(cm.doc.height + c.paddingVert(cm.display));
+        let docH = Math.round(cm.doc.height + position_measurement.paddingVert(cm.display));
         return {
             clientHeight: d.scroller.clientHeight,
             viewHeight: d.wrapper.clientHeight,
@@ -26411,7 +27627,7 @@ define('skylark-codemirror/primitives/display/scrollbars',[
             viewWidth: d.wrapper.clientWidth,
             barLeft: cm.options.fixedGutter ? gutterW : 0,
             docHeight: docH,
-            scrollHeight: docH + c.scrollGap(cm) + d.barHeight,
+            scrollHeight: docH + position_measurement.scrollGap(cm) + d.barHeight,
             nativeBarWidth: d.nativeBarWidth,
             gutterWidth: gutterW
         };
@@ -26419,21 +27635,21 @@ define('skylark-codemirror/primitives/display/scrollbars',[
     class NativeScrollbars {
         constructor(place, scroll, cm) {
             this.cm = cm;
-            let vert = this.vert = a.elt('div', [a.elt('div', null, null, 'min-width: 1px')], 'CodeMirror-vscrollbar');
-            let horiz = this.horiz = a.elt('div', [a.elt('div', null, null, 'height: 100%; min-height: 1px')], 'CodeMirror-hscrollbar');
+            let vert = this.vert = dom.elt('div', [dom.elt('div', null, null, 'min-width: 1px')], 'CodeMirror-vscrollbar');
+            let horiz = this.horiz = dom.elt('div', [dom.elt('div', null, null, 'height: 100%; min-height: 1px')], 'CodeMirror-hscrollbar');
             vert.tabIndex = horiz.tabIndex = -1;
             place(vert);
             place(horiz);
-            b.on(vert, 'scroll', () => {
+            event.on(vert, 'scroll', () => {
                 if (vert.clientHeight)
                     scroll(vert.scrollTop, 'vertical');
             });
-            b.on(horiz, 'scroll', () => {
+            event.on(horiz, 'scroll', () => {
                 if (horiz.clientWidth)
                     scroll(horiz.scrollLeft, 'horizontal');
             });
             this.checkedZeroWidth = false;
-            if (d.ie && d.ie_version < 8)
+            if (browser.ie && browser.ie_version < 8)
                 this.horiz.style.minHeight = this.vert.style.minWidth = '18px';
         }
         update(measure) {
@@ -26482,11 +27698,11 @@ define('skylark-codemirror/primitives/display/scrollbars',[
                 this.enableZeroWidthBar(this.vert, this.disableVert, 'vert');
         }
         zeroWidthHack() {
-            let w = d.mac && !d.mac_geMountainLion ? '12px' : '18px';
+            let w = browser.mac && !browser.mac_geMountainLion ? '12px' : '18px';
             this.horiz.style.height = this.vert.style.width = w;
             this.horiz.style.pointerEvents = this.vert.style.pointerEvents = 'none';
-            this.disableHoriz = new f.Delayed();
-            this.disableVert = new f.Delayed();
+            this.disableHoriz = new misc.Delayed();
+            this.disableVert = new misc.Delayed();
         }
         enableZeroWidthBar(bar, delay, type) {
             bar.style.pointerEvents = 'auto';
@@ -26527,7 +27743,7 @@ define('skylark-codemirror/primitives/display/scrollbars',[
         updateScrollbarsInner(cm, measure);
         for (let i = 0; i < 4 && startWidth != cm.display.barWidth || startHeight != cm.display.barHeight; i++) {
             if (startWidth != cm.display.barWidth && cm.options.lineWrapping)
-                e.updateHeightsInViewport(cm);
+                update_lines.updateHeightsInViewport(cm);
             updateScrollbarsInner(cm, measureForScrollbars(cm));
             startWidth = cm.display.barWidth;
             startHeight = cm.display.barHeight;
@@ -26560,23 +27776,23 @@ define('skylark-codemirror/primitives/display/scrollbars',[
         if (cm.display.scrollbars) {
             cm.display.scrollbars.clear();
             if (cm.display.scrollbars.undefined)
-                a.rmClass(cm.display.wrapper, cm.display.scrollbars.undefined);
+                dom.rmClass(cm.display.wrapper, cm.display.scrollbars.undefined);
         }
         cm.display.scrollbars = new scrollbarModel[cm.options.scrollbarStyle](node => {
             cm.display.wrapper.insertBefore(node, cm.display.scrollbarFiller);
-            b.on(node, 'mousedown', () => {
+            event.on(node, 'mousedown', () => {
                 if (cm.state.focused)
                     setTimeout(() => cm.display.input.focus(), 0);
             });
             node.setAttribute('cm-not-content', 'true');
         }, (pos, axis) => {
             if (axis == 'horizontal')
-                g.setScrollLeft(cm, pos);
+                scrolling.setScrollLeft(cm, pos);
             else
-                (cm, pos);
+                scrolling.updateScrollTop(cm, pos);
         }, cm);
         if (cm.display.scrollbars.undefined)
-            a.addClass(cm.display.wrapper, cm.display.scrollbars.undefined);
+            dom.addClass(cm.display.wrapper, cm.display.scrollbars.undefined);
     }
     return {
         measureForScrollbars: measureForScrollbars,
@@ -26883,10 +28099,70 @@ define('skylark-codemirror/primitives/display/scroll_events',[
         onScrollWheel: onScrollWheel
     };
 });
+define('skylark-codemirror/primitives/display/highlight_worker',[
+    '../line/highlight',
+    '../modes',
+    '../util/misc',
+    './operations',
+    './view_tracking'
+], function (highlight, models, misc, operations, view_tracking) {
+    'use strict';
+    function startWorker(cm, time) {
+        if (cm.doc.highlightFrontier < cm.display.viewTo)
+            cm.state.highlight.set(time, misc.bind(highlightWorker, cm));
+    }
+    function highlightWorker(cm) {
+        let doc = cm.doc;
+        if (doc.highlightFrontier >= cm.display.viewTo)
+            return;
+        let end = +new Date() + cm.options.workTime;
+        let context = highlight.getContextBefore(cm, doc.highlightFrontier);
+        let changedLines = [];
+        doc.iter(context.line, Math.min(doc.first + doc.size, cm.display.viewTo + 500), line => {
+            if (context.line >= cm.display.viewFrom) {
+                let oldStyles = line.styles;
+                let resetState = line.text.length > cm.options.maxHighlightLength ? models.copyState(doc.mode, context.state) : null;
+                let highlighted = highlight.highlightLine(cm, line, context, true);
+                if (resetState)
+                    context.state = resetState;
+                line.styles = highlighted.styles;
+                let oldCls = line.styleClasses, newCls = highlighted.classes;
+                if (newCls)
+                    line.styleClasses = newCls;
+                else if (oldCls)
+                    line.styleClasses = null;
+                let ischange = !oldStyles || oldStyles.length != line.styles.length || oldCls != newCls && (!oldCls || !newCls || oldCls.bgClass != newCls.bgClass || oldCls.textClass != newCls.textClass);
+                for (let i = 0; !ischange && i < oldStyles.length; ++i)
+                    ischange = oldStyles[i] != line.styles[i];
+                if (ischange)
+                    changedLines.push(context.line);
+                line.stateAfter = context.save();
+                context.nextLine();
+            } else {
+                if (line.text.length <= cm.options.maxHighlightLength)
+                    highlight.processLine(cm, line.text, context);
+                line.stateAfter = context.line % 5 == 0 ? context.save() : null;
+                context.nextLine();
+            }
+            if (+new Date() > end) {
+                startWorker(cm, cm.options.workDelay);
+                return true;
+            }
+        });
+        doc.highlightFrontier = context.line;
+        doc.modeFrontier = Math.max(doc.modeFrontier, context.line);
+        if (changedLines.length)
+            operations.runInOp(cm, () => {
+                for (let i = 0; i < changedLines.length; i++)
+                    view_tracking.regLineChange(cm, changedLines[i], 'text');
+            });
+    }
+    return { startWorker: startWorker };
+});
 define('skylark-codemirror/primitives/model/selection',[
     '../line/pos',
     '../util/misc'
-], function (a, b) {
+], function (m_pos, m_misc) {
     'use strict';
     class Selection {
         constructor(ranges, primIndex) {
@@ -26903,7 +28179,7 @@ define('skylark-codemirror/primitives/model/selection',[
                 return false;
             for (let i = 0; i < this.ranges.length; i++) {
                 let here = this.ranges[i], there = other.ranges[i];
-                if (!a.equalCursorPos(here.anchor, there.anchor) || !a.equalCursorPos(here.head, there.head))
+                if (!m_pos.equalCursorPos(here.anchor, there.anchor) || !m_pos.equalCursorPos(here.head, there.head))
                     return false;
             }
             return true;
@@ -26911,7 +28187,7 @@ define('skylark-codemirror/primitives/model/selection',[
         deepCopy() {
             let out = [];
             for (let i = 0; i < this.ranges.length; i++)
-                out[i] = new Range(a.copyPos(this.ranges[i].anchor), a.copyPos(this.ranges[i].head));
+                out[i] = new Range(m_pos.copyPos(this.ranges[i].anchor), m_pos.copyPos(this.ranges[i].head));
             return new Selection(out, this.primIndex);
         }
         somethingSelected() {
@@ -26925,7 +28201,7 @@ define('skylark-codemirror/primitives/model/selection',[
                 end = pos;
             for (let i = 0; i < this.ranges.length; i++) {
                 let range = this.ranges[i];
-                if (a.cmp(end, range.from()) >= 0 && a.cmp(pos, range.to()) <= 0)
+                if (m_pos.cmp(end, range.from()) >= 0 && m_pos.cmp(pos, range.to()) <= 0)
                     return i;
             }
             return -1;
@@ -26937,10 +28213,10 @@ define('skylark-codemirror/primitives/model/selection',[
             this.head = head;
         }
         from() {
-            return a.minPos(this.anchor, this.head);
+            return m_pos.minPos(this.anchor, this.head);
         }
         to() {
-            return a.maxPos(this.anchor, this.head);
+            return m_pos.maxPos(this.anchor, this.head);
         }
         empty() {
             return this.head.line == this.anchor.line && this.head.ch == this.anchor.ch;
@@ -26949,13 +28225,13 @@ define('skylark-codemirror/primitives/model/selection',[
     function normalizeSelection(cm, ranges, primIndex) {
         let mayTouch = cm && cm.options.selectionsMayTouch;
         let prim = ranges[primIndex];
-        ranges.sort((a, b) => a.cmp(a.from(), b.from()));
-        primIndex = b.indexOf(ranges, prim);
+        ranges.sort((a, b) => m_pos.cmp(a.from(), b.from()));
+        primIndex = m_misc.indexOf(ranges, prim);
         for (let i = 1; i < ranges.length; i++) {
             let cur = ranges[i], prev = ranges[i - 1];
-            let diff = a.cmp(prev.to(), cur.from());
+            let diff = m_pos.cmp(prev.to(), cur.from());
             if (mayTouch && !cur.empty() ? diff > 0 : diff >= 0) {
-                let from = a.minPos(prev.from(), cur.from()), to = a.maxPos(prev.to(), cur.to());
+                let from = m_pos.minPos(prev.from(), cur.from()), to = m_pos.maxPos(prev.to(), cur.to());
                 let inv = prev.empty() ? cur.from() == cur.head : prev.from() == prev.head;
                 if (i <= primIndex)
                     --primIndex;
@@ -26978,40 +28254,40 @@ define('skylark-codemirror/primitives/model/change_measurement',[
     '../line/pos',
     '../util/misc',
     './selection'
-], function (a, b, c) {
+], function (line_pos, misc, selection) {
     'use strict';
     function changeEnd(change) {
         if (!change.text)
             return change.to;
-        return a.Pos(change.from.line + change.text.length - 1, b.lst(change.text).length + (change.text.length == 1 ? change.from.ch : 0));
+        return line_pos.Pos(change.from.line + change.text.length - 1, misc.lst(change.text).length + (change.text.length == 1 ? change.from.ch : 0));
     }
     function adjustForChange(pos, change) {
-        if (a.cmp(pos, change.from) < 0)
+        if (line_pos.cmp(pos, change.from) < 0)
             return pos;
-        if (a.cmp(pos, change.to) <= 0)
+        if (line_pos.cmp(pos, change.to) <= 0)
             return changeEnd(change);
         let line = pos.line + change.text.length - (change.to.line - change.from.line) - 1, ch = pos.ch;
         if (pos.line == change.to.line)
             ch += changeEnd(change).ch - change.to.ch;
-        return a.Pos(line, ch);
+        return line_pos.Pos(line, ch);
     }
     function computeSelAfterChange(doc, change) {
         let out = [];
         for (let i = 0; i < doc.sel.ranges.length; i++) {
             let range = doc.sel.ranges[i];
-            out.push(new c.Range(adjustForChange(range.anchor, change), adjustForChange(range.head, change)));
+            out.push(new selection.Range(adjustForChange(range.anchor, change), adjustForChange(range.head, change)));
         }
-        return c.normalizeSelection(doc.cm, out, doc.sel.primIndex);
+        return selection.normalizeSelection(doc.cm, out, doc.sel.primIndex);
     }
     function offsetPos(pos, old, nw) {
         if (pos.line == old.line)
-            return a.Pos(nw.line, pos.ch - old.ch + nw.ch);
+            return line_pos.Pos(nw.line, pos.ch - old.ch + nw.ch);
         else
-            return a.Pos(nw.line + (pos.line - old.line), pos.ch);
+            return line_pos.Pos(nw.line + (pos.line - old.line), pos.ch);
     }
     function computeReplacedSel(doc, changes, hint) {
         let out = [];
-        let oldPrev = a.Pos(doc.first, 0), newPrev = oldPrev;
+        let oldPrev = line_pos.Pos(doc.first, 0), newPrev = oldPrev;
         for (let i = 0; i < changes.length; i++) {
             let change = changes[i];
             let from = offsetPos(change.from, oldPrev, newPrev);
@@ -27019,13 +28295,13 @@ define('skylark-codemirror/primitives/model/change_measurement',[
             oldPrev = change.to;
             newPrev = to;
             if (hint == 'around') {
-                let range = doc.sel.ranges[i], inv = a.cmp(range.head, range.anchor) < 0;
-                out[i] = new c.Range(inv ? to : from, inv ? from : to);
+                let range = doc.sel.ranges[i], inv = line_pos.cmp(range.head, range.anchor) < 0;
+                out[i] = new selection.Range(inv ? to : from, inv ? from : to);
             } else {
-                out[i] = new c.Range(from, from);
+                out[i] = new selection.Range(from, from);
             }
         }
-        return new c.Selection(out, doc.sel.primIndex);
+        return new selection.Selection(out, doc.sel.primIndex);
     }
     return {
         changeEnd: changeEnd,
@@ -27035,12 +28311,16 @@ define('skylark-codemirror/primitives/model/change_measurement',[
 });
 define('skylark-codemirror/primitives/display/mode_state',[
     '../modes',
-    './highlight_worker',
+    //'./highlight_worker',// dependence cycle 
     './view_tracking'
-], function (a, b, c) {
+], function (
+    models, 
+    //highlight_worker, 
+    view_tracking
+) {
     'use strict';
     function loadMode(cm) {
-        cm.doc.mode = a.getMode(cm.options, cm.doc.modeOption);
+        cm.doc.mode = models.getMode(cm.options, cm.doc.modeOption);
         resetModeState(cm);
     }
     function resetModeState(cm) {
@@ -27051,10 +28331,10 @@ define('skylark-codemirror/primitives/display/mode_state',[
                 line.styles = null;
         });
         cm.doc.modeFrontier = cm.doc.highlightFrontier = cm.doc.first;
-        b.startWorker(cm, 100);
+        cm.startWorker(cm, 100); // highlight_worker.startWorker(cm, 100);
         cm.state.modeGen++;
         if (cm.curOp)
-            c.regChange(cm);
+            view_tracking.regChange(cm);
     }
     return {
         loadMode: loadMode,
@@ -28433,7 +29713,6 @@ define('skylark-codemirror/primitives/model/mark_text',[
     };
 });
 define('skylark-codemirror/primitives/model/Doc',[
-    '../edit/CodeMirror',
     '../display/operations',
     '../line/line_data',
     '../line/pos',
@@ -28452,7 +29731,7 @@ define('skylark-codemirror/primitives/model/Doc',[
     './mark_text',
     './selection',
     './selection_updates'
-], function (CodeMirror, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) {
+], function (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) {
     'use strict';
     let nextDocId = 0;
     let Doc = function (text, mode, firstLine, lineSep, direction) {
@@ -28903,7 +30182,8 @@ define('skylark-codemirror/primitives/model/Doc',[
             return copy;
         },
         unlinkDoc: function (other) {
-            if (other instanceof CodeMirror)
+            //if (other instanceof CodeMirror) // modified by lwf
+            if (other.doc)
                 other = other.doc;
             if (this.linked)
                 for (let i = 0; i < this.linked.length; ++i) {
@@ -29082,7 +30362,7 @@ define('skylark-codemirror/primitives/edit/drop_events',[
 define('skylark-codemirror/primitives/edit/global_events',[
     '../display/focus',
     '../util/event'
-], function (a, b) {
+], function (focuses, events) {
     'use strict';
     function forEachCodeMirror(f) {
         if (!document.getElementsByClassName)
@@ -29108,14 +30388,14 @@ define('skylark-codemirror/primitives/edit/global_events',[
     }
     function registerGlobalHandlers() {
         let resizeTimer;
-        b.on(window, 'resize', () => {
+        events.on(window, 'resize', () => {
             if (resizeTimer == null)
                 resizeTimer = setTimeout(() => {
                     resizeTimer = null;
                     forEachCodeMirror(onResize);
                 }, 100);
         });
-        b.on(window, 'blur', () => forEachCodeMirror(a.onBlur));
+        events.on(window, 'blur', () => forEachCodeMirror(focuses.onBlur));
     }
     function onResize(cm) {
         let d = cm.display;
@@ -29197,7 +30477,7 @@ define('skylark-codemirror/primitives/input/keymap',[
     '../util/browser',
     '../util/misc',
     './keynames'
-], function (a, b, c) {
+], function (browser, misc, keynames) {
     'use strict';
     let keyMap = {};
     keyMap.basic = {
@@ -29302,7 +30582,7 @@ define('skylark-codemirror/primitives/input/keymap',[
             'emacsy'
         ]
     };
-    keyMap['default'] = a.mac ? keyMap.macDefault : keyMap.pcDefault;
+    keyMap['default'] = browser.mac ? keyMap.macDefault : keyMap.pcDefault;
     function normalizeKeyName(name) {
         let parts = name.split(/-(?!$)/);
         name = parts[parts.length - 1];
@@ -29341,7 +30621,7 @@ define('skylark-codemirror/primitives/input/keymap',[
                     delete keymap[keyname];
                     continue;
                 }
-                let keys = b.map(keyname.split(' '), normalizeKeyName);
+                let keys = misc.map(keyname.split(' '), normalizeKeyName);
                 for (let i = 0; i < keys.length; i++) {
                     let val, name;
                     if (i == keys.length - 1) {
@@ -29383,25 +30663,25 @@ define('skylark-codemirror/primitives/input/keymap',[
         }
     }
     function isModifierKey(value) {
-        let name = typeof value == 'string' ? value : c.keyNames[value.keyCode];
+        let name = typeof value == 'string' ? value : keynames.keyNames[value.keyCode];
         return name == 'Ctrl' || name == 'Alt' || name == 'Shift' || name == 'Mod';
     }
     function addModifierNames(name, event, noShift) {
         let base = name;
         if (event.altKey && base != 'Alt')
             name = 'Alt-' + name;
-        if ((a.flipCtrlCmd ? event.metaKey : event.ctrlKey) && base != 'Ctrl')
+        if ((browser.flipCtrlCmd ? event.metaKey : event.ctrlKey) && base != 'Ctrl')
             name = 'Ctrl-' + name;
-        if ((a.flipCtrlCmd ? event.ctrlKey : event.metaKey) && base != 'Cmd')
+        if ((browser.flipCtrlCmd ? event.ctrlKey : event.metaKey) && base != 'Cmd')
             name = 'Cmd-' + name;
         if (!noShift && event.shiftKey && base != 'Shift')
             name = 'Shift-' + name;
         return name;
     }
     function keyName(event, noShift) {
-        if (a.presto && event.keyCode == 34 && event['char'])
+        if (browser.presto && event.keyCode == 34 && event['char'])
             return false;
-        let name = c.keyNames[event.keyCode];
+        let name = keynames.keyNames[event.keyCode];
         if (name == null || event.altGraphKey)
             return false;
         if (event.keyCode == 3 && event.code)
@@ -29427,25 +30707,25 @@ define('skylark-codemirror/primitives/edit/deleteNearSelection',[
     '../line/pos',
     '../model/changes',
     '../util/misc'
-], function (a, b, c, d, e) {
+], function (operations, scrolling, line_pos, changes, misc) {
     'use strict';
     function deleteNearSelection(cm, compute) {
         let ranges = cm.doc.sel.ranges, kill = [];
         for (let i = 0; i < ranges.length; i++) {
             let toKill = compute(ranges[i]);
-            while (kill.length && c.cmp(toKill.from, e.lst(kill).to) <= 0) {
+            while (kill.length && line_pos.cmp(toKill.from, misc.lst(kill).to) <= 0) {
                 let replaced = kill.pop();
-                if (c.cmp(replaced.from, toKill.from) < 0) {
+                if (line_pos.cmp(replaced.from, toKill.from) < 0) {
                     toKill.from = replaced.from;
                     break;
                 }
             }
             kill.push(toKill);
         }
-        a.runInOp(cm, () => {
+        operations.runInOp(cm, () => {
             for (let i = kill.length - 1; i >= 0; i--)
-                d.replaceRange(cm.doc, '', kill[i].from, kill[i].to, '+delete');
-            b.ensureCursorVisible(cm);
+                changes.replaceRange(cm.doc, '', kill[i].from, kill[i].to, '+delete');
+            scrolling.ensureCursorVisible(cm);
         });
     }
     return { deleteNearSelection: deleteNearSelection };
@@ -29455,40 +30735,40 @@ define('skylark-codemirror/primitives/input/movement',[
     '../measurement/position_measurement',
     '../util/bidi',
     '../util/misc'
-], function (a, b, c, d) {
+], function (line_pos, position_measurement, bidi, misc) {
     'use strict';
     function moveCharLogically(line, ch, dir) {
-        let target = d.skipExtendingChars(line.text, ch + dir, dir);
+        let target = misc.skipExtendingChars(line.text, ch + dir, dir);
         return target < 0 || target > line.text.length ? null : target;
     }
     function moveLogically(line, start, dir) {
         let ch = moveCharLogically(line, start.ch, dir);
-        return ch == null ? null : new a.Pos(start.line, ch, dir < 0 ? 'after' : 'before');
+        return ch == null ? null : new line_pos.Pos(start.line, ch, dir < 0 ? 'after' : 'before');
     }
     function endOfLine(visually, cm, lineObj, lineNo, dir) {
         if (visually) {
-            let order = c.getOrder(lineObj, cm.doc.direction);
+            let order = bidi.getOrder(lineObj, cm.doc.direction);
             if (order) {
-                let part = dir < 0 ? d.lst(order) : order[0];
+                let part = dir < 0 ? misc.lst(order) : order[0];
                 let moveInStorageOrder = dir < 0 == (part.level == 1);
                 let sticky = moveInStorageOrder ? 'after' : 'before';
                 let ch;
                 if (part.level > 0 || cm.doc.direction == 'rtl') {
-                    let prep = b.prepareMeasureForLine(cm, lineObj);
+                    let prep = position_measurement.prepareMeasureForLine(cm, lineObj);
                     ch = dir < 0 ? lineObj.text.length - 1 : 0;
-                    let targetTop = b.measureCharPrepared(cm, prep, ch).top;
-                    ch = d.findFirst(ch => b.measureCharPrepared(cm, prep, ch).top == targetTop, dir < 0 == (part.level == 1) ? part.from : part.to - 1, ch);
+                    let targetTop = position_measurement.measureCharPrepared(cm, prep, ch).top;
+                    ch = misc.findFirst(ch => position_measurement.measureCharPrepared(cm, prep, ch).top == targetTop, dir < 0 == (part.level == 1) ? part.from : part.to - 1, ch);
                     if (sticky == 'before')
                         ch = moveCharLogically(lineObj, ch, 1);
                 } else
                     ch = dir < 0 ? part.to : part.from;
-                return new a.Pos(lineNo, ch, sticky);
+                return new line_pos.Pos(lineNo, ch, sticky);
             }
         }
-        return new a.Pos(lineNo, dir < 0 ? lineObj.text.length : 0, dir < 0 ? 'before' : 'after');
+        return new line_pos.Pos(lineNo, dir < 0 ? lineObj.text.length : 0, dir < 0 ? 'before' : 'after');
     }
     function moveVisually(cm, line, start, dir) {
-        let bidi = c.getOrder(line, cm.doc.direction);
+        let bidi = bidi.getOrder(line, cm.doc.direction);
         if (!bidi)
             return moveLogically(line, start, dir);
         if (start.ch >= line.text.length) {
@@ -29498,11 +30778,11 @@ define('skylark-codemirror/primitives/input/movement',[
             start.ch = 0;
             start.sticky = 'after';
         }
-        let partPos = c.getBidiPartAt(bidi, start.ch, start.sticky), part = bidi[partPos];
+        let partPos = bidi.getBidiPartAt(bidi, start.ch, start.sticky), part = bidi[partPos];
         if (cm.doc.direction == 'ltr' && part.level % 2 == 0 && (dir > 0 ? part.to > start.ch : part.from < start.ch)) {
             return moveLogically(line, start, dir);
         }
-        let mv = (pos, dir) => moveCharLogically(line, pos instanceof a.Pos ? pos.ch : pos, dir);
+        let mv = (pos, dir) => moveCharLogically(line, pos instanceof line_pos.Pos ? pos.ch : pos, dir);
         let prep;
         let getWrappedLineExtent = ch => {
             if (!cm.options.lineWrapping)
@@ -29510,8 +30790,8 @@ define('skylark-codemirror/primitives/input/movement',[
                     begin: 0,
                     end: line.text.length
                 };
-            prep = prep || b.prepareMeasureForLine(cm, line);
-            return b.wrappedLineExtentChar(cm, line, prep, ch);
+            prep = prep || position_measurement.prepareMeasureForLine(cm, line);
+            return position_measurement.wrappedLineExtentChar(cm, line, prep, ch);
         };
         let wrappedLineExtent = getWrappedLineExtent(start.sticky == 'before' ? mv(start, -1) : start.ch);
         if (cm.doc.direction == 'rtl' || part.level == 1) {
@@ -29519,11 +30799,11 @@ define('skylark-codemirror/primitives/input/movement',[
             let ch = mv(start, moveInStorageOrder ? 1 : -1);
             if (ch != null && (!moveInStorageOrder ? ch >= part.from && ch >= wrappedLineExtent.begin : ch <= part.to && ch <= wrappedLineExtent.end)) {
                 let sticky = moveInStorageOrder ? 'before' : 'after';
-                return new a.Pos(start.line, ch, sticky);
+                return new line_pos.Pos(start.line, ch, sticky);
             }
         }
         let searchInVisualLine = (partPos, dir, wrappedLineExtent) => {
-            let getRes = (ch, moveInStorageOrder) => moveInStorageOrder ? new a.Pos(start.line, mv(ch, 1), 'before') : new a.Pos(start.line, ch, 'after');
+            let getRes = (ch, moveInStorageOrder) => moveInStorageOrder ? new line_pos.Pos(start.line, mv(ch, 1), 'before') : new line_pos.Pos(start.line, ch, 'after');
             for (; partPos >= 0 && partPos < bidi.length; partPos += dir) {
                 let part = bidi[partPos];
                 let moveInStorageOrder = dir > 0 == (part.level != 1);
@@ -29772,11 +31052,11 @@ define('skylark-codemirror/primitives/edit/key_events',[
     '../util/feature_detection',
     '../util/misc',
     './commands'
-], function (a, b, c, d, e, f, g, h, i, j) {
+], function (operation_group, selection, keymap, widgets, browser, dom, events, feature_detection, misc, m_commands) {
     'use strict';
     function doHandleBinding(cm, bound, dropShift) {
         if (typeof bound == 'string') {
-            bound = j.commands[bound];
+            bound = m_commands.commands[bound];
             if (!bound)
                 return false;
         }
@@ -29787,7 +31067,7 @@ define('skylark-codemirror/primitives/edit/key_events',[
                 cm.state.suppressEdits = true;
             if (dropShift)
                 cm.display.shift = false;
-            done = bound(cm) != i.Pass;
+            done = bound(cm) != misc.Pass;
         } finally {
             cm.display.shift = prevShift;
             cm.state.suppressEdits = false;
@@ -29796,17 +31076,17 @@ define('skylark-codemirror/primitives/edit/key_events',[
     }
     function lookupKeyForEditor(cm, name, handle) {
         for (let i = 0; i < cm.state.keyMaps.length; i++) {
-            let result = c.lookupKey(name, cm.state.keyMaps[i], handle, cm);
+            let result = keymap.lookupKey(name, cm.state.keyMaps[i], handle, cm);
             if (result)
                 return result;
         }
-        return cm.options.extraKeys && c.lookupKey(name, cm.options.extraKeys, handle, cm) || c.lookupKey(name, cm.options.keyMap, handle, cm);
+        return cm.options.extraKeys && keymap.lookupKey(name, cm.options.extraKeys, handle, cm) || keymap.lookupKey(name, cm.options.keyMap, handle, cm);
     }
-    let stopSeq = new i.Delayed();
+    let stopSeq = new misc.Delayed();
     function dispatchKey(cm, name, e, handle) {
         let seq = cm.state.keySeq;
         if (seq) {
-            if (c.isModifierKey(name))
+            if (keymap.isModifierKey(name))
                 return 'handled';
             if (/\'$/.test(name))
                 cm.state.keySeq = null;
@@ -29827,15 +31107,15 @@ define('skylark-codemirror/primitives/edit/key_events',[
         if (result == 'multi')
             cm.state.keySeq = name;
         if (result == 'handled')
-            a.signalLater(cm, 'keyHandled', cm, name, e);
+            operation_group.signalLater(cm, 'keyHandled', cm, name, e);
         if (result == 'handled' || result == 'multi') {
-            g.e_preventDefault(e);
-            b.restartBlink(cm);
+            events.e_preventDefault(e);
+            selection.restartBlink(cm);
         }
         return !!result;
     }
     function handleKeyBinding(cm, e) {
-        let name = c.keyName(e, true);
+        let name = keymap.keyName(e, true);
         if (!name)
             return false;
         if (e.shiftKey && !cm.state.keySeq) {
@@ -29853,17 +31133,17 @@ define('skylark-codemirror/primitives/edit/key_events',[
     let lastStoppedKey = null;
     function onKeyDown(e) {
         let cm = this;
-        cm.curOp.focus = f.activeElt();
-        if (g.signalDOMEvent(cm, e))
+        cm.curOp.focus = dom.activeElt();
+        if (events.signalDOMEvent(cm, e))
             return;
-        if (e.ie && e.ie_version < 11 && e.keyCode == 27)
+        if (browser.ie && browser.ie_version < 11 && e.keyCode == 27)
             e.returnValue = false;
         let code = e.keyCode;
         cm.display.shift = code == 16 || e.shiftKey;
         let handled = handleKeyBinding(cm, e);
-        if (e.presto) {
+        if (browser.presto) {
             lastStoppedKey = handled ? code : null;
-            if (!handled && code == 88 && !h.hasCopyEvent && (e.mac ? e.metaKey : e.ctrlKey))
+            if (!handled && code == 88 && !feature_detection.hasCopyEvent && (browser.mac ? e.metaKey : e.ctrlKey))
                 cm.replaceSelection('', null, 'cut');
         }
         if (code == 18 && !/\bCodeMirror-crosshair\b/.test(cm.display.lineDiv.className))
@@ -29871,33 +31151,33 @@ define('skylark-codemirror/primitives/edit/key_events',[
     }
     function showCrossHair(cm) {
         let lineDiv = cm.display.lineDiv;
-        f.addClass(lineDiv, 'CodeMirror-crosshair');
+        dom.addClass(lineDiv, 'CodeMirror-crosshair');
         function up(e) {
             if (e.keyCode == 18 || !e.altKey) {
-                f.rmClass(lineDiv, 'CodeMirror-crosshair');
-                g.off(document, 'keyup', up);
-                g.off(document, 'mouseover', up);
+                dom.rmClass(lineDiv, 'CodeMirror-crosshair');
+                events.off(document, 'keyup', up);
+                events.off(document, 'mouseover', up);
             }
         }
-        g.on(document, 'keyup', up);
-        g.on(document, 'mouseover', up);
+        events.on(document, 'keyup', up);
+        events.on(document, 'mouseover', up);
     }
     function onKeyUp(e) {
         if (e.keyCode == 16)
             this.doc.sel.shift = false;
-        g.signalDOMEvent(this, e);
+        events.signalDOMEvent(this, e);
     }
     function onKeyPress(e) {
         let cm = this;
-        if (d.eventInWidget(cm.display, e) || g.signalDOMEvent(cm, e) || e.ctrlKey && !e.altKey || e.mac && e.metaKey)
+        if (widgets.eventInWidget(cm.display, e) || events.signalDOMEvent(cm, e) || e.ctrlKey && !e.altKey || browser.mac && e.metaKey)
             return;
         let keyCode = e.keyCode, charCode = e.charCode;
-        if (e.presto && keyCode == lastStoppedKey) {
+        if (browser.presto && keyCode == lastStoppedKey) {
             lastStoppedKey = null;
-            g.e_preventDefault(e);
+            events.e_preventDefault(e);
             return;
         }
-        if (e.presto && (!e.which || e.which < 10) && handleKeyBinding(cm, e))
+        if (browser.presto && (!e.which || e.which < 10) && handleKeyBinding(cm, e))
             return;
         let ch = String.fromCharCode(charCode == null ? keyCode : charCode);
         if (ch == '\b')
@@ -29932,7 +31212,7 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
     '../input/keymap',
     './key_events',
     './commands'
-], function (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r) {
+], function (focus, operations, update_lines, line_pos, utils_line, position_measurement, widgets, selection, selection_updates, browser, bidi, dom, events, n, o, p, q, r) {
     'use strict';
     const DOUBLECLICK_DELAY = 400;
     class PastClick {
@@ -29942,7 +31222,7 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
             this.button = button;
         }
         compare(time, pos, button) {
-            return this.time + DOUBLECLICK_DELAY > time && d.cmp(pos, this.pos) == 0 && button == this.button;
+            return this.time + DOUBLECLICK_DELAY > time && line_pos.cmp(pos, this.pos) == 0 && button == this.button;
         }
     }
     let lastClick, lastDoubleClick;
@@ -29963,12 +31243,12 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
     }
     function onMouseDown(e) {
         let cm = this, display = cm.display;
-        if (m.signalDOMEvent(cm, e) || display.activeTouch && display.input.supportsTouch())
+        if (events.signalDOMEvent(cm, e) || display.activeTouch && display.input.supportsTouch())
             return;
         display.input.ensurePolled();
         display.shift = e.shiftKey;
-        if (g.eventInWidget(display, e)) {
-            if (!j.webkit) {
+        if (widgets.eventInWidget(display, e)) {
+            if (!browser.webkit) {
                 display.scroller.draggable = false;
                 setTimeout(() => display.scroller.draggable = true, 100);
             }
@@ -29976,7 +31256,7 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         }
         if (clickInGutter(cm, e))
             return;
-        let pos = f.posFromMouse(cm, e), button = m.e_button(e), repeat = pos ? clickRepeat(pos, button) : 'single';
+        let pos = position_measurement.posFromMouse(cm, e), button = events.e_button(e), repeat = pos ? clickRepeat(pos, button) : 'single';
         window.focus();
         if (button == 1 && cm.state.selectingText)
             cm.state.selectingText(e);
@@ -29985,17 +31265,17 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         if (button == 1) {
             if (pos)
                 leftButtonDown(cm, pos, repeat, e);
-            else if (m.e_target(e) == display.scroller)
-                m.e_preventDefault(e);
+            else if (events.e_target(e) == display.scroller)
+                events.e_preventDefault(e);
         } else if (button == 2) {
             if (pos)
-                i.extendSelection(cm.doc, pos);
+                selection_updates.extendSelection(cm.doc, pos);
             setTimeout(() => display.input.focus(), 20);
         } else if (button == 3) {
-            if (j.captureRightClick)
+            if (browser.captureRightClick)
                 cm.display.input.onContextMenu(e);
             else
-                a.delayBlurEvent(cm);
+                focus.delayBlurEvent(cm);
         }
     }
     function handleMappedButton(cm, button, pos, repeat, event) {
@@ -30025,44 +31305,44 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         let option = cm.getOption('configureMouse');
         let value = option ? option(cm, repeat, event) : {};
         if (value.unit == null) {
-            let rect = j.chromeOS ? event.shiftKey && event.metaKey : event.altKey;
+            let rect = browser.chromeOS ? event.shiftKey && event.metaKey : event.altKey;
             value.unit = rect ? 'rectangle' : repeat == 'single' ? 'char' : repeat == 'double' ? 'word' : 'line';
         }
         if (value.extend == null || cm.doc.extend)
             value.extend = cm.doc.extend || event.shiftKey;
         if (value.addNew == null)
-            value.addNew = j.mac ? event.metaKey : event.ctrlKey;
+            value.addNew = browser.mac ? event.metaKey : event.ctrlKey;
         if (value.moveOnDrag == null)
-            value.moveOnDrag = !(j.mac ? event.altKey : event.ctrlKey);
+            value.moveOnDrag = !(browser.mac ? event.altKey : event.ctrlKey);
         return value;
     }
     function leftButtonDown(cm, pos, repeat, event) {
-        if (j.ie)
-            setTimeout(o.bind(a.ensureFocus, cm), 0);
+        if (browser.ie)
+            setTimeout(o.bind(focus.ensureFocus, cm), 0);
         else
-            cm.curOp.focus = l.activeElt();
+            cm.curOp.focus = dom.activeElt();
         let behavior = configureMouse(cm, repeat, event);
         let sel = cm.doc.sel, contained;
-        if (cm.options.dragDrop && n.dragAndDrop && !cm.isReadOnly() && repeat == 'single' && (contained = sel.contains(pos)) > -1 && (d.cmp((contained = sel.ranges[contained]).from(), pos) < 0 || pos.xRel > 0) && (d.cmp(contained.to(), pos) > 0 || pos.xRel < 0))
+        if (cm.options.dragDrop && n.dragAndDrop && !cm.isReadOnly() && repeat == 'single' && (contained = sel.contains(pos)) > -1 && (line_pos.cmp((contained = sel.ranges[contained]).from(), pos) < 0 || pos.xRel > 0) && (line_pos.cmp(contained.to(), pos) > 0 || pos.xRel < 0))
             leftButtonStartDrag(cm, event, pos, behavior);
         else
             leftButtonSelect(cm, event, pos, behavior);
     }
     function leftButtonStartDrag(cm, event, pos, behavior) {
         let display = cm.display, moved = false;
-        let dragEnd = b.operation(cm, e => {
-            if (j.webkit)
+        let dragEnd = operations.operation(cm, e => {
+            if (browser.webkit)
                 display.scroller.draggable = false;
             cm.state.draggingText = false;
-            m.off(display.wrapper.ownerDocument, 'mouseup', dragEnd);
-            m.off(display.wrapper.ownerDocument, 'mousemove', mouseMove);
-            m.off(display.scroller, 'dragstart', dragStart);
-            m.off(display.scroller, 'drop', dragEnd);
+            events.off(display.wrapper.ownerDocument, 'mouseup', dragEnd);
+            events.off(display.wrapper.ownerDocument, 'mousemove', mouseMove);
+            events.off(display.scroller, 'dragstart', dragStart);
+            events.off(display.scroller, 'drop', dragEnd);
             if (!moved) {
-                m.e_preventDefault(e);
+                events.e_preventDefault(e);
                 if (!behavior.addNew)
-                    i.extendSelection(cm.doc, pos, null, null, behavior.extend);
-                if (j.webkit || j.ie && j.ie_version == 9)
+                    selection_updates.extendSelection(cm.doc, pos, null, null, behavior.extend);
+                if (browser.webkit || browser.ie && browser.ie_version == 9)
                     setTimeout(() => {
                         display.wrapper.ownerDocument.body.focus();
                         display.input.focus();
@@ -30075,94 +31355,94 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
             moved = moved || Math.abs(event.clientX - e2.clientX) + Math.abs(event.clientY - e2.clientY) >= 10;
         };
         let dragStart = () => moved = true;
-        if (j.webkit)
+        if (browser.webkit)
             display.scroller.draggable = true;
         cm.state.draggingText = dragEnd;
         dragEnd.copy = !behavior.moveOnDrag;
         if (display.scroller.dragDrop)
             display.scroller.dragDrop();
-        m.on(display.wrapper.ownerDocument, 'mouseup', dragEnd);
-        m.on(display.wrapper.ownerDocument, 'mousemove', mouseMove);
-        m.on(display.scroller, 'dragstart', dragStart);
-        m.on(display.scroller, 'drop', dragEnd);
-        a.delayBlurEvent(cm);
+        events.on(display.wrapper.ownerDocument, 'mouseup', dragEnd);
+        events.on(display.wrapper.ownerDocument, 'mousemove', mouseMove);
+        events.on(display.scroller, 'dragstart', dragStart);
+        events.on(display.scroller, 'drop', dragEnd);
+        focus.delayBlurEvent(cm);
         setTimeout(() => display.input.focus(), 20);
     }
     function rangeForUnit(cm, pos, unit) {
         if (unit == 'char')
-            return new h.Range(pos, pos);
+            return new selection.Range(pos, pos);
         if (unit == 'word')
             return cm.findWordAt(pos);
         if (unit == 'line')
-            return new h.Range(d.Pos(pos.line, 0), d.clipPos(cm.doc, d.Pos(pos.line + 1, 0)));
+            return new selection.Range(line_pos.Pos(pos.line, 0), line_pos.clipPos(cm.doc, line_pos.Pos(pos.line + 1, 0)));
         let result = unit(cm, pos);
-        return new h.Range(result.from, result.to);
+        return new selection.Range(result.from, result.to);
     }
     function leftButtonSelect(cm, event, start, behavior) {
         let display = cm.display, doc = cm.doc;
-        m.e_preventDefault(event);
+        events.e_preventDefault(event);
         let ourRange, ourIndex, startSel = doc.sel, ranges = startSel.ranges;
         if (behavior.addNew && !behavior.extend) {
             ourIndex = doc.sel.contains(start);
             if (ourIndex > -1)
                 ourRange = ranges[ourIndex];
             else
-                ourRange = new h.Range(start, start);
+                ourRange = new selection.Range(start, start);
         } else {
             ourRange = doc.sel.primary();
             ourIndex = doc.sel.primIndex;
         }
         if (behavior.unit == 'rectangle') {
             if (!behavior.addNew)
-                ourRange = new h.Range(start, start);
-            start = f.posFromMouse(cm, event, true, true);
+                ourRange = new selection.Range(start, start);
+            start = position_measurement.posFromMouse(cm, event, true, true);
             ourIndex = -1;
         } else {
             let range = rangeForUnit(cm, start, behavior.unit);
             if (behavior.extend)
-                ourRange = i.extendRange(ourRange, range.anchor, range.head, behavior.extend);
+                ourRange = selection_updates.extendRange(ourRange, range.anchor, range.head, behavior.extend);
             else
                 ourRange = range;
         }
         if (!behavior.addNew) {
             ourIndex = 0;
-            i.setSelection(doc, new h.Selection([ourRange], 0), o.sel_mouse);
+            selection_updates.setSelection(doc, new selection.Selection([ourRange], 0), o.sel_mouse);
             startSel = doc.sel;
         } else if (ourIndex == -1) {
             ourIndex = ranges.length;
-            i.setSelection(doc, h.normalizeSelection(cm, ranges.concat([ourRange]), ourIndex), {
+            selection_updates.setSelection(doc, selection.normalizeSelection(cm, ranges.concat([ourRange]), ourIndex), {
                 scroll: false,
                 origin: '*mouse'
             });
         } else if (ranges.length > 1 && ranges[ourIndex].empty() && behavior.unit == 'char' && !behavior.extend) {
-            i.setSelection(doc, h.normalizeSelection(cm, ranges.slice(0, ourIndex).concat(ranges.slice(ourIndex + 1)), 0), {
+            selection_updates.setSelection(doc, selection.normalizeSelection(cm, ranges.slice(0, ourIndex).concat(ranges.slice(ourIndex + 1)), 0), {
                 scroll: false,
                 origin: '*mouse'
             });
             startSel = doc.sel;
         } else {
-            i.replaceOneSelection(doc, ourIndex, ourRange, o.sel_mouse);
+            selection_updates.replaceOneSelection(doc, ourIndex, ourRange, o.sel_mouse);
         }
         let lastPos = start;
         function extendTo(pos) {
-            if (d.cmp(lastPos, pos) == 0)
+            if (line_pos.cmp(lastPos, pos) == 0)
                 return;
             lastPos = pos;
             if (behavior.unit == 'rectangle') {
                 let ranges = [], tabSize = cm.options.tabSize;
-                let startCol = o.countColumn(e.getLine(doc, start.line).text, start.ch, tabSize);
-                let posCol = o.countColumn(e.getLine(doc, pos.line).text, pos.ch, tabSize);
+                let startCol = o.countColumn(utils_line.getLine(doc, start.line).text, start.ch, tabSize);
+                let posCol = o.countColumn(utils_line.getLine(doc, pos.line).text, pos.ch, tabSize);
                 let left = Math.min(startCol, posCol), right = Math.max(startCol, posCol);
                 for (let line = Math.min(start.line, pos.line), end = Math.min(cm.lastLine(), Math.max(start.line, pos.line)); line <= end; line++) {
-                    let text = e.getLine(doc, line).text, leftPos = o.findColumn(text, left, tabSize);
+                    let text = utils_line.getLine(doc, line).text, leftPos = o.findColumn(text, left, tabSize);
                     if (left == right)
-                        ranges.push(new h.Range(d.Pos(line, leftPos), d.Pos(line, leftPos)));
+                        ranges.push(new selection.Range(line_pos.Pos(line, leftPos), line_pos.Pos(line, leftPos)));
                     else if (text.length > leftPos)
-                        ranges.push(new h.Range(d.Pos(line, leftPos), d.Pos(line, o.findColumn(text, right, tabSize))));
+                        ranges.push(new selection.Range(line_pos.Pos(line, leftPos), line_pos.Pos(line, o.findColumn(text, right, tabSize))));
                 }
                 if (!ranges.length)
-                    ranges.push(new h.Range(start, start));
-                i.setSelection(doc, h.normalizeSelection(cm, startSel.ranges.slice(0, ourIndex).concat(ranges), ourIndex), {
+                    ranges.push(new selection.Range(start, start));
+                selection_updates.setSelection(doc, selection.normalizeSelection(cm, startSel.ranges.slice(0, ourIndex).concat(ranges), ourIndex), {
                     origin: '*mouse',
                     scroll: false
                 });
@@ -30171,38 +31451,38 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
                 let oldRange = ourRange;
                 let range = rangeForUnit(cm, pos, behavior.unit);
                 let anchor = oldRange.anchor, head;
-                if (d.cmp(range.anchor, anchor) > 0) {
+                if (line_pos.cmp(range.anchor, anchor) > 0) {
                     head = range.head;
-                    anchor = d.minPos(oldRange.from(), range.anchor);
+                    anchor = line_pos.minPos(oldRange.from(), range.anchor);
                 } else {
                     head = range.anchor;
-                    anchor = d.maxPos(oldRange.to(), range.head);
+                    anchor = line_pos.maxPos(oldRange.to(), range.head);
                 }
                 let ranges = startSel.ranges.slice(0);
-                ranges[ourIndex] = bidiSimplify(cm, new h.Range(d.clipPos(doc, anchor), head));
-                i.setSelection(doc, h.normalizeSelection(cm, ranges, ourIndex), o.sel_mouse);
+                ranges[ourIndex] = bidiSimplify(cm, new selection.Range(line_pos.clipPos(doc, anchor), head));
+                selection_updates.setSelection(doc, selection.normalizeSelection(cm, ranges, ourIndex), o.sel_mouse);
             }
         }
         let editorSize = display.wrapper.getBoundingClientRect();
         let counter = 0;
         function extend(e) {
             let curCount = ++counter;
-            let cur = f.posFromMouse(cm, e, true, behavior.unit == 'rectangle');
+            let cur = position_measurement.posFromMouse(cm, e, true, behavior.unit == 'rectangle');
             if (!cur)
                 return;
-            if (d.cmp(cur, lastPos) != 0) {
-                cm.curOp.focus = l.activeElt();
+            if (line_pos.cmp(cur, lastPos) != 0) {
+                cm.curOp.focus = dom.activeElt();
                 extendTo(cur);
-                let visible = c.visibleLines(display, doc);
+                let visible = update_lines.visibleLines(display, doc);
                 if (cur.line >= visible.to || cur.line < visible.from)
-                    setTimeout(b.operation(cm, () => {
+                    setTimeout(operations.operation(cm, () => {
                         if (counter == curCount)
                             extend(e);
                     }), 150);
             } else {
                 let outside = e.clientY < editorSize.top ? -20 : e.clientY > editorSize.bottom ? 20 : 0;
                 if (outside)
-                    setTimeout(b.operation(cm, () => {
+                    setTimeout(operations.operation(cm, () => {
                         if (counter != curCount)
                             return;
                         display.scroller.scrollTop += outside;
@@ -30213,31 +31493,31 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         function done(e) {
             cm.state.selectingText = false;
             counter = Infinity;
-            m.e_preventDefault(e);
+            events.e_preventDefault(e);
             display.input.focus();
-            m.off(display.wrapper.ownerDocument, 'mousemove', move);
-            m.off(display.wrapper.ownerDocument, 'mouseup', up);
+            events.off(display.wrapper.ownerDocument, 'mousemove', move);
+            events.off(display.wrapper.ownerDocument, 'mouseup', up);
             doc.history.lastSelOrigin = null;
         }
-        let move = b.operation(cm, e => {
-            if (e.buttons === 0 || !m.e_button(e))
+        let move = operations.operation(cm, e => {
+            if (e.buttons === 0 || !events.e_button(e))
                 done(e);
             else
                 extend(e);
         });
-        let up = b.operation(cm, done);
+        let up = operations.operation(cm, done);
         cm.state.selectingText = up;
-        m.on(display.wrapper.ownerDocument, 'mousemove', move);
-        m.on(display.wrapper.ownerDocument, 'mouseup', up);
+        events.on(display.wrapper.ownerDocument, 'mousemove', move);
+        events.on(display.wrapper.ownerDocument, 'mouseup', up);
     }
     function bidiSimplify(cm, range) {
-        let {anchor, head} = range, anchorLine = e.getLine(cm.doc, anchor.line);
-        if (d.cmp(anchor, head) == 0 && anchor.sticky == head.sticky)
+        let {anchor, head} = range, anchorLine = utils_line.getLine(cm.doc, anchor.line);
+        if (line_pos.cmp(anchor, head) == 0 && anchor.sticky == head.sticky)
             return range;
-        let order = k.getOrder(anchorLine);
+        let order = bidi.getOrder(anchorLine);
         if (!order)
             return range;
-        let index = k.getBidiPartAt(order, anchor.ch, anchor.sticky), part = order[index];
+        let index = bidi.getBidiPartAt(order, anchor.ch, anchor.sticky), part = order[index];
         if (part.from != anchor.ch && part.to != anchor.ch)
             return range;
         let boundary = index + (part.from == anchor.ch == (part.level != 1) ? 0 : 1);
@@ -30247,7 +31527,7 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         if (head.line != anchor.line) {
             leftSide = (head.line - anchor.line) * (cm.doc.direction == 'ltr' ? 1 : -1) > 0;
         } else {
-            let headIndex = k.getBidiPartAt(order, head.ch, head.sticky);
+            let headIndex = bidi.getBidiPartAt(order, head.ch, head.sticky);
             let dir = headIndex - index || (head.ch - anchor.ch) * (part.level == 1 ? -1 : 1);
             if (headIndex == boundary - 1 || headIndex == boundary)
                 leftSide = dir < 0;
@@ -30257,7 +31537,7 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         let usePart = order[boundary + (leftSide ? -1 : 0)];
         let from = leftSide == (usePart.level == 1);
         let ch = from ? usePart.from : usePart.to, sticky = from ? 'after' : 'before';
-        return anchor.ch == ch && anchor.sticky == sticky ? range : new h.Range(new d.Pos(anchor.line, ch, sticky), head);
+        return anchor.ch == ch && anchor.sticky == sticky ? range : new selection.Range(new line_pos.Pos(anchor.line, ch, sticky), head);
     }
     function gutterEvent(cm, e, type, prevent) {
         let mX, mY;
@@ -30275,19 +31555,19 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         if (mX >= Math.floor(cm.display.gutters.getBoundingClientRect().right))
             return false;
         if (prevent)
-            m.e_preventDefault(e);
+            events.e_preventDefault(e);
         let display = cm.display;
         let lineBox = display.lineDiv.getBoundingClientRect();
-        if (mY > lineBox.bottom || !m.hasHandler(cm, type))
-            return m.e_defaultPrevented(e);
+        if (mY > lineBox.bottom || !events.hasHandler(cm, type))
+            return events.e_defaultPrevented(e);
         mY -= lineBox.top - display.viewOffset;
         for (let i = 0; i < cm.options.gutters.length; ++i) {
             let g = display.gutters.childNodes[i];
             if (g && g.getBoundingClientRect().right >= mX) {
-                let line = e.lineAtHeight(cm.doc, mY);
+                let line = utils_line.lineAtHeight(cm.doc, mY);
                 let gutter = cm.options.gutters[i];
-                m.signal(cm, type, cm, line, gutter, e);
-                return m.e_defaultPrevented(e);
+                events.signal(cm, type, cm, line, gutter, e);
+                return events.e_defaultPrevented(e);
             }
         }
     }
@@ -30295,15 +31575,15 @@ define('skylark-codemirror/primitives/edit/mouse_events',[
         return gutterEvent(cm, e, 'gutterClick', true);
     }
     function onContextMenu(cm, e) {
-        if (g.eventInWidget(cm.display, e) || contextMenuInGutter(cm, e))
+        if (widgets.eventInWidget(cm.display, e) || contextMenuInGutter(cm, e))
             return;
-        if (m.signalDOMEvent(cm, e, 'contextmenu'))
+        if (events.signalDOMEvent(cm, e, 'contextmenu'))
             return;
-        if (!j.captureRightClick)
+        if (!browser.captureRightClick)
             cm.display.input.onContextMenu(e);
     }
     function contextMenuInGutter(cm, e) {
-        if (!m.hasHandler(cm, 'gutterContextMenu'))
+        if (!events.hasHandler(cm, 'gutterContextMenu'))
             return false;
         return gutterEvent(cm, e, 'gutterContextMenu', false);
     }
@@ -30545,14 +31825,14 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
     './mouse_events',
     './utils',
     './options'
-], function (a, b, c, d, e, f, g, h, i, j, k, Doc, l, m, n, o, p, q, r, s, t, u, v, m_options) {
+], function (m_display, focuses, gutters, line_numbers, operations, scrollbars, scroll_events, scrolling, line_pos, position_measurement, widgets, Doc, document_data, selection, selection_updates, browser, events, misc, drop_events, global_events, key_events, mouse_events, utils, m_options) {
     'use strict';
     function CodeMirror(place, options) {
         if (!(this instanceof CodeMirror))
             return new CodeMirror(place, options);
-        this.options = options = options ? q.copyObj(options) : {};
-        q.copyObj(m_options.defaults, options, false);
-        c.setGuttersForLineNumbers(options);
+        this.options = options = options ? misc.copyObj(options) : {};
+        misc.copyObj(m_options.defaults, options, false);
+        gutters.setGuttersForLineNumbers(options);
         let doc = options.value;
         if (typeof doc == 'string')
             doc = new Doc(doc, options.mode, null, options.lineSeparator, options.direction);
@@ -30560,13 +31840,13 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
             doc.modeOption = options.mode;
         this.doc = doc;
         let input = new CodeMirror.inputStyles[options.inputStyle](this);
-        let display = this.display = new a.Display(place, doc, input);
+        let display = this.display = new m_display.Display(place, doc, input);
         display.wrapper.CodeMirror = this;
-        c.updateGutters(this);
-        v.themeChanged(this);
+        gutters.updateGutters(this);
+        utils.themeChanged(this);
         if (options.lineWrapping)
             this.display.wrapper.className += ' CodeMirror-wrap';
-        f.initScrollbars(this);
+        scrollbars.initScrollbars(this);
         this.state = {
             keyMaps: [],
             overlays: [],
@@ -30579,33 +31859,33 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
             cutIncoming: -1,
             selectingText: false,
             draggingText: false,
-            highlight: new q.Delayed(),
+            highlight: new misc.Delayed(),
             keySeq: null,
             specialChars: null
         };
-        if (options.autofocus && !o.mobile)
+        if (options.autofocus && !browser.mobile)
             display.input.focus();
-        if (o.ie && o.ie_version < 11)
+        if (browser.ie && browser.ie_version < 11)
             setTimeout(() => this.display.input.reset(true), 20);
         registerEventHandlers(this);
-        s.ensureGlobalHandlers();
-        e.startOperation(this);
+        global_events.ensureGlobalHandlers();
+        operations.startOperation(this);
         this.curOp.forceUpdate = true;
-        l.attachDoc(this, doc);
-        if (options.autofocus && !o.mobile || this.hasFocus())
-            setTimeout(q.bind(b.onFocus, this), 20);
+        document_data.attachDoc(this, doc);
+        if (options.autofocus && !browser.mobile || this.hasFocus())
+            setTimeout(misc.bind(focuses.onFocus, this), 20);
         else
-            b.onBlur(this);
+            focuses.onBlur(this);
         for (let opt in m_options.optionHandlers)
             if (m_options.optionHandlers.hasOwnProperty(opt))
                 m_options.optionHandlers[opt](this, options[opt], m_options.Init);
-        d.maybeUpdateLineNumberWidth(this);
+        line_numbers.maybeUpdateLineNumberWidth(this);
         if (options.finishInit)
             options.finishInit(this);
         for (let i = 0; i < initHooks.length; ++i)
             initHooks[i](this);
-        e.endOperation(this);
-        if (o.webkit && options.lineWrapping && getComputedStyle(display.lineDiv).textRendering == 'optimizelegibility')
+        operations.endOperation(this);
+        if (browser.webkit && options.lineWrapping && getComputedStyle(display.lineDiv).textRendering == 'optimizelegibility')
             display.lineDiv.style.textRendering = 'auto';
     }
     
@@ -30614,21 +31894,21 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
 
     function registerEventHandlers(cm) {
         let d = cm.display;
-        p.on(d.scroller, 'mousedown', e.operation(cm, u.onMouseDown));
-        if (o.ie && o.ie_version < 11)
-            p.on(d.scroller, 'dblclick', e.operation(cm, e => {
-                if (p.signalDOMEvent(cm, e))
+        events.on(d.scroller, 'mousedown', operations.operation(cm, mouse_events.onMouseDown));
+        if (browser.ie && browser.ie_version < 11)
+            events.on(d.scroller, 'dblclick', operations.operation(cm, e => {
+                if (events.signalDOMEvent(cm, e))
                     return;
-                let pos = j.posFromMouse(cm, e);
-                if (!pos || u.clickInGutter(cm, e) || k.eventInWidget(cm.display, e))
+                let pos = position_measurement.posFromMouse(cm, e);
+                if (!pos || mouse_events.clickInGutter(cm, e) || widgets.eventInWidget(cm.display, e))
                     return;
-                p.e_preventDefault(e);
+                events.e_preventDefault(e);
                 let word = cm.findWordAt(pos);
-                n.extendSelection(cm.doc, word.anchor, word.head);
+                selection_updates.extendSelection(cm.doc, word.anchor, word.head);
             }));
         else
-            p.on(d.scroller, 'dblclick', e => p.signalDOMEvent(cm, e) || p.e_preventDefault(e));
-        p.on(d.scroller, 'contextmenu', e => u.onContextMenu(cm, e));
+            events.on(d.scroller, 'dblclick', e => events.signalDOMEvent(cm, e) || events.e_preventDefault(e));
+        events.on(d.scroller, 'contextmenu', e => mouse_events.onContextMenu(cm, e));
         let touchFinished, prevTouch = { end: 0 };
         function finishTouch() {
             if (d.activeTouch) {
@@ -30649,8 +31929,8 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
             let dx = other.left - touch.left, dy = other.top - touch.top;
             return dx * dx + dy * dy > 20 * 20;
         }
-        p.on(d.scroller, 'touchstart', e => {
-            if (!p.signalDOMEvent(cm, e) && !isMouseLikeTouchEvent(e) && !u.clickInGutter(cm, e)) {
+        events.on(d.scroller, 'touchstart', e => {
+            if (!events.signalDOMEvent(cm, e) && !isMouseLikeTouchEvent(e) && !mouse_events.clickInGutter(cm, e)) {
                 d.input.ensurePolled();
                 clearTimeout(touchFinished);
                 let now = +new Date();
@@ -30665,62 +31945,62 @@ define('skylark-codemirror/primitives/edit/CodeMirror',[
                 }
             }
         });
-        p.on(d.scroller, 'touchmove', () => {
+        events.on(d.scroller, 'touchmove', () => {
             if (d.activeTouch)
                 d.activeTouch.moved = true;
         });
-        p.on(d.scroller, 'touchend', e => {
+        events.on(d.scroller, 'touchend', e => {
             let touch = d.activeTouch;
-            if (touch && !k.eventInWidget(d, e) && touch.left != null && !touch.moved && new Date() - touch.start < 300) {
+            if (touch && !widgets.eventInWidget(d, e) && touch.left != null && !touch.moved && new Date() - touch.start < 300) {
                 let pos = cm.coordsChar(d.activeTouch, 'page'), range;
                 if (!touch.prev || farAway(touch, touch.prev))
-                    range = new m.Range(pos, pos);
+                    range = new selection.Range(pos, pos);
                 else if (!touch.prev.prev || farAway(touch, touch.prev.prev))
                     range = cm.findWordAt(pos);
                 else
-                    range = new m.Range(i.Pos(pos.line, 0), i.clipPos(cm.doc, i.Pos(pos.line + 1, 0)));
+                    range = new selection.Range(line_pos.Pos(pos.line, 0), line_pos.clipPos(cm.doc, line_pos.Pos(pos.line + 1, 0)));
                 cm.setSelection(range.anchor, range.head);
                 cm.focus();
-                p.e_preventDefault(e);
+                events.e_preventDefault(e);
             }
             finishTouch();
         });
-        p.on(d.scroller, 'touchcancel', finishTouch);
-        p.on(d.scroller, 'scroll', () => {
+        events.on(d.scroller, 'touchcancel', finishTouch);
+        events.on(d.scroller, 'scroll', () => {
             if (d.scroller.clientHeight) {
-                h.updateScrollTop(cm, d.scroller.scrollTop);
-                h.setScrollLeft(cm, d.scroller.scrollLeft, true);
-                p.signal(cm, 'scroll', cm);
+                scrolling.updateScrollTop(cm, d.scroller.scrollTop);
+                scrolling.setScrollLeft(cm, d.scroller.scrollLeft, true);
+                events.signal(cm, 'scroll', cm);
             }
         });
-        p.on(d.scroller, 'mousewheel', e => g.onScrollWheel(cm, e));
-        p.on(d.scroller, 'DOMMouseScroll', e => g.onScrollWheel(cm, e));
-        p.on(d.wrapper, 'scroll', () => d.wrapper.scrollTop = d.wrapper.scrollLeft = 0);
+        events.on(d.scroller, 'mousewheel', e => scroll_events.onScrollWheel(cm, e));
+        events.on(d.scroller, 'DOMMouseScroll', e => scroll_events.onScrollWheel(cm, e));
+        events.on(d.wrapper, 'scroll', () => d.wrapper.scrollTop = d.wrapper.scrollLeft = 0);
         d.dragFunctions = {
             enter: e => {
-                if (!p.signalDOMEvent(cm, e))
-                    p.e_stop(e);
+                if (!events.signalDOMEvent(cm, e))
+                    events.e_stop(e);
             },
             over: e => {
-                if (!p.signalDOMEvent(cm, e)) {
-                    r.onDragOver(cm, e);
-                    p.e_stop(e);
+                if (!events.signalDOMEvent(cm, e)) {
+                    drop_events.onDragOver(cm, e);
+                    events.e_stop(e);
                 }
             },
-            start: e => r.onDragStart(cm, e),
-            drop: e.operation(cm, r.onDrop),
+            start: e => drop_events.onDragStart(cm, e),
+            drop: operations.operation(cm, drop_events.onDrop),
             leave: e => {
-                if (!p.signalDOMEvent(cm, e)) {
-                    r.clearDragCursor(cm);
+                if (!events.signalDOMEvent(cm, e)) {
+                    drop_events.clearDragCursor(cm);
                 }
             }
         };
         let inp = d.input.getField();
-        p.on(inp, 'keyup', e => t.onKeyUp.call(cm, e));
-        p.on(inp, 'keydown', e.operation(cm, t.onKeyDown));
-        p.on(inp, 'keypress', e.operation(cm, t.onKeyPress));
-        p.on(inp, 'focus', e => b.onFocus(cm, e));
-        p.on(inp, 'blur', e => b.onBlur(cm, e));
+        events.on(inp, 'keyup', e => key_events.onKeyUp.call(cm, e));
+        events.on(inp, 'keydown', operations.operation(cm, key_events.onKeyDown));
+        events.on(inp, 'keypress', operations.operation(cm, key_events.onKeyPress));
+        events.on(inp, 'focus', e => focuses.onFocus(cm, e));
+        events.on(inp, 'blur', e => focuses.onBlur(cm, e));
     }
     let initHooks = [];
     CodeMirror.defineInitHook = f => initHooks.push(f);
@@ -30813,7 +32093,7 @@ define('skylark-codemirror/primitives/input/input',[
     '../util/operation_group',
     '../util/feature_detection',
     './indent'
-], function (a, b, c, d, e, f, g, h, i, j, k) {
+], function (operations, scrolling, line_pos, utils_line, changes, browser, dom, misc, operation_group, feature_detection, indent) {
     'use strict';
     let lastCopied = null;
     function setLastCopied(newLastCopied) {
@@ -30826,7 +32106,7 @@ define('skylark-codemirror/primitives/input/input',[
             sel = doc.sel;
         let recent = +new Date() - 200;
         let paste = origin == 'paste' || cm.state.pasteIncoming > recent;
-        let textLines = j.splitLinesAuto(inserted), multiPaste = null;
+        let textLines = feature_detection.splitLinesAuto(inserted), multiPaste = null;
         if (paste && sel.ranges.length > 1) {
             if (lastCopied && lastCopied.text.join('\n') == inserted) {
                 if (sel.ranges.length % lastCopied.text.length == 0) {
@@ -30835,7 +32115,7 @@ define('skylark-codemirror/primitives/input/input',[
                         multiPaste.push(doc.splitLines(lastCopied.text[i]));
                 }
             } else if (textLines.length == sel.ranges.length && cm.options.pasteLinesPerSelection) {
-                multiPaste = h.map(textLines, l => [l]);
+                multiPaste = misc.map(textLines, l => [l]);
             }
         }
         let updateInput = cm.curOp.updateInput;
@@ -30844,11 +32124,11 @@ define('skylark-codemirror/primitives/input/input',[
             let from = range.from(), to = range.to();
             if (range.empty()) {
                 if (deleted && deleted > 0)
-                    from = c.Pos(from.line, from.ch - deleted);
+                    from = line_pos.Pos(from.line, from.ch - deleted);
                 else if (cm.state.overwrite && !paste)
-                    to = c.Pos(to.line, Math.min(d.getLine(doc, to.line).text.length, to.ch + h.lst(textLines).length));
+                    to = line_pos.Pos(to.line, Math.min(utils_line.getLine(doc, to.line).text.length, to.ch + misc.lst(textLines).length));
                 else if (paste && lastCopied && lastCopied.lineWise && lastCopied.text.join('\n') == inserted)
-                    from = to = c.Pos(from.line, 0);
+                    from = to = line_pos.Pos(from.line, 0);
             }
             let changeEvent = {
                 from: from,
@@ -30856,12 +32136,12 @@ define('skylark-codemirror/primitives/input/input',[
                 text: multiPaste ? multiPaste[i % multiPaste.length] : textLines,
                 origin: origin || (paste ? 'paste' : cm.state.cutIncoming > recent ? 'cut' : '+input')
             };
-            e.makeChange(cm.doc, changeEvent);
-            i.signalLater(cm, 'inputRead', cm, changeEvent);
+            changes.makeChange(cm.doc, changeEvent);
+            operation_group.signalLater(cm, 'inputRead', cm, changeEvent);
         }
         if (inserted && !paste)
             triggerElectric(cm, inserted);
-        b.ensureCursorVisible(cm);
+        scrolling.ensureCursorVisible(cm);
         if (cm.curOp.updateInput < 2)
             cm.curOp.updateInput = updateInput;
         cm.curOp.typing = true;
@@ -30872,7 +32152,7 @@ define('skylark-codemirror/primitives/input/input',[
         if (pasted) {
             e.preventDefault();
             if (!cm.isReadOnly() && !cm.options.disableInput)
-                a.runInOp(cm, () => applyTextInput(cm, pasted, 0, null, 'paste'));
+                operations.runInOp(cm, () => applyTextInput(cm, pasted, 0, null, 'paste'));
             return true;
         }
     }
@@ -30889,15 +32169,15 @@ define('skylark-codemirror/primitives/input/input',[
             if (mode.electricChars) {
                 for (let j = 0; j < mode.electricChars.length; j++)
                     if (inserted.indexOf(mode.electricChars.charAt(j)) > -1) {
-                        indented = k.indentLine(cm, range.head.line, 'smart');
+                        indented = indent.indentLine(cm, range.head.line, 'smart');
                         break;
                     }
             } else if (mode.electricInput) {
-                if (mode.electricInput.test(d.getLine(cm.doc, range.head.line).text.slice(0, range.head.ch)))
-                    indented = k.indentLine(cm, range.head.line, 'smart');
+                if (mode.electricInput.test(utils_line.getLine(cm.doc, range.head.line).text.slice(0, range.head.ch)))
+                    indented = indent.indentLine(cm, range.head.line, 'smart');
             }
             if (indented)
-                i.signalLater(cm, 'electricInput', cm, range.head.line);
+                operation_group.signalLater(cm, 'electricInput', cm, range.head.line);
         }
     }
     function copyableRanges(cm) {
@@ -30905,8 +32185,8 @@ define('skylark-codemirror/primitives/input/input',[
         for (let i = 0; i < cm.doc.sel.ranges.length; i++) {
             let line = cm.doc.sel.ranges[i].head.line;
             let lineRange = {
-                anchor: c.Pos(line, 0),
-                head: c.Pos(line + 1, 0)
+                anchor: line_pos.Pos(line, 0),
+                head: line_pos.Pos(line + 1, 0)
             };
             ranges.push(lineRange);
             text.push(cm.getRange(lineRange.anchor, lineRange.head));
@@ -30922,13 +32202,13 @@ define('skylark-codemirror/primitives/input/input',[
         field.setAttribute('spellcheck', !!spellcheck);
     }
     function hiddenTextarea() {
-        let te = g.elt('textarea', null, null, 'position: absolute; bottom: -1em; padding: 0; width: 1px; height: 1em; outline: none');
-        let div = g.elt('div', [te], null, 'overflow: hidden; position: relative; width: 3px; height: 0px;');
-        if (f.webkit)
+        let te = dom.elt('textarea', null, null, 'position: absolute; bottom: -1em; padding: 0; width: 1px; height: 1em; outline: none');
+        let div = dom.elt('div', [te], null, 'overflow: hidden; position: relative; width: 3px; height: 0px;');
+        if (browser.webkit)
             te.style.width = '1000px';
         else
             te.setAttribute('wrap', 'off');
-        if (f.ios)
+        if (browser.ios)
             te.style.border = '1px solid black';
         disableBrowserMagic(te);
         return div;
@@ -30972,8 +32252,121 @@ define('skylark-codemirror/primitives/edit/methods',[
     '../display/highlight_worker',
     '../display/line_numbers',
     '../display/scrollbars'
-], function (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x,m_highlight_worker,m_line_numbers,m_scrollbars) {
+], function (
+    m_deleteNearSelection, 
+    m_commands, 
+    m_document_data, 
+    dom, 
+    events, 
+    highlight, 
+    indent, 
+    m_input, 
+    key_events, 
+    mouse_events, 
+    keymap, 
+    movement, 
+    operations, 
+    line_pos, 
+    position_measurement, 
+    selection, 
+    selection_updates, 
+    scrolling, 
+    line_spans, 
+    update_display, 
+    misc, 
+    operation_group, 
+    utils_line, 
+    view_tracking,
+    m_highlight_worker,
+    m_line_numbers,
+    m_scrollbars
+) {
     'use strict';
+
+    function findPosH(doc, pos, dir, unit, visually) {
+        let oldPos = pos;
+        let origDir = dir;
+        let lineObj = utils_line.getLine(doc, pos.line);
+        function findNextLine() {
+            let l = pos.line + dir;
+            if (l < doc.first || l >= doc.first + doc.size)
+                return false;
+            pos = new line_pos.Pos(l, pos.ch, pos.sticky);
+            return lineObj = utils_line.getLine(doc, l);
+        }
+        function moveOnce(boundToLine) {
+            let next;
+            if (visually) {
+                next = movement.moveVisually(doc.cm, lineObj, pos, dir);
+            } else {
+                next = movement.moveLogically(lineObj, pos, dir);
+            }
+            if (next == null) {
+                if (!boundToLine && findNextLine())
+                    pos = movement.endOfLine(visually, doc.cm, lineObj, pos.line, dir);
+                else
+                    return false;
+            } else {
+                pos = next;
+            }
+            return true;
+        }
+        if (unit == 'char') {
+            moveOnce();
+        } else if (unit == 'column') {
+            moveOnce(true);
+        } else if (unit == 'word' || unit == 'group') {
+            let sawType = null, group = unit == 'group';
+            let helper = doc.cm && doc.cm.getHelper(pos, 'wordChars');
+            for (let first = true;; first = false) {
+                if (dir < 0 && !moveOnce(!first))
+                    break;
+                let cur = lineObj.text.charAt(pos.ch) || '\n';
+                let type = misc.isWordChar(cur, helper) ? 'w' : group && cur == '\n' ? 'n' : !group || /\s/.test(cur) ? null : 'p';
+                if (group && !first && !type)
+                    type = 's';
+                if (sawType && sawType != type) {
+                    if (dir < 0) {
+                        dir = 1;
+                        moveOnce();
+                        pos.sticky = 'after';
+                    }
+                    break;
+                }
+                if (type)
+                    sawType = type;
+                if (dir > 0 && !moveOnce(!first))
+                    break;
+            }
+        }
+        let result = selection_updates.skipAtomic(doc, pos, oldPos, origDir, true);
+        if (line_pos.equalCursorPos(oldPos, result))
+            result.hitSide = true;
+        return result;
+    }
+    function findPosV(cm, pos, dir, unit) {
+        let doc = cm.doc, x = pos.left, y;
+        if (unit == 'page') {
+            let pageSize = Math.min(cm.display.wrapper.clientHeight, window.innerHeight || document.documentElement.clientHeight);
+            let moveAmount = Math.max(pageSize - 0.5 * position_measurement.textHeight(cm.display), 3);
+            y = (dir > 0 ? pos.bottom : pos.top) + dir * moveAmount;
+        } else if (unit == 'line') {
+            y = dir > 0 ? pos.bottom + 3 : pos.top - 3;
+        }
+        let target;
+        for (;;) {
+            target = position_measurement.coordsChar(cm, x, y);
+            if (!target.outside)
+                break;
+            if (dir < 0 ? y <= 0 : y >= doc.height) {
+                target.hitSide = true;
+                break;
+            }
+            y += dir * 5;
+        }
+        return target;
+    }
+        
     return function (CodeMirror) {
         let optionHandlers = CodeMirror.optionHandlers;
         let helpers = CodeMirror.helpers = {};
@@ -30989,8 +32382,8 @@ define('skylark-codemirror/primitives/edit/methods',[
                     return;
                 options[option] = value;
                 if (optionHandlers.hasOwnProperty(option))
-                    m.operation(this, optionHandlers[option])(this, value, old);
-                e.signal(this, 'optionChange', this, option);
+                    operations.operation(this, optionHandlers[option])(this, value, old);
+                events.signal(this, 'optionChange', this, option);
             },
             getOption: function (option) {
                 return this.options[option];
@@ -30999,7 +32392,7 @@ define('skylark-codemirror/primitives/edit/methods',[
                 return this.doc;
             },
             addKeyMap: function (map, bottom) {
-                this.state.keyMaps[bottom ? 'push' : 'unshift'](k.getKeyMap(map));
+                this.state.keyMaps[bottom ? 'push' : 'unshift'](keymap.getKeyMap(map));
             },
             removeKeyMap: function (map) {
                 let maps = this.state.keyMaps;
@@ -31009,42 +32402,42 @@ define('skylark-codemirror/primitives/edit/methods',[
                         return true;
                     }
             },
-            addOverlay: m.methodOp(function (spec, options) {
+            addOverlay: operations.methodOp(function (spec, options) {
                 let mode = spec.token ? spec : CodeMirror.getMode(this.options, spec);
                 if (mode.startState)
                     throw new Error('Overlays may not be stateful.');
-                u.insertSorted(this.state.overlays, {
+                misc.insertSorted(this.state.overlays, {
                     mode: mode,
                     modeSpec: spec,
                     opaque: options && options.opaque,
                     priority: options && options.priority || 0
                 }, overlay => overlay.priority);
                 this.state.modeGen++;
-                x.regChange(this);
+                view_tracking.regChange(this);
             }),
-            removeOverlay: m.methodOp(function (spec) {
+            removeOverlay: operations.methodOp(function (spec) {
                 let overlays = this.state.overlays;
                 for (let i = 0; i < overlays.length; ++i) {
                     let cur = overlays[i].modeSpec;
                     if (cur == spec || typeof spec == 'string' && cur.name == spec) {
                         overlays.splice(i, 1);
                         this.state.modeGen++;
-                        x.regChange(this);
+                        view_tracking.regChange(this);
                         return;
                     }
                 }
             }),
-            indentLine: m.methodOp(function (n, dir, aggressive) {
+            indentLine: operations.methodOp(function (n, dir, aggressive) {
                 if (typeof dir != 'string' && typeof dir != 'number') {
                     if (dir == null)
                         dir = this.options.smartIndent ? 'smart' : 'prev';
                     else
                         dir = dir ? 'add' : 'subtract';
                 }
-                if (w.isLine(this.doc, n))
-                    g.indentLine(this, n, dir, aggressive);
+                if (utils_line.isLine(this.doc, n))
+                    indent.indentLine(this, n, dir, aggressive);
             }),
-            indentSelection: m.methodOp(function (how) {
+            indentSelection: operations.methodOp(function (how) {
                 let ranges = this.doc.sel.ranges, end = -1;
                 for (let i = 0; i < ranges.length; i++) {
                     let range = ranges[i];
@@ -31053,27 +32446,27 @@ define('skylark-codemirror/primitives/edit/methods',[
                         let start = Math.max(end, from.line);
                         end = Math.min(this.lastLine(), to.line - (to.ch ? 0 : 1)) + 1;
                         for (let j = start; j < end; ++j)
-                            g.indentLine(this, j, how);
+                            indent.indentLine(this, j, how);
                         let newRanges = this.doc.sel.ranges;
                         if (from.ch == 0 && ranges.length == newRanges.length && newRanges[i].from().ch > 0)
-                            q.replaceOneSelection(this.doc, i, new p.Range(from, newRanges[i].to()), u.sel_dontScroll);
+                            selection_updates.replaceOneSelection(this.doc, i, new selection.Range(from, newRanges[i].to()), misc.sel_dontScroll);
                     } else if (range.head.line > end) {
-                        g.indentLine(this, range.head.line, how, true);
+                        indent.indentLine(this, range.head.line, how, true);
                         end = range.head.line;
                         if (i == this.doc.sel.primIndex)
-                            r.ensureCursorVisible(this);
+                            scrolling.ensureCursorVisible(this);
                     }
                 }
             }),
             getTokenAt: function (pos, precise) {
-                return f.takeToken(this, pos, precise);
+                return highlight.takeToken(this, pos, precise);
             },
             getLineTokens: function (line, precise) {
-                return f.takeToken(this, n.Pos(line), precise, true);
+                return highlight.takeToken(this, line_pos.Pos(line), precise, true);
             },
             getTokenTypeAt: function (pos) {
-                pos = n.clipPos(this.doc, pos);
-                let styles = f.getLineStyles(this, w.getLine(this.doc, pos.line));
+                pos = line_pos.clipPos(this.doc, pos);
+                let styles = highlight.getLineStyles(this, utils_line.getLine(this.doc, pos.line));
                 let before = 0, after = (styles.length - 1) / 2, ch = pos.ch;
                 let type;
                 if (ch == 0)
@@ -31123,39 +32516,39 @@ define('skylark-codemirror/primitives/edit/methods',[
                 }
                 for (let i = 0; i < help._global.length; i++) {
                     let cur = help._global[i];
-                    if (cur.pred(mode, this) && u.indexOf(found, cur.val) == -1)
+                    if (cur.pred(mode, this) && misc.indexOf(found, cur.val) == -1)
                         found.push(cur.val);
                 }
                 return found;
             },
             getStateAfter: function (line, precise) {
                 let doc = this.doc;
-                line = n.clipLine(doc, line == null ? doc.first + doc.size - 1 : line);
-                return f.getContextBefore(this, line + 1, precise).state;
+                line = line_pos.clipLine(doc, line == null ? doc.first + doc.size - 1 : line);
+                return highlight.getContextBefore(this, line + 1, precise).state;
             },
             cursorCoords: function (start, mode) {
                 let pos, range = this.doc.sel.primary();
                 if (start == null)
                     pos = range.head;
                 else if (typeof start == 'object')
-                    pos = n.clipPos(this.doc, start);
+                    pos = line_pos.clipPos(this.doc, start);
                 else
                     pos = start ? range.from() : range.to();
-                return o.cursorCoords(this, pos, mode || 'page');
+                return position_measurement.cursorCoords(this, pos, mode || 'page');
             },
             charCoords: function (pos, mode) {
-                return o.charCoords(this, n.clipPos(this.doc, pos), mode || 'page');
+                return position_measurement.charCoords(this, line_pos.clipPos(this.doc, pos), mode || 'page');
             },
             coordsChar: function (coords, mode) {
-                coords = o.fromCoordSystem(this, coords, mode || 'page');
-                return o.coordsChar(this, coords.left, coords.top);
+                coords = position_measurement.fromCoordSystem(this, coords, mode || 'page');
+                return position_measurement.coordsChar(this, coords.left, coords.top);
             },
             lineAtHeight: function (height, mode) {
-                height = o.fromCoordSystem(this, {
+                height = position_measurement.fromCoordSystem(this, {
                     top: height,
                     left: 0
                 }, mode || 'page').top;
-                return w.lineAtHeight(this.doc, height + this.display.viewOffset);
+                return utils_line.lineAtHeight(this.doc, height + this.display.viewOffset);
             },
             heightAtLine: function (line, mode, includeWidgets) {
                 let end = false, lineObj;
@@ -31167,20 +32560,20 @@ define('skylark-codemirror/primitives/edit/methods',[
                         line = last;
                         end = true;
                     }
-                    lineObj = w.getLine(this.doc, line);
+                    lineObj = utils_line.getLine(this.doc, line);
                 } else {
                     lineObj = line;
                 }
-                return o.intoCoordSystem(this, lineObj, {
+                return position_measurement.intoCoordSystem(this, lineObj, {
                     top: 0,
                     left: 0
-                }, mode || 'page', includeWidgets || end).top + (end ? this.doc.height - s.heightAtLine(lineObj) : 0);
+                }, mode || 'page', includeWidgets || end).top + (end ? this.doc.height - line_spans.heightAtLine(lineObj) : 0);
             },
             defaultTextHeight: function () {
-                return o.textHeight(this.display);
+                return position_measurement.textHeight(this.display);
             },
             defaultCharWidth: function () {
-                return o.charWidth(this.display);
+                return position_measurement.charWidth(this.display);
             },
             getViewport: function () {
                 return {
@@ -31190,7 +32583,7 @@ define('skylark-codemirror/primitives/edit/methods',[
             },
             addWidget: function (pos, node, scroll, vert, horiz) {
                 let display = this.display;
-                pos = o.cursorCoords(this, n.clipPos(this.doc, pos));
+                pos = position_measurement.cursorCoords(this, line_pos.clipPos(this.doc, pos));
                 let top = pos.bottom, left = pos.left;
                 node.style.position = 'absolute';
                 node.setAttribute('cm-ignore-events', 'true');
@@ -31220,23 +32613,23 @@ define('skylark-codemirror/primitives/edit/methods',[
                     node.style.left = left + 'px';
                 }
                 if (scroll)
-                    r.scrollIntoView(this, {
+                    scrolling.scrollIntoView(this, {
                         left,
                         top,
                         right: left + node.offsetWidth,
                         bottom: top + node.offsetHeight
                     });
             },
-            triggerOnKeyDown: m.methodOp(i.onKeyDown),
-            triggerOnKeyPress: m.methodOp(i.onKeyPress),
-            triggerOnKeyUp: i.onKeyUp,
-            triggerOnMouseDown: m.methodOp(j.onMouseDown),
+            triggerOnKeyDown: operations.methodOp(key_events.onKeyDown),
+            triggerOnKeyPress: operations.methodOp(key_events.onKeyPress),
+            triggerOnKeyUp: key_events.onKeyUp,
+            triggerOnMouseDown: operations.methodOp(mouse_events.onMouseDown),
             execCommand: function (cmd) {
-                if (b.commands.hasOwnProperty(cmd))
-                    return b.commands[cmd].call(null, this);
+                if (m_commands.commands.hasOwnProperty(cmd))
+                    return m_commands.commands[cmd].call(null, this);
             },
-            triggerElectric: m.methodOp(function (text) {
-                h.triggerElectric(this, text);
+            triggerElectric: operations.methodOp(function (text) {
+                m_input.triggerElectric(this, text);
             }),
             findPosH: function (from, amount, unit, visually) {
                 let dir = 1;
@@ -31244,7 +32637,7 @@ define('skylark-codemirror/primitives/edit/methods',[
                     dir = -1;
                     amount = -amount;
                 }
-                let cur = n.clipPos(this.doc, from);
+                let cur = line_pos.clipPos(this.doc, from);
                 for (let i = 0; i < amount; ++i) {
                     cur = findPosH(this.doc, cur, dir, unit, visually);
                     if (cur.hitSide)
@@ -31252,20 +32645,20 @@ define('skylark-codemirror/primitives/edit/methods',[
                 }
                 return cur;
             },
-            moveH: m.methodOp(function (dir, unit) {
+            moveH: operations.methodOp(function (dir, unit) {
                 this.extendSelectionsBy(range => {
                     if (this.display.shift || this.doc.extend || range.empty())
                         return findPosH(this.doc, range.head, dir, unit, this.options.rtlMoveVisually);
                     else
                         return dir < 0 ? range.from() : range.to();
-                }, u.sel_move);
+                }, misc.sel_move);
             }),
-            deleteH: m.methodOp(function (dir, unit) {
+            deleteH: operations.methodOp(function (dir, unit) {
                 let sel = this.doc.sel, doc = this.doc;
                 if (sel.somethingSelected())
                     doc.replaceSelection('', null, '+delete');
                 else
-                    a.deleteNearSelection(this, range => {
+                    m_deleteNearSelection.deleteNearSelection(this, range => {
                         let other = findPosH(doc, range.head, dir, unit, false);
                         return dir < 0 ? {
                             from: other,
@@ -31282,9 +32675,9 @@ define('skylark-codemirror/primitives/edit/methods',[
                     dir = -1;
                     amount = -amount;
                 }
-                let cur = n.clipPos(this.doc, from);
+                let cur = line_pos.clipPos(this.doc, from);
                 for (let i = 0; i < amount; ++i) {
-                    let coords = o.cursorCoords(this, cur, 'div');
+                    let coords = position_measurement.cursorCoords(this, cur, 'div');
                     if (x == null)
                         x = coords.left;
                     else
@@ -31295,27 +32688,27 @@ define('skylark-codemirror/primitives/edit/methods',[
                 }
                 return cur;
             },
-            moveV: m.methodOp(function (dir, unit) {
+            moveV: operations.methodOp(function (dir, unit) {
                 let doc = this.doc, goals = [];
                 let collapse = !this.display.shift && !doc.extend && doc.sel.somethingSelected();
                 doc.extendSelectionsBy(range => {
                     if (collapse)
                         return dir < 0 ? range.from() : range.to();
-                    let headPos = o.cursorCoords(this, range.head, 'div');
+                    let headPos = position_measurement.cursorCoords(this, range.head, 'div');
                     if (range.goalColumn != null)
                         headPos.left = range.goalColumn;
                     goals.push(headPos.left);
                     let pos = findPosV(this, headPos, dir, unit);
                     if (unit == 'page' && range == doc.sel.primary())
-                        r.addToScrollTop(this, o.charCoords(this, pos, 'div').top - headPos.top);
+                        scrolling.addToScrollTop(this, position_measurement.charCoords(this, pos, 'div').top - headPos.top);
                     return pos;
-                }, u.sel_move);
+                }, misc.sel_move);
                 if (goals.length)
                     for (let i = 0; i < doc.sel.ranges.length; i++)
                         doc.sel.ranges[i].goalColumn = goals[i];
             }),
             findWordAt: function (pos) {
-                let doc = this.doc, line = w.getLine(doc, pos.line).text;
+                let doc = this.doc, line = utils_line.getLine(doc, pos.line).text;
                 let start = pos.ch, end = pos.ch;
                 if (line) {
                     let helper = this.getHelper(pos, 'wordChars');
@@ -31324,44 +32717,44 @@ define('skylark-codemirror/primitives/edit/methods',[
                     else
                         ++end;
                     let startChar = line.charAt(start);
-                    let check = u.isWordChar(startChar, helper) ? ch => u.isWordChar(ch, helper) : /\s/.test(startChar) ? ch => /\s/.test(ch) : ch => !/\s/.test(ch) && !u.isWordChar(ch);
+                    let check = misc.isWordChar(startChar, helper) ? ch => misc.isWordChar(ch, helper) : /\s/.test(startChar) ? ch => /\s/.test(ch) : ch => !/\s/.test(ch) && !misc.isWordChar(ch);
                     while (start > 0 && check(line.charAt(start - 1)))
                         --start;
                     while (end < line.length && check(line.charAt(end)))
                         ++end;
                 }
-                return new p.Range(n.Pos(pos.line, start), n.Pos(pos.line, end));
+                return new selection.Range(line_pos.Pos(pos.line, start), line_pos.Pos(pos.line, end));
             },
             toggleOverwrite: function (value) {
                 if (value != null && value == this.state.overwrite)
                     return;
                 if (this.state.overwrite = !this.state.overwrite)
-                    d.addClass(this.display.cursorDiv, 'CodeMirror-overwrite');
+                    dom.addClass(this.display.cursorDiv, 'CodeMirror-overwrite');
                 else
-                    d.rmClass(this.display.cursorDiv, 'CodeMirror-overwrite');
-                e.signal(this, 'overwriteToggle', this, this.state.overwrite);
+                    dom.rmClass(this.display.cursorDiv, 'CodeMirror-overwrite');
+                events.signal(this, 'overwriteToggle', this, this.state.overwrite);
             },
             hasFocus: function () {
-                return this.display.input.getField() == d.activeElt();
+                return this.display.input.getField() == dom.activeElt();
             },
             isReadOnly: function () {
                 return !!(this.options.readOnly || this.doc.cantEdit);
             },
-            scrollTo: m.methodOp(function (x, y) {
-                r.scrollToCoords(this, x, y);
+            scrollTo: operations.methodOp(function (x, y) {
+                scrolling.scrollToCoords(this, x, y);
             }),
             getScrollInfo: function () {
                 let scroller = this.display.scroller;
                 return {
                     left: scroller.scrollLeft,
                     top: scroller.scrollTop,
-                    height: scroller.scrollHeight - o.scrollGap(this) - this.display.barHeight,
-                    width: scroller.scrollWidth - o.scrollGap(this) - this.display.barWidth,
-                    clientHeight: o.displayHeight(this),
-                    clientWidth: o.displayWidth(this)
+                    height: scroller.scrollHeight - position_measurement.scrollGap(this) - this.display.barHeight,
+                    width: scroller.scrollWidth - position_measurement.scrollGap(this) - this.display.barWidth,
+                    clientHeight: position_measurement.displayHeight(this),
+                    clientWidth: position_measurement.displayWidth(this)
                 };
             },
-            scrollIntoView: m.methodOp(function (range, margin) {
+            scrollIntoView: operations.methodOp(function (range, margin) {
                 if (range == null) {
                     range = {
                         from: this.doc.sel.primary().head,
@@ -31371,7 +32764,7 @@ define('skylark-codemirror/primitives/edit/methods',[
                         margin = this.options.cursorScrollMargin;
                 } else if (typeof range == 'number') {
                     range = {
-                        from: n.Pos(range, 0),
+                        from: line_pos.Pos(range, 0),
                         to: null
                     };
                 } else if (range.from == null) {
@@ -31384,61 +32777,61 @@ define('skylark-codemirror/primitives/edit/methods',[
                     range.to = range.from;
                 range.margin = margin || 0;
                 if (range.from.line != null) {
-                    r.scrollToRange(this, range);
+                    scrolling.scrollToRange(this, range);
                 } else {
-                    r.scrollToCoordsRange(this, range.from, range.to, range.margin);
+                    scrolling.scrollToCoordsRange(this, range.from, range.to, range.margin);
                 }
             }),
-            setSize: m.methodOp(function (width, height) {
+            setSize: operations.methodOp(function (width, height) {
                 let interpret = val => typeof val == 'number' || /^\d+$/.test(String(val)) ? val + 'px' : val;
                 if (width != null)
                     this.display.wrapper.style.width = interpret(width);
                 if (height != null)
                     this.display.wrapper.style.height = interpret(height);
                 if (this.options.lineWrapping)
-                    o.clearLineMeasurementCache(this);
+                    position_measurement.clearLineMeasurementCache(this);
                 let lineNo = this.display.viewFrom;
                 this.doc.iter(lineNo, this.display.viewTo, line => {
                     if (line.widgets)
                         for (let i = 0; i < line.widgets.length; i++)
                             if (line.widgets[i].noHScroll) {
-                                x.regLineChange(this, lineNo, 'widget');
+                                view_tracking.regLineChange(this, lineNo, 'widget');
                                 break;
                             }
                     ++lineNo;
                 });
                 this.curOp.forceUpdate = true;
-                e.signal(this, 'refresh', this);
+                events.signal(this, 'refresh', this);
             }),
             operation: function (f) {
-                return m.runInOp(this, f);
+                return operations.runInOp(this, f);
             },
             startOperation: function () {
-                return m.startOperation(this);
+                return operations.startOperation(this);
             },
             endOperation: function () {
-                return m.endOperation(this);
+                return operations.endOperation(this);
             },
-            refresh: m.methodOp(function () {
+            refresh: operations.methodOp(function () {
                 let oldHeight = this.display.cachedTextHeight;
-                x.regChange(this);
+                view_tracking.regChange(this);
                 this.curOp.forceUpdate = true;
-                o.clearCaches(this);
-                r.scrollToCoords(this, this.doc.scrollLeft, this.doc.scrollTop);
-                t.updateGutterSpace(this);
-                if (oldHeight == null || Math.abs(oldHeight - o.textHeight(this.display)) > 0.5)
-                    o.estimateLineHeights(this);
-                e.signal(this, 'refresh', this);
+                position_measurement.clearCaches(this);
+                scrolling.scrollToCoords(this, this.doc.scrollLeft, this.doc.scrollTop);
+                update_display.updateGutterSpace(this);
+                if (oldHeight == null || Math.abs(oldHeight - position_measurement.textHeight(this.display)) > 0.5)
+                    position_measurement.estimateLineHeights(this);
+                events.signal(this, 'refresh', this);
             }),
-            swapDoc: m.methodOp(function (doc) {
+            swapDoc: operations.methodOp(function (doc) {
                 let old = this.doc;
                 old.cm = null;
-                c.attachDoc(this, doc);
-                o.clearCaches(this);
+                m_document_data.attachDoc(this, doc);
+                position_measurement.clearCaches(this);
                 this.display.input.reset();
-                r.scrollToCoords(this, doc.scrollLeft, doc.scrollTop);
+                scrolling.scrollToCoords(this, doc.scrollLeft, doc.scrollTop);
                 this.curOp.forceScroll = true;
-                v.signalLater(this, 'swapDoc', this, old);
+                operation_group.signalLater(this, 'swapDoc', this, old);
                 return old;
             }),
             phrase: function (phraseText) {
@@ -31474,7 +32867,7 @@ define('skylark-codemirror/primitives/edit/methods',[
                 return m_scrollbars.updateScrollbars(this,measure);
             }
         };
-        e.eventMixin(CodeMirror);
+        events.eventMixin(CodeMirror);
         CodeMirror.registerHelper = function (type, name, value) {
             if (!helpers.hasOwnProperty(type))
                 helpers[type] = CodeMirror[type] = { _global: [] };
@@ -31488,89 +32881,7 @@ define('skylark-codemirror/primitives/edit/methods',[
             });
         };
     };
-    function findPosH(doc, pos, dir, unit, visually) {
-        let oldPos = pos;
-        let origDir = dir;
-        let lineObj = w.getLine(doc, pos.line);
-        function findNextLine() {
-            let l = pos.line + dir;
-            if (l < doc.first || l >= doc.first + doc.size)
-                return false;
-            pos = new n.Pos(l, pos.ch, pos.sticky);
-            return lineObj = w.getLine(doc, l);
-        }
-        function moveOnce(boundToLine) {
-            let next;
-            if (visually) {
-                next = l.moveVisually(doc.cm, lineObj, pos, dir);
-            } else {
-                next = l.moveLogically(lineObj, pos, dir);
-            }
-            if (next == null) {
-                if (!boundToLine && findNextLine())
-                    pos = l.endOfLine(visually, doc.cm, lineObj, pos.line, dir);
-                else
-                    return false;
-            } else {
-                pos = next;
-            }
-            return true;
-        }
-        if (unit == 'char') {
-            moveOnce();
-        } else if (unit == 'column') {
-            moveOnce(true);
-        } else if (unit == 'word' || unit == 'group') {
-            let sawType = null, group = unit == 'group';
-            let helper = doc.cm && doc.cm.getHelper(pos, 'wordChars');
-            for (let first = true;; first = false) {
-                if (dir < 0 && !moveOnce(!first))
-                    break;
-                let cur = lineObj.text.charAt(pos.ch) || '\n';
-                let type = u.isWordChar(cur, helper) ? 'w' : group && cur == '\n' ? 'n' : !group || /\s/.test(cur) ? null : 'p';
-                if (group && !first && !type)
-                    type = 's';
-                if (sawType && sawType != type) {
-                    if (dir < 0) {
-                        dir = 1;
-                        moveOnce();
-                        pos.sticky = 'after';
-                    }
-                    break;
-                }
-                if (type)
-                    sawType = type;
-                if (dir > 0 && !moveOnce(!first))
-                    break;
-            }
-        }
-        let result = q.skipAtomic(doc, pos, oldPos, origDir, true);
-        if (n.equalCursorPos(oldPos, result))
-            result.hitSide = true;
-        return result;
-    }
-    function findPosV(cm, pos, dir, unit) {
-        let doc = cm.doc, x = pos.left, y;
-        if (unit == 'page') {
-            let pageSize = Math.min(cm.display.wrapper.clientHeight, window.innerHeight || document.documentElement.clientHeight);
-            let moveAmount = Math.max(pageSize - 0.5 * o.textHeight(cm.display), 3);
-            y = (dir > 0 ? pos.bottom : pos.top) + dir * moveAmount;
-        } else if (unit == 'line') {
-            y = dir > 0 ? pos.bottom + 3 : pos.top - 3;
-        }
-        let target;
-        for (;;) {
-            target = o.coordsChar(cm, x, y);
-            if (!target.outside)
-                break;
-            if (dir < 0 ? y <= 0 : y >= doc.height) {
-                target.hitSide = true;
-                break;
-            }
-            y += dir * 5;
-        }
-        return target;
-    }
+
 });
 define('skylark-codemirror/primitives/input/ContentEditableInput',[
     '../display/operations',
@@ -31588,13 +32899,13 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
     '../util/dom',
     '../util/event',
     '../util/misc'
-], function (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) {
+], function (operations, display_selection, view_tracking, inputs, line_pos, utils_line, position_measurement, changes, selection, selection_updates, bidi, browser, dom, events, misc) {
     'use strict';
     class ContentEditableInput {
         constructor(cm) {
             this.cm = cm;
             this.lastAnchorNode = this.lastAnchorOffset = this.lastFocusNode = this.lastFocusOffset = null;
-            this.polling = new o.Delayed();
+            this.polling = new misc.Delayed();
             this.composing = null;
             this.gracePeriod = false;
             this.readDOMTimeout = null;
@@ -31602,43 +32913,43 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
         init(display) {
             let input = this, cm = input.cm;
             let div = input.div = display.lineDiv;
-            d.disableBrowserMagic(div, cm.options.spellcheck, cm.options.autocorrect, cm.options.autocapitalize);
-            n.on(div, 'paste', e => {
-                if (n.signalDOMEvent(cm, e) || d.handlePaste(e, cm))
+            inputs.disableBrowserMagic(div, cm.options.spellcheck, cm.options.autocorrect, cm.options.autocapitalize);
+            events.on(div, 'paste', e => {
+                if (events.signalDOMEvent(cm, e) || inputs.handlePaste(e, cm))
                     return;
-                if (l.ie_version <= 11)
-                    setTimeout(a.operation(cm, () => this.updateFromDOM()), 20);
+                if (browser.ie_version <= 11)
+                    setTimeout(operations.operation(cm, () => this.updateFromDOM()), 20);
             });
-            n.on(div, 'compositionstart', e => {
+            events.on(div, 'compositionstart', e => {
                 this.composing = {
                     data: e.data,
                     done: false
                 };
             });
-            n.on(div, 'compositionupdate', e => {
+            events.on(div, 'compositionupdate', e => {
                 if (!this.composing)
                     this.composing = {
                         data: e.data,
                         done: false
                     };
             });
-            n.on(div, 'compositionend', e => {
+            events.on(div, 'compositionend', e => {
                 if (this.composing) {
                     if (e.data != this.composing.data)
                         this.readFromDOMSoon();
                     this.composing.done = true;
                 }
             });
-            n.on(div, 'touchstart', () => input.forceCompositionEnd());
-            n.on(div, 'input', () => {
+            events.on(div, 'touchstart', () => input.forceCompositionEnd());
+            events.on(div, 'input', () => {
                 if (!this.composing)
                     this.readFromDOMSoon();
             });
             function onCopyCut(e) {
-                if (n.signalDOMEvent(cm, e))
+                if (events.signalDOMEvent(cm, e))
                     return;
                 if (cm.somethingSelected()) {
-                    d.setLastCopied({
+                    inputs.setLastCopied({
                         lineWise: false,
                         text: cm.getSelections()
                     });
@@ -31647,32 +32958,32 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                 } else if (!cm.options.lineWiseCopyCut) {
                     return;
                 } else {
-                    let ranges = d.copyableRanges(cm);
-                    d.setLastCopied({
+                    let ranges = inputs.copyableRanges(cm);
+                    inputs.setLastCopied({
                         lineWise: true,
                         text: ranges.text
                     });
                     if (e.type == 'cut') {
                         cm.operation(() => {
-                            cm.setSelections(ranges.ranges, 0, o.sel_dontScroll);
+                            cm.setSelections(ranges.ranges, 0, misc.sel_dontScroll);
                             cm.replaceSelection('', null, 'cut');
                         });
                     }
                 }
                 if (e.clipboardData) {
                     e.clipboardData.clearData();
-                    let content = d.lastCopied.text.join('\n');
+                    let content = inputs.lastCopied.text.join('\n');
                     e.clipboardData.setData('Text', content);
                     if (e.clipboardData.getData('Text') == content) {
                         e.preventDefault();
                         return;
                     }
                 }
-                let kludge = d.hiddenTextarea(), te = kludge.firstChild;
+                let kludge = inputs.hiddenTextarea(), te = kludge.firstChild;
                 cm.display.lineSpace.insertBefore(kludge, cm.display.lineSpace.firstChild);
-                te.value = d.lastCopied.text.join('\n');
+                te.value = inputs.lastCopied.text.join('\n');
                 let hadFocus = document.activeElement;
-                m.selectInput(te);
+                dom.selectInput(te);
                 setTimeout(() => {
                     cm.display.lineSpace.removeChild(kludge);
                     hadFocus.focus();
@@ -31680,11 +32991,11 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                         input.showPrimarySelection();
                 }, 50);
             }
-            n.on(div, 'copy', onCopyCut);
-            n.on(div, 'cut', onCopyCut);
+            events.on(div, 'copy', onCopyCut);
+            events.on(div, 'cut', onCopyCut);
         }
         prepareSelection() {
-            let result = b.prepareSelection(this.cm, false);
+            let result = display_selection.prepareSelection(this.cm, false);
             result.focus = this.cm.state.focused;
             return result;
         }
@@ -31707,7 +33018,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             }
             let curAnchor = domToPos(cm, sel.anchorNode, sel.anchorOffset);
             let curFocus = domToPos(cm, sel.focusNode, sel.focusOffset);
-            if (curAnchor && !curAnchor.bad && curFocus && !curFocus.bad && e.cmp(e.minPos(curAnchor, curFocus), from) == 0 && e.cmp(e.maxPos(curAnchor, curFocus), to) == 0)
+            if (curAnchor && !curAnchor.bad && curFocus && !curFocus.bad && line_pos.cmp(line_pos.minPos(curAnchor, curFocus), from) == 0 && line_pos.cmp(line_pos.maxPos(curAnchor, curFocus), to) == 0)
                 return;
             let view = cm.display.view;
             let start = from.line >= cm.display.viewFrom && posToDOM(cm, from) || {
@@ -31729,11 +33040,11 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             }
             let old = sel.rangeCount && sel.getRangeAt(0), rng;
             try {
-                rng = m.range(start.node, start.offset, end.offset, end.node);
+                rng = dom.range(start.node, start.offset, end.offset, end.node);
             } catch (e) {
             }
             if (rng) {
-                if (!l.gecko && cm.state.focused) {
+                if (!browser.gecko && cm.state.focused) {
                     sel.collapse(start.node, start.offset);
                     if (!rng.collapsed) {
                         sel.removeAllRanges();
@@ -31745,7 +33056,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                 }
                 if (old && sel.anchorNode == null)
                     sel.addRange(old);
-                else if (l.gecko)
+                else if (browser.gecko)
                     this.startGracePeriod();
             }
             this.rememberSelection();
@@ -31759,8 +33070,8 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             }, 20);
         }
         showMultipleSelections(info) {
-            m.removeChildrenAndAdd(this.cm.display.cursorDiv, info.cursors);
-            m.removeChildrenAndAdd(this.cm.display.selectionDiv, info.selection);
+            dom.removeChildrenAndAdd(this.cm.display.cursorDiv, info.cursors);
+            dom.removeChildrenAndAdd(this.cm.display.selectionDiv, info.selection);
         }
         rememberSelection() {
             let sel = this.getSelection();
@@ -31774,7 +33085,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             if (!sel.rangeCount)
                 return false;
             let node = sel.getRangeAt(0).commonAncestorContainer;
-            return m.contains(this.div, node);
+            return dom.contains(this.div, node);
         }
         focus() {
             if (this.cm.options.readOnly != 'nocursor') {
@@ -31797,7 +33108,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             if (this.selectionInEditor())
                 this.pollSelection();
             else
-                a.runInOp(this.cm, () => input.cm.curOp.selectionChanged = true);
+                operations.runInOp(this.cm, () => input.cm.curOp.selectionChanged = true);
             function poll() {
                 if (input.cm.state.focused) {
                     input.pollSelection();
@@ -31814,7 +33125,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             if (this.readDOMTimeout != null || this.gracePeriod || !this.selectionChanged())
                 return;
             let sel = this.getSelection(), cm = this.cm;
-            if (l.android && l.chrome && this.cm.options.gutters.length && isInGutter(sel.anchorNode)) {
+            if (browser.android && browser.chrome && this.cm.options.gutters.length && isInGutter(sel.anchorNode)) {
                 this.cm.triggerOnKeyDown({
                     type: 'keydown',
                     keyCode: 8,
@@ -31830,8 +33141,8 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             let anchor = domToPos(cm, sel.anchorNode, sel.anchorOffset);
             let head = domToPos(cm, sel.focusNode, sel.focusOffset);
             if (anchor && head)
-                a.runInOp(cm, () => {
-                    j.setSelection(cm.doc, i.simpleSelection(anchor, head), o.sel_dontScroll);
+                operations.runInOp(cm, () => {
+                    selection_updates.setSelection(cm.doc, selection.simpleSelection(anchor, head), misc.sel_dontScroll);
                     if (anchor.bad || head.bad)
                         cm.curOp.selectionChanged = true;
                 });
@@ -31844,34 +33155,34 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             let cm = this.cm, display = cm.display, sel = cm.doc.sel.primary();
             let from = sel.from(), to = sel.to();
             if (from.ch == 0 && from.line > cm.firstLine())
-                from = e.Pos(from.line - 1, f.getLine(cm.doc, from.line - 1).length);
-            if (to.ch == f.getLine(cm.doc, to.line).text.length && to.line < cm.lastLine())
-                to = e.Pos(to.line + 1, 0);
+                from = line_pos.Pos(from.line - 1, utils_line.getLine(cm.doc, from.line - 1).length);
+            if (to.ch == utils_line.getLine(cm.doc, to.line).text.length && to.line < cm.lastLine())
+                to = line_pos.Pos(to.line + 1, 0);
             if (from.line < display.viewFrom || to.line > display.viewTo - 1)
                 return false;
             let fromIndex, fromLine, fromNode;
-            if (from.line == display.viewFrom || (fromIndex = g.findViewIndex(cm, from.line)) == 0) {
-                fromLine = f.lineNo(display.view[0].line);
+            if (from.line == display.viewFrom || (fromIndex = position_measurement.findViewIndex(cm, from.line)) == 0) {
+                fromLine = utils_line.lineNo(display.view[0].line);
                 fromNode = display.view[0].node;
             } else {
-                fromLine = f.lineNo(display.view[fromIndex].line);
+                fromLine = utils_line.lineNo(display.view[fromIndex].line);
                 fromNode = display.view[fromIndex - 1].node.nextSibling;
             }
-            let toIndex = g.findViewIndex(cm, to.line);
+            let toIndex = position_measurement.findViewIndex(cm, to.line);
             let toLine, toNode;
             if (toIndex == display.view.length - 1) {
                 toLine = display.viewTo - 1;
                 toNode = display.lineDiv.lastChild;
             } else {
-                toLine = f.lineNo(display.view[toIndex + 1].line) - 1;
+                toLine = utils_line.lineNo(display.view[toIndex + 1].line) - 1;
                 toNode = display.view[toIndex + 1].node.previousSibling;
             }
             if (!fromNode)
                 return false;
             let newText = cm.doc.splitLines(domTextBetween(cm, fromNode, toNode, fromLine, toLine));
-            let oldText = f.getBetween(cm.doc, e.Pos(fromLine, 0), e.Pos(toLine, f.getLine(cm.doc, toLine).text.length));
+            let oldText = utils_line.getBetween(cm.doc, line_pos.Pos(fromLine, 0), line_pos.Pos(toLine, utils_line.getLine(cm.doc, toLine).text.length));
             while (newText.length > 1 && oldText.length > 1) {
-                if (o.lst(newText) == o.lst(oldText)) {
+                if (misc.lst(newText) == misc.lst(oldText)) {
                     newText.pop();
                     oldText.pop();
                     toLine--;
@@ -31886,7 +33197,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             let newTop = newText[0], oldTop = oldText[0], maxCutFront = Math.min(newTop.length, oldTop.length);
             while (cutFront < maxCutFront && newTop.charCodeAt(cutFront) == oldTop.charCodeAt(cutFront))
                 ++cutFront;
-            let newBot = o.lst(newText), oldBot = o.lst(oldText);
+            let newBot = misc.lst(newText), oldBot = misc.lst(oldText);
             let maxCutEnd = Math.min(newBot.length - (newText.length == 1 ? cutFront : 0), oldBot.length - (oldText.length == 1 ? cutFront : 0));
             while (cutEnd < maxCutEnd && newBot.charCodeAt(newBot.length - cutEnd - 1) == oldBot.charCodeAt(oldBot.length - cutEnd - 1))
                 ++cutEnd;
@@ -31898,10 +33209,10 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
             }
             newText[newText.length - 1] = newBot.slice(0, newBot.length - cutEnd).replace(/^\u200b+/, '');
             newText[0] = newText[0].slice(cutFront).replace(/\u200b+$/, '');
-            let chFrom = e.Pos(fromLine, cutFront);
-            let chTo = e.Pos(toLine, oldText.length ? o.lst(oldText).length - cutEnd : 0);
-            if (newText.length > 1 || newText[0] || e.cmp(chFrom, chTo)) {
-                h.replaceRange(cm.doc, newText, chFrom, chTo, '+input');
+            let chFrom = line_pos.Pos(fromLine, cutFront);
+            let chTo = line_pos.Pos(toLine, oldText.length ? misc.lst(oldText).length - cutEnd : 0);
+            if (newText.length > 1 || newText[0] || line_pos.cmp(chFrom, chTo)) {
+                changes.replaceRange(cm.doc, newText, chFrom, chTo, '+input');
                 return true;
             }
         }
@@ -31936,7 +33247,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
         }
         updateFromDOM() {
             if (this.cm.isReadOnly() || !this.pollContent())
-                a.runInOp(this.cm, () => c.regChange(this.cm));
+                operations.runInOp(this.cm, () => view_tracking.regChange(this.cm));
         }
         setUneditable(node) {
             node.contentEditable = 'false';
@@ -31946,7 +33257,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                 return;
             e.preventDefault();
             if (!this.cm.isReadOnly())
-                a.operation(this.cm, d.applyTextInput)(this.cm, String.fromCharCode(e.charCode == null ? e.keyCode : e.charCode), 0);
+                operations.operation(this.cm, inputs.applyTextInput)(this.cm, String.fromCharCode(e.charCode == null ? e.keyCode : e.charCode), 0);
         }
         readOnlyChanged(val) {
             this.div.contentEditable = String(val != 'nocursor');
@@ -31958,17 +33269,17 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
     };
     ContentEditableInput.prototype.needsContentAttribute = true;
     function posToDOM(cm, pos) {
-        let view = g.findViewForLine(cm, pos.line);
+        let view = position_measurement.findViewForLine(cm, pos.line);
         if (!view || view.hidden)
             return null;
-        let line = f.getLine(cm.doc, pos.line);
-        let info = g.mapFromLineView(view, line, pos.line);
-        let order = k.getOrder(line, cm.doc.direction), side = 'left';
+        let line = utils_line.getLine(cm.doc, pos.line);
+        let info = position_measurement.mapFromLineView(view, line, pos.line);
+        let order = bidi.getOrder(line, cm.doc.direction), side = 'left';
         if (order) {
-            let partPos = k.getBidiPartAt(order, pos.ch);
+            let partPos = bidi.getBidiPartAt(order, pos.ch);
             side = partPos % 2 ? 'right' : 'left';
         }
-        let result = g.nodeAndOffsetInLineMap(info.map, pos.ch, side);
+        let result = position_measurement.nodeAndOffsetInLineMap(info.map, pos.ch, side);
         result.offset = result.collapse == 'right' ? result.end : result.start;
         return result;
     }
@@ -32011,9 +33322,9 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                 }
                 let markerID = node.getAttribute('cm-marker'), range;
                 if (markerID) {
-                    let found = cm.findMarks(e.Pos(fromLine, 0), e.Pos(toLine + 1, 0), recognizeMarker(+markerID));
+                    let found = cm.findMarks(line_pos.Pos(fromLine, 0), line_pos.Pos(toLine + 1, 0), recognizeMarker(+markerID));
                     if (found.length && (range = found[0].find(0)))
-                        addText(f.getBetween(cm.doc, range.from, range.to).join(lineSep));
+                        addText(utils_line.getBetween(cm.doc, range.from, range.to).join(lineSep));
                     return;
                 }
                 if (node.getAttribute('contenteditable') == 'false')
@@ -32047,7 +33358,7 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
         if (node == cm.display.lineDiv) {
             lineNode = cm.display.lineDiv.childNodes[offset];
             if (!lineNode)
-                return badPos(cm.clipPos(e.Pos(cm.display.viewTo - 1)), true);
+                return badPos(cm.clipPos(line_pos.Pos(cm.display.viewTo - 1)), true);
             node = null;
             offset = 0;
         } else {
@@ -32066,15 +33377,15 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
     }
     function locateNodeInLineView(lineView, node, offset) {
         let wrapper = lineView.text.firstChild, bad = false;
-        if (!node || !m.contains(wrapper, node))
-            return badPos(e.Pos(f.lineNo(lineView.line), 0), true);
+        if (!node || !dom.contains(wrapper, node))
+            return badPos(line_pos.Pos(utils_line.lineNo(lineView.line), 0), true);
         if (node == wrapper) {
             bad = true;
             node = wrapper.childNodes[offset];
             offset = 0;
             if (!node) {
-                let line = lineView.rest ? o.lst(lineView.rest) : lineView.line;
-                return badPos(e.Pos(f.lineNo(line), line.text.length), bad);
+                let line = lineView.rest ? misc.lst(lineView.rest) : lineView.line;
+                return badPos(line_pos.Pos(utils_line.lineNo(line), line.text.length), bad);
             }
         }
         let textNode = node.nodeType == 3 ? node : null, topNode = node;
@@ -32092,11 +33403,11 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
                 for (let j = 0; j < map.length; j += 3) {
                     let curNode = map[j + 2];
                     if (curNode == textNode || curNode == topNode) {
-                        let line = f.lineNo(i < 0 ? lineView.line : lineView.rest[i]);
+                        let line = utils_line.lineNo(i < 0 ? lineView.line : lineView.rest[i]);
                         let ch = map[j] + offset;
                         if (offset < 0 || curNode != textNode)
                             ch = map[j + (offset ? 1 : 0)];
-                        return e.Pos(line, ch);
+                        return line_pos.Pos(line, ch);
                     }
                 }
             }
@@ -32107,14 +33418,14 @@ define('skylark-codemirror/primitives/input/ContentEditableInput',[
         for (let after = topNode.nextSibling, dist = textNode ? textNode.nodeValue.length - offset : 0; after; after = after.nextSibling) {
             found = find(after, after.firstChild, 0);
             if (found)
-                return badPos(e.Pos(found.line, found.ch - dist), bad);
+                return badPos(line_pos.Pos(found.line, found.ch - dist), bad);
             else
                 dist += after.textContent.length;
         }
         for (let before = topNode.previousSibling, dist = offset; before; before = before.previousSibling) {
             found = find(before, before.firstChild, -1);
             if (found)
-                return badPos(e.Pos(found.line, found.ch + dist), bad);
+                return badPos(line_pos.Pos(found.line, found.ch + dist), bad);
             else
                 dist += before.textContent.length;
         }
@@ -32135,106 +33446,119 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
     '../util/event',
     '../util/feature_detection',
     '../util/misc'
-], function (a, b, c, d, e, f, g, h, i, j, k, l) {
+], function (
+    operations, 
+    display_selection, 
+    inputs, 
+    position_measurement, 
+    widgets, 
+    model_selection, 
+    selection_updates, 
+    browser, 
+    dom, 
+    event, 
+    feature_detection, 
+    misc
+) {
     'use strict';
     class TextareaInput {
         constructor(cm) {
             this.cm = cm;
             this.prevInput = '';
             this.pollingFast = false;
-            this.polling = new l.Delayed();
+            this.polling = new misc.Delayed();
             this.hasSelection = false;
             this.composing = null;
         }
         init(display) {
-            let input = this, cm = this.cm;
+            let self = this, cm = this.cm;
             this.createField(display);
             const te = this.textarea;
             display.wrapper.insertBefore(this.wrapper, display.wrapper.firstChild);
-            if (h.ios)
+            if (browser.ios)
                 te.style.width = '0px';
-            j.on(te, 'input', () => {
-                if (h.ie && h.ie_version >= 9 && this.hasSelection)
+            event.on(te, 'input', () => {
+                if (browser.ie && browser.ie_version >= 9 && this.hasSelection)
                     this.hasSelection = null;
-                input.poll();
+                self.poll();
             });
-            j.on(te, 'paste', e => {
-                if (j.signalDOMEvent(cm, e) || c.handlePaste(e, cm))
+            event.on(te, 'paste', e => {
+                if (event.signalDOMEvent(cm, e) || inputs.handlePaste(e, cm))
                     return;
                 cm.state.pasteIncoming = +new Date();
-                input.fastPoll();
+                self.fastPoll();
             });
             function prepareCopyCut(e) {
-                if (j.signalDOMEvent(cm, e))
+                if (event.signalDOMEvent(cm, e))
                     return;
                 if (cm.somethingSelected()) {
-                    c.setLastCopied({
+                    inputs.setLastCopied({
                         lineWise: false,
                         text: cm.getSelections()
                     });
                 } else if (!cm.options.lineWiseCopyCut) {
                     return;
                 } else {
-                    let ranges = c.copyableRanges(cm);
-                    c.setLastCopied({
+                    let ranges = inputs.copyableRanges(cm);
+                    inputs.setLastCopied({
                         lineWise: true,
                         text: ranges.text
                     });
                     if (e.type == 'cut') {
-                        cm.setSelections(ranges.ranges, null, l.sel_dontScroll);
+                        cm.setSelections(ranges.ranges, null, misc.sel_dontScroll);
                     } else {
-                        input.prevInput = '';
+                        self.prevInput = '';
                         te.value = ranges.text.join('\n');
-                        i.selectInput(te);
+                        dom.selectInput(te);
                     }
                 }
                 if (e.type == 'cut')
                     cm.state.cutIncoming = +new Date();
             }
-            j.on(te, 'cut', prepareCopyCut);
-            j.on(te, 'copy', prepareCopyCut);
-            j.on(display.scroller, 'paste', e => {
-                if (e.eventInWidget(display, e) || j.signalDOMEvent(cm, e))
+            event.on(te, 'cut', prepareCopyCut);
+            event.on(te, 'copy', prepareCopyCut);
+            event.on(display.scroller, 'paste', e => {
+                if (widgets.eventInWidget(display, e) || event.signalDOMEvent(cm, e))
                     return;
                 if (!te.dispatchEvent) {
                     cm.state.pasteIncoming = +new Date();
-                    input.focus();
+                    self.focus();
                     return;
                 }
                 const event = new Event('paste');
                 event.clipboardData = e.clipboardData;
                 te.dispatchEvent(event);
             });
-            j.on(display.lineSpace, 'selectstart', e => {
-                if (!e.eventInWidget(display, e))
-                    j.e_preventDefault(e);
+            event.on(display.lineSpace, 'selectstart', e => {
+                if (!widgets.eventInWidget(display, e))
+                    event.e_preventDefault(e);
             });
-            j.on(te, 'compositionstart', () => {
+            event.on(te, 'compositionstart', () => {
                 let start = cm.getCursor('from');
-                if (input.composing)
-                    input.composing.range.clear();
-                input.composing = {
+                if (self.composing)
+                    self.composing.range.clear();
+                self.composing = {
                     start: start,
                     range: cm.markText(start, cm.getCursor('to'), { className: 'CodeMirror-composing' })
                 };
             });
-            j.on(te, 'compositionend', () => {
-                if (input.composing) {
-                    input.poll();
-                    input.composing.range.clear();
-                    input.composing = null;
+            event.on(te, 'compositionend', () => {
+                if (self.composing) {
+                    self.poll();
+                    self.composing.range.clear();
+                    self.composing = null;
                 }
             });
         }
         createField(_display) {
-            this.wrapper = c.hiddenTextarea();
+            this.wrapper = inputs.hiddenTextarea();
             this.textarea = this.wrapper.firstChild;
         }
         prepareSelection() {
             let cm = this.cm, display = cm.display, doc = cm.doc;
-            let result = b.prepareSelection(cm);
+            let result = display_selection.prepareSelection(cm);
             if (cm.options.moveInputWithCursor) {
-                let headPos = d.cursorCoords(cm, doc.sel.primary().head, 'div');
+                let headPos = position_measurement.cursorCoords(cm, doc.sel.primary().head, 'div');
                 let wrapOff = display.wrapper.getBoundingClientRect(), lineOff = display.lineDiv.getBoundingClientRect();
                 result.teTop = Math.max(0, Math.min(display.wrapper.clientHeight - 10, headPos.top + lineOff.top - wrapOff.top));
                 result.teLeft = Math.max(0, Math.min(display.wrapper.clientWidth - 10, headPos.left + lineOff.left - wrapOff.left));
@@ -32243,8 +33567,8 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
         }
         showSelection(drawn) {
             let cm = this.cm, display = cm.display;
-            i.removeChildrenAndAdd(display.cursorDiv, drawn.cursors);
-            i.removeChildrenAndAdd(display.selectionDiv, drawn.selection);
+            dom.removeChildrenAndAdd(display.cursorDiv, drawn.cursors);
+            dom.removeChildrenAndAdd(display.selectionDiv, drawn.selection);
             if (drawn.teTop != null) {
                 this.wrapper.style.top = drawn.teTop + 'px';
                 this.wrapper.style.left = drawn.teLeft + 'px';
@@ -32259,12 +33583,12 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
                 let content = cm.getSelection();
                 this.textarea.value = content;
                 if (cm.state.focused)
-                    i.selectInput(this.textarea);
-                if (h.ie && h.ie_version >= 9)
+                    dom.selectInput(this.textarea);
+                if (browser.ie && browser.ie_version >= 9)
                     this.hasSelection = content;
             } else if (!typing) {
                 this.prevInput = this.textarea.value = '';
-                if (h.ie && h.ie_version >= 9)
+                if (browser.ie && browser.ie_version >= 9)
                     this.hasSelection = null;
             }
         }
@@ -32275,7 +33599,7 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
             return false;
         }
         focus() {
-            if (this.cm.options.readOnly != 'nocursor' && (!h.mobile || i.activeElt() != this.textarea)) {
+            if (this.cm.options.readOnly != 'nocursor' && (!browser.mobile || dom.activeElt() != this.textarea)) {
                 try {
                     this.textarea.focus();
                 } catch (e) {
@@ -32301,28 +33625,28 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
             });
         }
         fastPoll() {
-            let missed = false, input = this;
-            input.pollingFast = true;
+            let missed = false, self = this;
+            self.pollingFast = true;
             function p() {
-                let changed = input.poll();
+                let changed = self.poll();
                 if (!changed && !missed) {
                     missed = true;
-                    input.polling.set(60, p);
+                    self.polling.set(60, p);
                 } else {
-                    input.pollingFast = false;
-                    input.slowPoll();
+                    self.pollingFast = false;
+                    self.slowPoll();
                 }
             }
-            input.polling.set(20, p);
+            self.polling.set(20, p);
         }
         poll() {
             let cm = this.cm, input = this.textarea, prevInput = this.prevInput;
-            if (this.contextMenuPending || !cm.state.focused || k.hasSelection(input) && !prevInput && !this.composing || cm.isReadOnly() || cm.options.disableInput || cm.state.keySeq)
+            if (this.contextMenuPending || !cm.state.focused || feature_detection.hasSelection(input) && !prevInput && !this.composing || cm.isReadOnly() || cm.options.disableInput || cm.state.keySeq)
                 return false;
             let text = input.value;
             if (text == prevInput && !cm.somethingSelected())
                 return false;
-            if (h.ie && h.ie_version >= 9 && this.hasSelection === text || h.mac && /[\uf700-\uf7ff]/.test(text)) {
+            if (browser.ie && browser.ie_version >= 9 && this.hasSelection === text || browser.mac && /[\uf700-\uf7ff]/.test(text)) {
                 cm.display.input.reset();
                 return false;
             }
@@ -32338,8 +33662,8 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
             let same = 0, l = Math.min(prevInput.length, text.length);
             while (same < l && prevInput.charCodeAt(same) == text.charCodeAt(same))
                 ++same;
-            a.runInOp(cm, () => {
-                c.applyTextInput(cm, text.slice(same), prevInput.length - same, null, this.composing ? '*compose' : null);
+            operations.runInOp(cm, () => {
+                inputs.applyTextInput(cm, text.slice(same), prevInput.length - same, null, this.composing ? '*compose' : null);
                 if (text.length > 1000 || text.indexOf('\n') > -1)
                     input.value = this.prevInput = '';
                 else
@@ -32356,37 +33680,37 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
                 this.pollingFast = false;
         }
         onKeyPress() {
-            if (h.ie && h.ie_version >= 9)
+            if (browser.ie && browser.ie_version >= 9)
                 this.hasSelection = null;
             this.fastPoll();
         }
         onContextMenu(e) {
-            let input = this, cm = input.cm, display = cm.display, te = input.textarea;
-            if (input.contextMenuPending)
-                input.contextMenuPending();
-            let pos = d.posFromMouse(cm, e), scrollPos = display.scroller.scrollTop;
-            if (!pos || h.presto)
+            let self = this, cm = self.cm, display = cm.display, te = self.textarea;
+            if (self.contextMenuPending)
+                self.contextMenuPending();
+            let pos = position_measurement.posFromMouse(cm, e), scrollPos = display.scroller.scrollTop;
+            if (!pos || browser.presto)
                 return;
             let reset = cm.options.resetSelectionOnContextMenu;
             if (reset && cm.doc.sel.contains(pos) == -1)
-                a.operation(cm, g.setSelection)(cm.doc, f.simpleSelection(pos), l.sel_dontScroll);
-            let oldCSS = te.style.cssText, oldWrapperCSS = input.wrapper.style.cssText;
-            let wrapperBox = input.wrapper.offsetParent.getBoundingClientRect();
-            input.wrapper.style.cssText = 'position: static';
+                operations.operation(cm, selection_updates.setSelection)(cm.doc, model_selection.simpleSelection(pos), misc.sel_dontScroll);
+            let oldCSS = te.style.cssText, oldWrapperCSS = self.wrapper.style.cssText;
+            let wrapperBox = self.wrapper.offsetParent.getBoundingClientRect();
+            self.wrapper.style.cssText = 'position: static';
             te.style.cssText = `position: absolute; width: 30px; height: 30px;
       top: ${ e.clientY - wrapperBox.top - 5 }px; left: ${ e.clientX - wrapperBox.left - 5 }px;
-      z-index: 1000; background: ${ h.ie ? 'rgba(255, 255, 255, .05)' : 'transparent' };
+      z-index: 1000; background: ${ browser.ie ? 'rgba(255, 255, 255, .05)' : 'transparent' };
       outline: none; border-width: 0; outline: none; overflow: hidden; opacity: .05; filter: alpha(opacity=5);`;
             let oldScrollY;
-            if (h.webkit)
+            if (browser.webkit)
                 oldScrollY = window.scrollY;
             display.input.focus();
-            if (h.webkit)
+            if (browser.webkit)
                 window.scrollTo(null, oldScrollY);
             display.input.reset();
             if (!cm.somethingSelected())
-                te.value = input.prevInput = ' ';
-            input.contextMenuPending = rehide;
+                te.value = self.prevInput = ' ';
+            self.contextMenuPending = rehide;
             display.selForContextMenu = cm.doc.sel;
             clearTimeout(display.detectingSelectAll);
             function prepareSelectAllHack() {
@@ -32395,26 +33719,26 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
                     let extval = '\u200B' + (selected ? te.value : '');
                     te.value = '\u21DA';
                     te.value = extval;
-                    input.prevInput = selected ? '' : '\u200B';
+                    self.prevInput = selected ? '' : '\u200B';
                     te.selectionStart = 1;
                     te.selectionEnd = extval.length;
                     display.selForContextMenu = cm.doc.sel;
                 }
             }
             function rehide() {
-                if (input.contextMenuPending != rehide)
+                if (self.contextMenuPending != rehide)
                     return;
-                input.contextMenuPending = false;
-                input.wrapper.style.cssText = oldWrapperCSS;
+                self.contextMenuPending = false;
+                self.wrapper.style.cssText = oldWrapperCSS;
                 te.style.cssText = oldCSS;
-                if (h.ie && h.ie_version < 9)
+                if (browser.ie && browser.ie_version < 9)
                     display.scrollbars.setScrollTop(display.scroller.scrollTop = scrollPos);
                 if (te.selectionStart != null) {
-                    if (!h.ie || h.ie && h.ie_version < 9)
+                    if (!browser.ie || browser.ie && browser.ie_version < 9)
                         prepareSelectAllHack();
                     let i = 0, poll = () => {
-                            if (display.selForContextMenu == cm.doc.sel && te.selectionStart == 0 && te.selectionEnd > 0 && input.prevInput == '\u200B') {
-                                a.operation(cm, g.selectAll)(cm);
+                            if (display.selForContextMenu == cm.doc.sel && te.selectionStart == 0 && te.selectionEnd > 0 && self.prevInput == '\u200B') {
+                                operations.operation(cm, selection_updates.selectAll)(cm);
                             } else if (i++ < 10) {
                                 display.detectingSelectAll = setTimeout(poll, 500);
                             } else {
@@ -32425,15 +33749,15 @@ define('skylark-codemirror/primitives/input/TextareaInput',[
                     display.detectingSelectAll = setTimeout(poll, 200);
                 }
             }
-            if (h.ie && h.ie_version >= 9)
+            if (browser.ie && browser.ie_version >= 9)
                 prepareSelectAllHack();
-            if (h.captureRightClick) {
-                j.e_stop(e);
+            if (browser.captureRightClick) {
+                event.e_stop(e);
                 let mouseup = () => {
-                    j.off(window, 'mouseup', mouseup);
+                    event.off(window, 'mouseup', mouseup);
                     setTimeout(rehide, 20);
                 };
-                j.on(window, 'mouseup', mouseup);
+                event.on(window, 'mouseup', mouseup);
             } else {
                 setTimeout(rehide, 50);
             }
@@ -32456,17 +33780,17 @@ define('skylark-codemirror/primitives/edit/fromTextArea',[
     '../util/dom',
     '../util/event',
     '../util/misc'
-], function (CodeMirror, b, c, d) {
+], function (CodeMirror, dom, events, misc) {
     'use strict';
     function fromTextArea(textarea, options) {
-        options = options ? d.copyObj(options) : {};
+        options = options ? misc.copyObj(options) : {};
         options.value = textarea.value;
         if (!options.tabindex && textarea.tabIndex)
             options.tabindex = textarea.tabIndex;
         if (!options.placeholder && textarea.placeholder)
             options.placeholder = textarea.placeholder;
         if (options.autofocus == null) {
-            let hasFocus = b.activeElt();
+            let hasFocus = dom.activeElt();
             options.autofocus = hasFocus == textarea || textarea.getAttribute('autofocus') != null && hasFocus == document.body;
         }
         function save() {
@@ -32474,7 +33798,7 @@ define('skylark-codemirror/primitives/edit/fromTextArea',[
         }
         let realSubmit;
         if (textarea.form) {
-            c.on(textarea.form, 'submit', save);
+            events.on(textarea.form, 'submit', save);
             if (!options.leaveSubmitMethodAlone) {
                 let form = textarea.form;
                 realSubmit = form.submit;
@@ -32498,7 +33822,7 @@ define('skylark-codemirror/primitives/edit/fromTextArea',[
                 textarea.parentNode.removeChild(cm.getWrapperElement());
                 textarea.style.display = '';
                 if (textarea.form) {
-                    c.off(textarea.form, 'submit', save);
+                    events.off(textarea.form, 'submit', save);
                     if (typeof textarea.form.submit == 'function')
                         textarea.form.submit = realSubmit;
                 }
@@ -32587,22 +33911,22 @@ define('skylark-codemirror/primitives/edit/main',[
     '../modes',
     './fromTextArea',
     './legacy'
-], function (CodeMirror, b, c, d, addEditorMethods, Doc, ContentEditableInput, TextareaInput, e, f, g) {
+], function (CodeMirror, events, misc, options, addEditorMethods, Doc, ContentEditableInput, TextareaInput, modes, m_fromTextArea, legacy) {
     'use strict';
-    d.defineOptions(CodeMirror);
+    options.defineOptions(CodeMirror);
 
     addEditorMethods(CodeMirror);
 
     let dontDelegate = 'iter insert remove copy getEditor constructor'.split(' ');
     for (let prop in Doc.prototype)
-        if (Doc.prototype.hasOwnProperty(prop) && c.indexOf(dontDelegate, prop) < 0)
+        if (Doc.prototype.hasOwnProperty(prop) && misc.indexOf(dontDelegate, prop) < 0)
             CodeMirror.prototype[prop] = function (method) {
                 return function () {
                     return method.apply(this.doc, arguments);
                 };
             }(Doc.prototype[prop]);
 
-    b.eventMixin(Doc);
+    events.eventMixin(Doc);
 
     CodeMirror.inputStyles = {
         'textarea': TextareaInput,
@@ -32612,10 +33936,10 @@ define('skylark-codemirror/primitives/edit/main',[
     CodeMirror.defineMode = function (name) {
         if (!CodeMirror.defaults.mode && name != 'null')
             CodeMirror.defaults.mode = name;
-        e.defineMode.apply(this, arguments);
+        modes.defineMode.apply(this, arguments);
     };
 
-    CodeMirror.defineMIME = e.defineMIME;
+    CodeMirror.defineMIME = modes.defineMIME;
 
     CodeMirror.defineMode('null', () => ({ token: stream => stream.skipToEnd() }));
 
@@ -32629,9 +33953,9 @@ define('skylark-codemirror/primitives/edit/main',[
         Doc.prototype[name] = func;
     };
 
-    CodeMirror.fromTextArea = f.fromTextArea;
+    CodeMirror.fromTextArea = m_fromTextArea.fromTextArea;
 
-    g.addLegacyProps(CodeMirror);
+    legacy.addLegacyProps(CodeMirror);
     CodeMirror.version = '5.45.0';
     return { 
         CodeMirror : CodeMirror 
@@ -33143,7 +34467,7 @@ define('skylark-vvveb/plugins/google-fonts',[
 });
 
  define('skylark-vvveb/plugins/jszip',[
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../Gui"
 ],function($,Vvveb,Gui){
@@ -33233,7 +34557,9 @@ define('skylark-vvveb/main',[
 	"./CodeEditor",
 	"./ComponentsGroup",
 	"./Components",
+	"./ContentManager",
 	"./FileManager",
+	"./StyleManager",
 	"./Gui",
 	"./inputs",
 	"./tmpl",

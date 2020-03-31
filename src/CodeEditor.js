@@ -1,5 +1,5 @@
 define([
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	return Vvveb.CodeEditor = {
@@ -13,7 +13,7 @@ define([
 
 			$("#vvveb-code-editor textarea").keyup(function () 
 			{
-				Vvveb.delay(Vvveb.Builder.setHtml(this.value), 1000);
+				delay(Vvveb.Builder.setHtml(this.value), 1000);
 			});
 
 			//load code on document changes
@@ -44,6 +44,7 @@ define([
 			this.isActive = false;
 			this.destroy();
 		}
+
 	}
 
 });

@@ -1,5 +1,5 @@
 define([
-	"skylark-utils-dom/query",
+	"skylark-jquery",
 	"./Vvveb"
 ],function($,Vvveb){
 	var jQuery = $;
@@ -35,21 +35,24 @@ define([
 			self.dragElement = null;
 		},
 		
+	/* controls */    	
 		loadControlGroups : function() {	
 
 			var componentsList = $(".components-list");
 			componentsList.empty();
 			var item = {}, component = {};
+			var count = 0;
 			
 			componentsList.each(function ()
 			{
 				var list = $(this);
 				var type = this.dataset.type;
+				count ++;
 				
 				for (group in Vvveb.ComponentsGroup)	
 				{
-					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + '">' + group + '  <div class="header-arrow"></div>\
-										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + '">  <ol></ol></li>');
+					list.append('<li class="header clearfix" data-section="' + group + '"  data-search=""><label class="header" for="' + type + '_comphead_' + group + count + '">' + group + '  <div class="header-arrow"></div>\
+										   </label><input class="header_check" type="checkbox" checked="true" id="' + type + '_comphead_' + group + count + '">  <ol></ol></li>');
 
 					var componentsSubList = list.find('li[data-section="' + group + '"]  ol');
 					
@@ -67,7 +70,7 @@ define([
 							if (component.image) {
 
 								item.css({
-									backgroundImage: "url(" + component.image + ")", //backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
+									backgroundImage: "url(" + 'libs/builder/' + component.image + ")",
 									backgroundRepeat: "no-repeat"
 								})
 							}
@@ -124,12 +127,15 @@ define([
 		 },
 		
 		loadUrl : function(url, callback) {	
+			var self = this;
 			jQuery("#select-box").hide();
 			
 			self.initCallback = callback;
 			if (Vvveb.Builder.iframe.src != url) Vvveb.Builder.iframe.src = url;
-		},		
-		_loadIframe : function(url) {	// iframe 
+		},
+		
+	/* iframe */
+		_loadIframe : function(url) {	
 
 			var self = this;
 			self.iframe = this.documentFrame.get(0);
@@ -139,6 +145,9 @@ define([
 	        {
 					window.FrameWindow = self.iframe.contentWindow;
 					window.FrameDocument = self.iframe.contentWindow.document;
+					var addSectionBox = jQuery("#add-section-box"); 
+					var highlightBox = jQuery("#highlight-box").hide(); 
+					
 
 					$(window.FrameWindow).on( "beforeunload", function(event) {
 						if (Vvveb.Undo.undoIndex <= 0)
@@ -169,14 +178,18 @@ define([
 							{
 								var offset = self.highlightEl.offset();
 								
-								jQuery("#highlight-box").css(
+								highlightBox.css(
 									{"top": offset.top - self.frameDoc.scrollTop() , 
 									 "left": offset.left - self.frameDoc.scrollLeft() , 
 									 "width" : self.highlightEl.outerWidth(), 
 									 "height": self.highlightEl.outerHeight(),
 									 //"display": "block"
-									 });			
+									 });		
+									 
+								
+								addSectionBox.hide();
 							}
+							
 					});
 				
 					Vvveb.WysiwygEditor.init(window.FrameDocument);
@@ -200,6 +213,8 @@ define([
 			self.frameHead.append('<link data-vvveb-helpers href="' + Vvveb.baseUrl + '../../css/vvvebjs-editor-helpers.css" rel="stylesheet">');
 
 			self._initHighlight();
+			
+			$(window).triggerHandler("vvveb.iframe.loaded", self.frameDoc);
 	    },	
 	    
 	    _getElementType: function(el) {
@@ -276,14 +291,14 @@ define([
 			
 		},
 
-	 
-	    _initHighlight: function() { // iframe highlight
+	/* iframe highlight */    
+	    _initHighlight: function() {
 			
 			var self = Vvveb.Builder;
 			
 			self.frameHtml.on("mousemove touchmove", function(event) {
 				
-				if (event.target && Vvveb.isElement(event.target) && event.originalEvent)
+				if (event.target && isElement(event.target) && event.originalEvent)
 				{
 					self.highlightEl = target = jQuery(event.target);
 					var offset = target.offset();
@@ -304,13 +319,13 @@ define([
 							{
 								if ((offset.top  < (y - halfHeight)) || (offset.left  < (x - halfWidth)))
 								{
-									 if (Vvveb.isIE11) 
+									 if (isIE11) 
 										self.highlightEl.append(self.dragElement); 
 									 else 
 										self.dragElement.appendTo(parent);
 								} else
 								{
-									if (Vvveb.isIE11) 
+									if (isIE11) 
 									 self.highlightEl.prepend(self.dragElement); 
 									else 
 										self.dragElement.prependTo(parent);
@@ -345,7 +360,14 @@ define([
 							  "display" : event.target.hasAttribute('contenteditable')?"none":"block",
 							  "border":self.isDragging?"1px dashed aqua":"",//when dragging highlight parent with green
 							 });
-							 
+
+						if (height < 50) 
+						{
+							jQuery("#section-actions").addClass("outside");	 
+						} else
+						{
+							jQuery("#section-actions").removeClass("outside");	
+						}
 						jQuery("#highlight-name").html(self._getElementType(event.target));
 						if (self.isDragging) jQuery("#highlight-name").hide(); else jQuery("#highlight-name").show();//hide tag name when dragging
 					}
@@ -359,14 +381,17 @@ define([
 					self.isDragging = false;
 					if (self.iconDrag) self.iconDrag.remove();
 					$("#component-clone").remove();
-					
-					if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
-					{
-						newElement = $(self.component.html);
-						self.dragElement.replaceWith(newElement);
-						self.dragElement = newElement;
+
+					if (self.dragMoveMutation === false)
+					{				
+						if (self.component.dragHtml) //if dragHtml is set for dragging then set real component html
+						{
+							newElement = $(self.component.html);
+							self.dragElement.replaceWith(newElement);
+							self.dragElement = newElement;
+						}
+						if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					}
-					if (self.component.afterDrop) self.dragElement = self.component.afterDrop(self.dragElement);
 					
 					self.dragElement.css("border", "");
 					
@@ -571,11 +596,21 @@ define([
 				
 				addSectionElement = self.highlightEl; 
 
-				var offset = jQuery(this).offset();			
+				var offset = jQuery(addSectionElement).offset();			
+				var top = (offset.top - self.frameDoc.scrollTop()) + addSectionElement.outerHeight();
+				var left = (offset.left - self.frameDoc.scrollLeft()) + (addSectionElement.outerWidth() / 2) - (addSectionBox.outerWidth() / 2);
+				var outerHeight = $(window.FrameWindow).height() + self.frameDoc.scrollTop();
+
+				//check if box is out of viewport and move inside
+				if (left < 0) left = 0;
+				if (top < 0) top = 0;
+				if ((left + addSectionBox.outerWidth()) > self.frameDoc.outerWidth()) left = self.frameDoc.outerWidth() - addSectionBox.outerWidth();
+				if (((top + addSectionBox.outerHeight()) + self.frameDoc.scrollTop()) > outerHeight) top = top - addSectionBox.outerHeight();
+				
 				
 				addSectionBox.css(
-					{"top": offset.top - self.frameDoc.scrollTop() - $(this).outerHeight(), 
-					 "left": offset.left - (addSectionBox.outerWidth() / 2) - (275) - self.frameDoc.scrollLeft(), 
+					{"top": top, 
+					 "left": left, 
 					 "display": "block",
 					 });
 				
@@ -625,8 +660,8 @@ define([
 			
 		},	
 
-	
-		_initDragdrop : function() {//drag and drop
+	/* drag and drop */
+		_initDragdrop : function() {
 
 			var self = this;
 			self.isDragging = false;	
@@ -730,6 +765,8 @@ define([
 			var hasDoctpe = (doc.doctype !== null);
 			var html = "";
 			
+			$(window).triggerHandler("vvveb.getHtml.before", doc);
+			
 			if (hasDoctpe) html =
 			"<!DOCTYPE "
 	         + doc.doctype.name
@@ -740,7 +777,12 @@ define([
 	          
 	         html +=  doc.documentElement.innerHTML + "\n</html>";
 	         
-	         return this.removeHelpers(html, keepHelperAttributes);
+	         html = this.removeHelpers(html, keepHelperAttributes);
+	         
+	         var filter = $(window).triggerHandler("vvveb.getHtml.after", html);
+	         if (filter) return filter;
+	         
+	         return html;
 		},
 		
 		setHtml: function(html) 

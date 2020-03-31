@@ -1,19 +1,27 @@
 define([
-    "skylark-utils-dom/query",
+    "skylark-jquery",
     "../Vvveb",
     "../ComponentsGroup",
     "../Components",
     "../inputs"
 ],function($,Vvveb,ComponentsGroup,Components,inputs){
 
-    bgcolorClasses = ["bg-primary", "bg-secondary", "bg-success", "bg-danger", "bg-warning", "bg-info", "bg-light", "bg-dark", "bg-white"]
+    var bgcolorClasses = [
+        "bg-primary", 
+        "bg-secondary", 
+        "bg-success", 
+        "bg-danger", 
+        "bg-warning", 
+        "bg-info", 
+        "bg-light", 
+        "bg-dark", 
+        "bg-white"
+    ],
 
-    bgcolorSelectOptions = 
-    [{
-    	value: "Default",
-    	text: ""
-    }, 
-    {
+    bgcolorSelectOptions = [{
+	   value: "Default",
+	   text: ""
+    }, {
     	value: "bg-primary",
     	text: "Primary"
     }, {
@@ -58,10 +66,35 @@ define([
     	return newNode;
     }
 
-    ComponentsGroup['Bootstrap 4'] =
-    ["html/container", "html/gridrow", "html/button", "html/buttongroup", "html/buttontoolbar", "html/heading", "html/image", "html/jumbotron", "html/alert", "html/card", "html/listgroup", "html/hr", "html/taglabel", "html/badge", "html/progress", "html/navbar", "html/breadcrumbs", "html/pagination", "html/form", "html/textinput", "html/textareainput", "html/selectinput", "html/fileinput", "html/checkbox", "html/radiobutton", "html/table", "html/paragraph"];
-
-
+    ComponentsGroup['Bootstrap 4'] = [
+        "html/container", 
+        "html/gridrow", 
+        "html/button", 
+        "html/buttongroup", 
+        "html/buttontoolbar", 
+        "html/heading", 
+        "html/image", 
+        "html/jumbotron", 
+        "html/alert", 
+        "html/card", 
+        "html/listgroup", 
+        "html/hr", 
+        "html/taglabel", 
+        "html/badge", 
+        "html/progress", 
+        "html/navbar", 
+        "html/breadcrumbs", 
+        "html/pagination", 
+        "html/form", 
+        "html/textinput", 
+        "html/textareainput", 
+        "html/selectinput", 
+        "html/fileinput", 
+        "html/checkbox", 
+        "html/radiobutton", 
+        "html/table", 
+        "html/paragraph"
+    ];
 
     Components.add("_base", {
         name: "Element",
@@ -93,16 +126,15 @@ define([
 
     //display
     Components.extend("_base", "_base", {
-    	 properties: [
-         {
+    	 properties: [{
             key: "display_header",
             inputtype: inputs.SectionInput,
             name:false,
             sort: Components.base_sort++,
             data: {header:"Display"},
         }, {
-            name: "Display",
             key: "display",
+            name: "Display",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -125,8 +157,8 @@ define([
                 }]
             }
         }, {
-            name: "Position",
             key: "position",
+            name: "Position",
             htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -149,8 +181,8 @@ define([
                 }]
             }
         }, {
-            name: "Top",
             key: "top",
+            name: "Top",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -158,8 +190,8 @@ define([
             parent:"",
             inputtype: inputs.CssUnitInput
     	}, {
-            name: "Left",
             key: "left",
+            name: "Left",
     		htmlAttr: "style",
             sort: Components.base_sort++,
             col:6,
@@ -977,7 +1009,24 @@ define([
             key: "type",
             htmlAttr: "class",
             inputtype: inputs.SelectInput,
-            validValues: ["btn-default", "btn-primary", "btn-info", "btn-success", "btn-warning", "btn-info", "btn-light", "btn-dark", "btn-outline-primary", "btn-outline-info", "btn-outline-success", "btn-outline-warning", "btn-outline-info", "btn-outline-light", "btn-outline-dark", "btn-link"],
+            validValues: [
+                "btn-default", 
+                "btn-primary", 
+                "btn-info", 
+                "btn-success", 
+                "btn-warning", 
+                "btn-info", 
+                "btn-light", 
+                "btn-dark", 
+                "btn-outline-primary", 
+                "btn-outline-info", 
+                "btn-outline-success", 
+                "btn-outline-warning", 
+                "btn-outline-info", 
+                "btn-outline-light", 
+                "btn-outline-dark", 
+                "btn-link"
+            ],
             data: {
                 options: [{
                     value: "btn-default",
