@@ -19,6 +19,12 @@
   "bugs": {
     "url": "https://github.com/skylark-integration/skylark-vvveb/issues"
   },
+  "files": [
+    "demo/",
+    "dist/",
+    "src/",
+    "skins/"
+  ],  
   "license": "MIT",
   "dependencies": {
     "skylark-bootstrap3": "git+https://github.com/skylark-integration/skylark-bootstrap3.git#master",
