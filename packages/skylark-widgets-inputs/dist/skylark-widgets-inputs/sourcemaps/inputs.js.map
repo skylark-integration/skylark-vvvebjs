@@ -1,0 +1,1 @@
+{"version":3,"sources":["inputs.js"],"names":["define","skylark","attach"],"mappings":";;;;;;;AAAAA,QACC,yBACC,SAASC,GAGV,OAAOA,EAAQC,OAAO","file":"../inputs.js","sourcesContent":["define([\r\n\t\"skylark-langx/skylark\"\r\n],function(skylark) {\r\n\tvar inputs = {};\r\n\r\n\treturn skylark.attach(\"widgets.inputs\",inputs);\r\n\r\n});\r\n\r\n"]}

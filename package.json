@@ -34,7 +34,25 @@
   },
   "skylarkjs": {
     "build": {
-      "prepare": {}
+      "packages": {
+        "skylark-widgets-inputs": "./packages/skylark-widgets-inputs/src"
+      },
+      "prepare": {
+        "texttojs": [
+          "html",
+          "json",
+          "css"
+        ],
+        "jsxtojs": false,
+        "es6toamd": false,
+        "cjstoamd": false
+      },
+      "bundle": {
+        "standard": {
+          "include": [
+          ]
+        }
+      }
     }
   },
   "engines": {

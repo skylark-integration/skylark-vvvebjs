@@ -1,0 +1,9 @@
+/**
+ * skylark-widgets-inputs - The skylark input widget library
+ * @author Hudaokeji, Inc.
+ * @version v0.9.0
+ * @link https://github.com/skylark-widgets/skylark-widgets-inputs/
+ * @license MIT
+ */
+!function(n,r){var t=r.define,e=r.require,s="function"==typeof t&&t.amd,i=!s&&"undefined"!=typeof exports;if(!s&&!t){var a={};t=r.define=function(n,r,t){"function"==typeof t?(a[n]={factory:t,deps:r.map(function(r){return function(n,r){if("."!==n[0])return n;var t=r.split("/"),e=n.split("/");t.pop();for(var s=0;s<e.length;s++)"."!=e[s]&&(".."==e[s]?t.pop():t.push(e[s]));return t.join("/")}(r,n)}),resolved:!1,exports:null},e(n)):a[n]={factory:null,resolved:!0,exports:t}},e=r.require=function(n){if(!a.hasOwnProperty(n))throw new Error("Module "+n+" has not been defined");var t=a[n];if(!t.resolved){var s=[];t.deps.forEach(function(n){s.push(e(n))}),t.exports=t.factory.apply(r,s)||null,t.resolved=!0}return t.exports}}if(!t)throw new Error("The module utility (ex: requirejs or skylark-utils) is not loaded!");if(function(n,r){n("skylark-langx-ns/_attach",[],function(){return function(n,r,t){"string"==typeof r&&(r=r.split("."));for(var e=r.length,s=n,i=0,a=r[i++];i<e;)s=s[a]=s[a]||{},a=r[i++];return s[a]=t}}),n("skylark-langx-ns/ns",["./_attach"],function(n){var r={attach:function(t,e){return n(r,t,e)}};return r}),n("skylark-langx-ns/main",["./ns"],function(n){return n}),n("skylark-langx-ns",["skylark-langx-ns/main"],function(n){return n}),n("skylark-langx/skylark",["skylark-langx-ns"],function(n){return n}),n("skylark-widgets-inputs/inputs",["skylark-langx/skylark"],function(n){return n.attach("widgets.inputs",{})}),n("skylark-widgets-inputs/main",["./inputs"],function(){return inputs}),n("skylark-widgets-inputs",["skylark-widgets-inputs/main"],function(n){return n})}(t),!s){var u=e("skylark-langx/skylark");i?module.exports=u:r.skylarkjs=u}}(0,this);
+//# sourceMappingURL=sourcemaps/skylark-widgets-inputs-all.js.map
