@@ -1,8 +1,8 @@
 define([
 	"skylark-langx/skylark",
-	"skylark-bootstrap3"
+	"skylark-bootstrap3/loadedInit"
 
-],function(skylark){
+],function(skylark,bs3Init){
 
  var Vvveb = {};
 
@@ -82,5 +82,6 @@ Vvveb.baseUrl =  document.currentScript?document.currentScript.src.replace(/[^\/
 	  }
 	};
 
+   bs3Init();
 	return skylark.attach("intg.Vvveb",Vvveb);
 });

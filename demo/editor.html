@@ -11,8 +11,8 @@
     <base href="">
     <title>VvvebJs</title>
     
-    <link href="../skins/default/css/builder.css" rel="stylesheet">
     <link href="../skins/default/css/bootstrap.css" rel="stylesheet">
+    <link href="../skins/default/css/builder.css" rel="stylesheet">
     <link href="../skins/default/css/line-awesome.css" rel="stylesheet">
   </head>
 <body>
@@ -21,10 +21,10 @@
 	<div id="vvveb-builder">
 				
 				<div id="top-panel">
-					<img src="img/logo.png" alt="Vvveb" class="float-left" id="logo">
+					<img src="img/logo.png" alt="Vvveb" class="pull-left" id="logo">
 					
 					
-					<div class="btn-group float-left" role="group">
+					<div class="btn-group pull-left" role="group">
 					  <button class="btn btn-light" title="Toggle file manager" id="toggle-file-manager-btn" data-vvveb-action="toggleFileManager" data-toggle="button" aria-pressed="false">
 						  <img src="libs/builder/icons/file-manager-layout.svg" width="20px" height="20px">
 					  </button>
@@ -75,7 +75,7 @@
 					</div>	
 
 
-					<div class="btn-group float-right responsive-btns" role="group">
+					<div class="btn-group pull-right responsive-btns" role="group">
 		 			 <button id="mobile-view" data-view="mobile" class="btn btn-light"  title="Mobile view" data-vvveb-action="viewport">
 						  <i class="la la-mobile-phone"></i>
 					  </button>
@@ -134,7 +134,7 @@
 							</ul>
 					
 							<div class="tab-content">
-							  <div class="tab-pane fade show active" id="components" role="tabpanel" aria-labelledby="components-tab">
+							  <div class="tab-pane show active" id="components" role="tabpanel" aria-labelledby="components-tab">
 								  
 								   <div class="search">
 										  <input class="form-control form-control-sm component-search" placeholder="Search components" type="text" data-vvveb-action="componentSearch" data-vvveb-on="keyup">
@@ -153,7 +153,7 @@
 									</div>
 							  
 							  </div>
-							  <div class="tab-pane fade" id="blocks" role="tabpanel" aria-labelledby="blocks-tab">
+							  <div class="tab-pane " id="blocks" role="tabpanel" aria-labelledby="blocks-tab">
 								  
 								   <div class="search">
 										  <input class="form-control form-control-sm block-search" placeholder="Search blocks" type="text" data-vvveb-action="blockSearch" data-vvveb-on="keyup">
@@ -173,7 +173,7 @@
 							  
 							  </div>
 							
-								<div class="tab-pane fade" id="properties" role="tabpanel" aria-labelledby="blocks-tab">
+								<div class="tab-pane " id="properties" role="tabpanel" aria-labelledby="blocks-tab">
 									<div class="component-properties-sidepane">
 										<div>
 											<div class="component-properties">
@@ -193,14 +193,14 @@
 													</ul>
 											
 													<div class="tab-content">
-														 <div class="tab-pane fade show active" id="content-left-panel-tab" data-section="content" role="tabpanel" aria-labelledby="content-tab">
+														 <div class="tab-pane  show active" id="content-left-panel-tab" data-section="content" role="tabpanel" aria-labelledby="content-tab">
 															<div class="mt-4 text-center">Click on an element to edit.</div>
 														</div>
 														
-														 <div class="tab-pane fade show" id="style-left-panel-tab" data-section="style" role="tabpanel" aria-labelledby="style-tab">
+														 <div class="tab-pane  show" id="style-left-panel-tab" data-section="style" role="tabpanel" aria-labelledby="style-tab">
 														</div>
 														
-														 <div class="tab-pane fade show" id="advanced-left-panel-tab" data-section="advanced"  role="tabpanel" aria-labelledby="advanced-tab">
+														 <div class="tab-pane  show" id="advanced-left-panel-tab" data-section="advanced"  role="tabpanel" aria-labelledby="advanced-tab">
 														</div>
 													</div>
 											</div>
@@ -284,7 +284,7 @@
 										</div>
 										
 										<div class="tab-content">
-										  <div class="tab-pane fade show active" id="box-components" role="tabpanel" aria-labelledby="components-tab">
+										  <div class="tab-pane show active" id="box-components" role="tabpanel" aria-labelledby="components-tab">
 											  
 											   <div class="search">
 													  <input class="form-control form-control-sm component-search" placeholder="Search components" type="text" data-vvveb-action="addBoxComponentSearch" data-vvveb-on="keyup">
@@ -303,7 +303,7 @@
 												</div>
 										  
 										  </div>
-										  <div class="tab-pane fade" id="box-blocks" role="tabpanel" aria-labelledby="blocks-tab">
+										  <div class="tab-pane" id="box-blocks" role="tabpanel" aria-labelledby="blocks-tab">
 											  
 											   <div class="search">
 													  <input class="form-control form-control-sm block-search" placeholder="Search blocks" type="text" data-vvveb-action="addBoxBlockSearch" data-vvveb-on="keyup">
@@ -323,7 +323,7 @@
 										  
 										  </div>
 										
-											<!-- div class="tab-pane fade" id="box-properties" role="tabpanel" aria-labelledby="blocks-tab">
+											<!-- div class="tab-pane" id="box-properties" role="tabpanel" aria-labelledby="blocks-tab">
 												<div class="component-properties-sidepane">
 													<div>
 														<div class="component-properties">
@@ -363,13 +363,13 @@
 							</ul>
 					
 							<div class="tab-content">
-								 <div class="tab-pane fade active" id="content-tab" data-section="content" role="tabpanel" aria-labelledby="content-tab">
+								 <div class="tab-pane active" id="content-tab" data-section="content" role="tabpanel" aria-labelledby="content-tab">
 								</div>
 								
-								 <div class="tab-pane fade " id="style-tab" data-section="style" role="tabpanel" aria-labelledby="style-tab">
+								 <div class="tab-pane " id="style-tab" data-section="style" role="tabpanel" aria-labelledby="style-tab">
 								</div>
 								
-								 <div class="tab-pane fade " id="advanced-tab" data-section="advanced"  role="tabpanel" aria-labelledby="advanced-tab">
+								 <div class="tab-pane " id="advanced-tab" data-section="advanced"  role="tabpanel" aria-labelledby="advanced-tab">
 								</div>
 								
 								
